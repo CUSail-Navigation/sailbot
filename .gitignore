@@ -1,0 +1,22 @@
+# ROS2 build directories
+build/
+install/
+log/
+
+# ROS2 specific
+.rosinstall
+.ament_version
+
+# ROS2 package specific
+CMakeLists.txt.user
+colcon.meta
+
+# Python cache
+__pycache__/
+
+# Other common files to ignore
+*.swp
+*.swo
+*.bak
+*.tmp
+*~
