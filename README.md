@@ -1,9 +1,9 @@
 # sailros2
-Unfinished implementation of raspberrypi for CUSail running ROS2 Foxy: [Download ROS2 Foxy](https://ms-iot.github.io/ROSOnWindows/GettingStarted/SetupRos2.html)
+Unfinished implementation of raspberrypi for CUSail running ROS2 Humble: [Download ROS2 Humble](https://ms-iot.github.io/ROSOnWindows/GettingStarted/SetupRos2.html)
 
 ## Building the sailros2 package
 Before running any nodes, first build the sailros2 project with the following steps:
-  Be sure to first source the ```setup.bat``` file by typing: ```\opt\ros\foxy\x64\setup.bat```
+  Be sure to first source the ```setup.bat``` file by typing: ```\opt\ros\humble\x64\setup.bat```
   Got to the directory of the sailros2 project: ```FILE_PATH\sailros2```
   Type ```colcon build``` to build your ros2 project
       Note that to build a specific package, we can run
