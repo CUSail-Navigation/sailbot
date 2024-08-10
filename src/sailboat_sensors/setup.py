@@ -20,10 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-                'read_wind = sailboat_sensors.read_wind:main',
-                'test_read_wind = sailboat_sensors.test_read_wind:main',
-                'read_airmar = sailboat_sensors.read_airmar:main',
-                'listener = sailboat_sensors.test_listener:main',
+                'anemometer = sailboat_sensors.anemometer:main',
+                'airmar = sailboat_sensors.airmar:main',
         ],
     },
 )

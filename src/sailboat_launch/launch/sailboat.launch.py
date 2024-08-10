@@ -15,16 +15,16 @@ def generate_launch_description():
    return LaunchDescription([
       Node(
             package='sailboat_sensors',
-            executable='read_airmar',
-            name='read_airmar',
-            output='screen',
+            executable='airmar',
+            name='airmar',
+            namespace='sailbot',
             parameters=[config]
       ),
       Node(
             package='sailboat_sensors',
-            executable='read_wind',
-            name='read_wind',
-            output='screen',
+            executable='anemometer',
+            name='anemometer',
+            namespace='sailbot',
             parameters=[config]
       )
    ])
