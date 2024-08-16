@@ -1,6 +1,6 @@
 from setuptools import setup
 
-package_name = 'sailboat_navigation'
+package_name = 'sailboat_main'
 
 setup(
     name=package_name,
