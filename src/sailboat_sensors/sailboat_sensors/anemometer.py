@@ -2,7 +2,8 @@ import rclpy
 from rclpy.node import Node
 
 from std_msgs.msg import Int32
-from Adafruit_ADS1x15 import ADS1x15 as ADS
+#from Adafruit_ADS1x15 import ADS1x15 as ADS
+import serial
 
 class Anemometer(Node):
 
@@ -13,20 +14,26 @@ class Anemometer(Node):
         self.declare_parameter('timer_period', 0.5)
         self.timer_period = self.get_parameter('timer_period').value
 
-        self.declare_parameter('ADC_ADDRESS', '0x48')
-        self.adc_address = self.get_parameter('ADC_ADDRESS').value
+        self.declare_parameter('anemometer_port')
+        self.adc_address = self.get_parameter('anemometer_port').value
 
         self.publisher_ = self.create_publisher(Int32, '/wind', 10)
         self.timer = self.create_timer(self.timer_period, self.timer_callback)
 
-        self.mainADC = ADS.ADS1015(self.adc_address)
+        self.anem_serial = serial.Serial(self.adc_address, baudrate=9600)
         self.get_logger().info('Launching Anemometer')
 
 
     def read_wind(self):
-        rawadc = self.mainADC.read_adc(0, gain=2/3) 
-        wind_direction = (180 + 360 - rawadc * 360 / 1720) % 360
-        return int(wind_direction)
+
+        try:
+            if self.anem_serial.in_waiting > 0:
+                # Read the incoming message from XBee
+                wind_dir = self.serial_port.readline().decode('utf-8').strip()
+                return int(wind_dir)
+
+        except Exception as e:
+            self.get_logger().error(f"Error reading anem data: {e}")
 
     def timer_callback(self):
         msg = Int32()

@@ -27,10 +27,19 @@ def generate_launch_description():
       parameters=[config]
    )
 
+   servo_cmd = Node(
+      package='sailboat_main',
+      executable='servo',
+      name='servo',
+      namespace='sailbot',
+      parameters=[config]
+   )
+
    ld = LaunchDescription()
 
    # Sensors
    ld.add_action(gps_cmd)
    ld.add_action(anemometer_cmd)
+   ld.add_action(servo_cmd)
 
    return ld

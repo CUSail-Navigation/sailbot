@@ -20,6 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'servo = sailboat_main.servo:main',
+            'radio = sailboat_main.radio:main',
         ],
     },
 )
