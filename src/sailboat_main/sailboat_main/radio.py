@@ -1,7 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32
-from your_package_name.msg import SailTail  # Replace with the actual package name
+from sailboat_interfaces.msg import SailTail  # Replace with the actual package name
 import serial
 
 class Radio(Node):
