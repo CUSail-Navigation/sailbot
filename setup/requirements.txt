@@ -1,0 +1,2 @@
+Adafruit_ADS1x15==1.0.2
+pyserial==3.5
