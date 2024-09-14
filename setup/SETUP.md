@@ -72,6 +72,7 @@ With this structure, the `setup` folder contains all the configuration needed to
 1. Now, build the Docker image. You will need to run this command from the `setup` folder:
 
    ```bash
+   cd setup
    docker build -t ros2_humble_custom .
    ```
 
@@ -91,6 +92,7 @@ Once the image is built, you can run the Docker container. Here's how to do it:
 You will need to run the following command from the project root to mount your `src/` directory to the container and make it accessible from within the container, use the following command:
 
 ```bash
+cd ..
 docker run -it --rm --name ros2_container \
   -v $(pwd)/src:/home/ros2_user/ros2_ws/src \
   ros2_humble_custom
