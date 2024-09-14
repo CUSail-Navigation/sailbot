@@ -140,4 +140,3 @@ By following this tutorial, you:
 This setup allows you to work in a consistent environment without worrying about your host machine's setup. Docker ensures that all dependencies and tools are available and isolated in the container.
 
 Happy ROS2 development!
-```
