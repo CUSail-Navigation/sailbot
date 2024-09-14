@@ -127,8 +127,10 @@ docker run -d --name ros2_container \
   -v $(pwd)/src:/home/ros2_user/ros2_ws/src \
   ros2_humble_custom
 ```
+
 ---
-### Step 5: Understanding our Software Development Lifecycle (SDLC) Process
+
+## Step 5: Understanding our Software Development Lifecycle (SDLC) Process
 
 In this setup, the development process follows a typical Software Development Lifecycle (SDLC) workflow where you write and test your code iteratively. Here’s how it works with your ROS2 project:
 
