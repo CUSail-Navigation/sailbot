@@ -23,7 +23,7 @@ Before we start, ensure the following prerequisites are met:
 2. Clone the repository using SSH. Replace the SSH URL with the correct URL for your repository:
 
    ```bash
-   git clone git@github.com:your-username/your-repo.git
+   git clone git@github.com:CUSail-Navigation/sailbot.git
    ```
 
    This will create a directory with the project files. Navigate to this directory:
