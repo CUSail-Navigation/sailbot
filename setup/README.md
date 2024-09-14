@@ -80,6 +80,7 @@ With this structure, the `setup` folder contains all the configuration needed to
    - `.`: Tells Docker to use the current directory as the build context.
 
 2. Docker will use the `Dockerfile` to create the image. This step may take a few minutes as Docker installs dependencies and sets up the environment.
+3. Note that if you get an error like `ERROR: Cannot connect to the Docker daemon`, launch the Docker GUI application you installed and run this command again.
 
 ---
 
@@ -113,11 +114,11 @@ To test that everything is working, you can run a ROS node from your workspace:
 ros2 launch sailboat_launch sailboat.launch.py
 ```
 
-Note that this should fail trying to open the serial ports.
+Note that this should fail trying to open the serial ports with a verbose error output, one line of which should look something like ```[airmar-1] serial.serialutil.SerialException: [Errno 2] could not open port /dev/ttyACM0: [Errno 2] No such file or directory: '/dev/ttyACM0'```
 
 ---
 
-## Step 6: Stopping the Container
+## Step 5: Stopping the Container
 
 To exit the container, press `Ctrl+D` or type `exit`. If you used the `--rm` flag, the container will automatically be removed after you exit. If you want to keep the container running in the background, remove the `--rm` flag and instead use the `-d` flag for detached mode:
 
@@ -127,6 +128,41 @@ docker run -d --name ros2_container \
   ros2_humble_custom
 ```
 
+### Step 6: Understanding the Software Development Lifecycle (SDLC) Process
+
+In this setup, the development process follows a typical Software Development Lifecycle (SDLC) workflow where you write and test your code iteratively. Here’s how it works with your ROS2 project:
+
+1. **Developing Code in the `sailbot/src` Directory:**
+   - You will write and edit your code directly in the `sailbot/src` directory, which contains your ROS2 packages. This is where all of your nodes, launch files, and configurations reside.
+   - You are free to use any IDE or text editor you prefer (e.g., VS Code, PyCharm, or Sublime Text) to edit and manage your code. Since this directory is part of the local file system, your changes will be saved locally.
+
+2. **Testing Your Code in the Docker Container:**
+   - Once you have made changes and want to test them, you don’t need to worry about copying files into the container manually. The Docker setup automatically mounts your local `sailbot/src` directory into the Docker container. 
+   - To start testing, simply run the Docker image with the command we defined earlier:
+
+     ```bash
+     docker run -it --rm --name ros2_container \
+     -v $(pwd)/src:/home/ros2_user/ros2_ws/src \
+     ros2_humble_custom
+     ```
+
+   - This will start the Docker container, mounting the `src` directory from your local machine, and build the workspace inside the container. From here, you can run any ROS2 nodes you wish to test.
+
+3. **Live Changes and ROS Node Rebuild:**
+   - **Live Changes:** Any modifications you make in the local `sailbot/src` directory will automatically be reflected inside the Docker container because of the mounted directory. This allows you to work and test your code seamlessly.
+   - **Rebuilding ROS Nodes:** Although live changes are reflected in the container, changes to the code often require you to rebuild your ROS2 workspace inside the container. This can be done by running:
+     
+     ```bash
+     colcon build
+     ```
+
+     After the build, you should source the setup file again:
+
+     ```bash
+     source install/setup.bash
+     ```
+
+     This ensures that the changes to your nodes or packages are properly built and ready for testing.
 ---
 
 ## Summary
