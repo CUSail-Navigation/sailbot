@@ -67,7 +67,7 @@ With this structure, the `setup` folder contains all the configuration needed to
 
 ---
 
-## Step 3: Build the Docker Image
+## Step 2: Build the Docker Image
 
 1. Now, build the Docker image. You will need to run this command from the `setup` folder:
 
@@ -84,11 +84,11 @@ With this structure, the `setup` folder contains all the configuration needed to
 
 ---
 
-## Step 4: Run the Docker Container
+## Step 3: Run the Docker Container
 
 Once the image is built, you can run the Docker container. Here's how to do it:
 
-### 1. **Run the Container with Volume Mounting**
+### **Run the Container with Volume Mounting**
 
 You will need to run the following command from the project root to mount your `src/` directory to the container and make it accessible from within the container, use the following command:
 
@@ -106,7 +106,7 @@ docker run -it --rm --name ros2_container \
 - `-v $(pwd)/src:/home/ros2_user/ros2_ws/src`: Mounts the `src/` directory from your host machine into the container at `/home/ros2_user/ros2_ws/src`.
 - `ros2_humble_custom`: The name of the Docker image you built in Step 3.
 
-### 4. **Run a ROS Node**
+### **Run a ROS Node**
 
 To test that everything is working, you can run a ROS node from your workspace: 
 
@@ -118,7 +118,7 @@ Note that this should fail trying to open the serial ports with a verbose error 
 
 ---
 
-## Step 5: Stopping the Container
+## Step 4: Stopping the Container
 
 To exit the container, press `Ctrl+D` or type `exit`. If you used the `--rm` flag, the container will automatically be removed after you exit. If you want to keep the container running in the background, remove the `--rm` flag and instead use the `-d` flag for detached mode:
 
@@ -127,8 +127,8 @@ docker run -d --name ros2_container \
   -v $(pwd)/src:/home/ros2_user/ros2_ws/src \
   ros2_humble_custom
 ```
-
-### Step 6: Understanding the Software Development Lifecycle (SDLC) Process
+---
+### Step 5: Understanding our Software Development Lifecycle (SDLC) Process
 
 In this setup, the development process follows a typical Software Development Lifecycle (SDLC) workflow where you write and test your code iteratively. Here’s how it works with your ROS2 project:
 
