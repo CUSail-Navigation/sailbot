@@ -1,11 +1,11 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 package_name = 'sailboat_sensors'
 
 setup(
     name=package_name,
     version='0.0.0',
-    packages=[package_name],
+    packages=find_packages(include=[package_name, f'{package_name}.*']),
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
@@ -20,8 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-                'anemometer = sailboat_sensors.anemometer:main',
-                'airmar = sailboat_sensors.airmar:main',
+                'anemometer = sailboat_sensors.anemometer.anemometer_node:main',
+                'airmar = sailboat_sensors.airmar.airmar_node:main',
         ],
     },
 )
