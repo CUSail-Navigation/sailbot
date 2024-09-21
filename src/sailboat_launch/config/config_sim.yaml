@@ -11,7 +11,9 @@ sailbot: #Namespace
    anemometer:
       ros__parameters:
          anemometer_port: "/dev/ttyUSB0"
+         use_fake_data: true
    
    servo:
       ros__parameters:
          servo_port: "/dev/ttyUSB1"
+         simulated: true
