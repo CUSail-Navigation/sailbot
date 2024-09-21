@@ -1,0 +1,17 @@
+/**:
+   ros__parameters:
+      timer_period: 0.5
+
+sailbot: #Namespace
+   airmar: #Node
+      ros__parameters:
+         airmar_port: "/dev/ttyACM0"
+         use_fake_data: true
+   
+   anemometer:
+      ros__parameters:
+         anemometer_port: "/dev/ttyUSB0"
+   
+   servo:
+      ros__parameters:
+         servo_port: "/dev/ttyUSB1"
