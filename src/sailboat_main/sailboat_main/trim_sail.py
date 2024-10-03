@@ -24,7 +24,7 @@ class TrimSail(Node):
         self.publisher_ = self.create_publisher(Int32, '/sail', 10)
 
     def wind_callback(self, msg):
-        sail_angle = self.setSail(msg.data)
+        sail_angle = abs(self.setSail(msg.data))
         self.publisher_.publish(sail_angle)
         self.get_logger().info('Sail Angle: "%s"' % sail_angle)
 

@@ -31,7 +31,7 @@ class MainAlgo(Node):
 
         self.subscription_heading_dir = self.create_subscription(
             Imu,
-            '/heading_direction',
+            '/imu',
             self.heading_dir_callback,
             10)
 
