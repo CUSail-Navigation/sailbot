@@ -23,6 +23,7 @@ setup(
         'console_scripts': [
             'servo = sailboat_main.servo.servo_node:main',
             'radio = sailboat_main.radio:main',
+            'main_algo = sailboat_main.main_algo.main_algo:main',
         ],
     },
 )
