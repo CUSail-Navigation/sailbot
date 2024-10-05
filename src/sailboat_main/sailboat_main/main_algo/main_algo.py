@@ -8,9 +8,15 @@ from std_msgs.msg import Bool, Int32
 import math
 
 class MainAlgo(Node):
+    """
+    The sailing algorithm responsible for changing the rudder angle based on the 
+    current location, destination, and heading direction.
+    """
+    
     def __init__(self):
         super().__init__('main_algo')
 
+        #Subscription for current location
         self.subscription_curr_loc = self.create_subscription(
             NavSatFix,
             '/gps',
@@ -29,19 +35,21 @@ class MainAlgo(Node):
         #     self.tacking_point_callback,
         #     10)
 
+        #Subscription for heading direction
         self.subscription_heading_dir = self.create_subscription(
             Imu,
             '/imu',
             self.heading_dir_callback,
             10)
 
+        #Subscription for current destination
         self.subscription_curr_dest = self.create_subscription(
             NavSatFix,
             '/current_destination',
             self.curr_dest_callback,
             10)
 
-        # Publisher
+        # Publisher for rudder angle
         self.rudder_angle_pub = self.create_publisher(Int32, '/rudder_angle', 10)
 
         # Internal state
@@ -52,6 +60,9 @@ class MainAlgo(Node):
         self.curr_dest = None
 
     def curr_gps_callback(self, msg):
+        """
+        Use the NavSatFix data to assign value to self.curr_loc
+        """
         utm_coords = utm.from_latlon(msg.latitude, msg.longitude)
         utm_x, utm_y = utm_coords[0], utm_coords[1]
         self.curr_loc = Point()
@@ -68,12 +79,18 @@ class MainAlgo(Node):
     #     self.calculate_rudder_angle()
 
     def heading_dir_callback(self, msg):
+        """
+        Use the imu data to assign value to self.heading_dir
+        """
         data = msg.orientation
         roll_x, roll_y, roll_z = euler_from_quaternion(data.x, data.y, data.z, data.w)
         self.heading_dir = np.degrees(roll_x)
         self.calculate_rudder_angle()
 
     def curr_dest_callback(self, msg):
+        """
+        Use the NavSatFix data to assign value to self.curr_dest
+        """
         utm_coords = utm.from_latlon(msg.latitude, msg.longitude)
         utm_x, utm_y = utm_coords[0], utm_coords[1]
         self.curr_dest = Point()
@@ -82,6 +99,13 @@ class MainAlgo(Node):
         self.calculate_rudder_angle()
 
     def calculate_rudder_angle(self):
+        """
+        The main function for calculating the rudder angle.
+        This function will do nothing if current location is missing, or the boat is tacking
+        but the tacking point is missing, or the current destination is missing (inclusive or).
+        Otherwise, this function will publish the rudder angle, and the rudder angle is 
+        from -25 to 25 degree rounded to the nearest 5.
+        """
         if self.curr_loc is None or (self.tacking and self.tacking_point is None) or self.curr_dest is None:
             # Not enough information to calculate rudder angle yet
             return
