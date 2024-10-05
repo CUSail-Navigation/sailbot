@@ -43,6 +43,14 @@ def generate_launch_description():
       parameters=[config]
    )
 
+   event_driver_cmd  = Node(
+      package='sailbot_events',
+      executable='event_driver',
+      name='event_driver',
+      namespace='sailbot',
+      parameters=[config]
+   )
+
    ld = LaunchDescription()
 
    # Sensors
@@ -50,5 +58,6 @@ def generate_launch_description():
    ld.add_action(anemometer_cmd)
    ld.add_action(servo_cmd)
    ld.add_action(main_algo_cmd)
+   ld.add_action(event_driver_cmd)
 
    return ld
