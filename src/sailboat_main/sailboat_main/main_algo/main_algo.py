@@ -15,6 +15,8 @@ class MainAlgo(Node):
     
     def __init__(self):
         super().__init__('main_algo')
+        self.get_logger().info('Main-algo started successfully')  # Check if this line prints
+
 
         #Subscription for current location
         self.subscription_curr_loc = self.create_subscription(
@@ -94,8 +96,8 @@ class MainAlgo(Node):
         utm_coords = utm.from_latlon(msg.latitude, msg.longitude)
         utm_x, utm_y = utm_coords[0], utm_coords[1]
         self.curr_dest = Point()
-        point.x = utm_x
-        point.y = utm_y
+        self.curr_dest.x = utm_x
+        self.curr_dest.y = utm_y
         self.calculate_rudder_angle()
 
     def calculate_rudder_angle(self):
@@ -106,6 +108,8 @@ class MainAlgo(Node):
         Otherwise, this function will publish the rudder angle, and the rudder angle is 
         from -25 to 25 degree rounded to the nearest 5.
         """
+        # x = (5 / 0)
+        # self.get_logger().info("Calculating rudder angle.")
         if self.curr_loc is None or (self.tacking and self.tacking_point is None) or self.curr_dest is None:
             # Not enough information to calculate rudder angle yet
             return
