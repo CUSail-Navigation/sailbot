@@ -133,9 +133,17 @@ class MainAlgo(Node):
         rudder_angle = (diff / 180.0) * 25
         self.get_logger().info(f'Rudder Angle Raw: {rudder_angle}')
 
-        rudder_angle = np.floor(rudder_angle / 5) * 5
+        # Assuming rudder_angle is a floating-point number and you want it to be an Int32 message
+        rudder_angle = np.floor(rudder_angle / 5) * 5  # Floor the angle to the nearest multiple of 5
+        rudder_angle = int(rudder_angle)  # Convert to int since Int32 requires an integer value
+
         self.get_logger().info(f'Rudder Angle: {rudder_angle}')
-        self.rudder_angle_pub.publish(rudder_angle)
+
+        # Create an Int32 message and publish the rudder angle
+        rudder_angle_msg = Int32()
+        rudder_angle_msg.data = rudder_angle
+
+        self.rudder_angle_pub.publish(rudder_angle_msg)
     
 def euler_from_quaternion(x, y, z, w):
         """
