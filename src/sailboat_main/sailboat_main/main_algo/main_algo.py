@@ -55,8 +55,8 @@ class MainAlgo(Node):
         utm_coords = utm.from_latlon(msg.latitude, msg.longitude)
         utm_x, utm_y = utm_coords[0], utm_coords[1]
         self.curr_loc = Point()
-        point.x = utm_x
-        point.y = utm_y
+        self.curr_loc.x = utm_x
+        self.curr_loc.y = utm_y
         self.calculate_rudder_angle()
 
     # def tacking_callback(self, msg):
