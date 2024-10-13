@@ -16,7 +16,7 @@ class Anemometer(Node):
         self.declare_parameter('timer_period', 0.5)
         self.timer_period = self.get_parameter('timer_period').value
 
-        self.declare_parameter('anemometer_port', '') # FIXME: Add a better default port
+        self.declare_parameter('anemometer_port', 'usb-Teensyduino_Triple_Serial_16089010-if00') # FIXME: Add a better default port
         anemometer_port = self.get_parameter('anemometer_port').value
 
         self.declare_parameter('use_fake_data', False)

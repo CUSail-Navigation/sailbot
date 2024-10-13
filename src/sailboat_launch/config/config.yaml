@@ -9,7 +9,7 @@ sailbot: #Namespace
    
    anemometer:
       ros__parameters:
-         anemometer_port: "/dev/ttyUSB0"
+         anemometer_port: "usb-Teensyduino_Triple_Serial_16089010-if00"
    
    servo:
       ros__parameters:
