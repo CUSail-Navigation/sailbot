@@ -13,4 +13,5 @@ sailbot: #Namespace
    
    servo:
       ros__parameters:
-         servo_port: "/dev/ttyUSB1"
+         sail_port: "/dev/ttyUSB0"
+         tail_port: "/dev/ttyUSB1"

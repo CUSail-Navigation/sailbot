@@ -11,7 +11,7 @@ class EventDriverNode(Node):
         self.publisher_ = self.create_publisher(NavSatFix, '/current_destination', 10)
         self.timer = self.create_timer(1.0, self.publish_destination)  # Publish every 2 seconds
         self.get_logger().info('Event Driver Node has started.')
-
+ 
     def publish_destination(self):
         """
         Publishes a random GPS location to the '/current_destination' topic.
