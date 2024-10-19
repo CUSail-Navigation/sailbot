@@ -165,6 +165,13 @@ In this setup, the development process follows a typical Software Development Li
      ```
 
      This ensures that the changes to your nodes or packages are properly built and ready for testing.
+
+4. **Opening a Second Terminal Running the Same Container:**
+   - Sometimes, you may want to enter the same container from a second terminal to run concurrent processes. This can be done by running:
+     
+     ```bash
+     docker exec -it ros2_container bash
+     ```
 ---
 
 ## Summary
