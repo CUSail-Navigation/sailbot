@@ -43,6 +43,14 @@ def generate_launch_description():
       parameters=[config]
    )
 
+   trim_sail_cmd = Node(
+      package='sailboat_main',
+      executable='trim_sail',
+      name='trim_sail',
+      namespace='sailbot',
+      parameters=[config]
+   )
+
    event_driver_cmd  = Node(
       package='sailbot_events',
       executable='event_driver',
@@ -58,6 +66,7 @@ def generate_launch_description():
    ld.add_action(anemometer_cmd)
    ld.add_action(servo_cmd)
    ld.add_action(main_algo_cmd)
+   ld.add_action(trim_sail_cmd)
    ld.add_action(event_driver_cmd)
 
    return ld
