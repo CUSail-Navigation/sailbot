@@ -52,7 +52,7 @@ class MainAlgo(Node):
             10)
 
         # Publisher for rudder angle
-        self.rudder_angle_pub = self.create_publisher(Int32, '/algo-rudder', 10)
+        self.rudder_angle_pub = self.create_publisher(Int32, 'algo_rudder', 10)
 
         # Internal state
         self.curr_loc = None

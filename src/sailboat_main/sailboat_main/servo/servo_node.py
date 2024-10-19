@@ -27,7 +27,8 @@ class Servo(Node):
 
         # Initialize the appropriate servo handler based on the simulation mode
         if self.simulated: #TODO: Fix sim mode for new serial setup
-            self.servo_handler = sail_servo_fake.SailServoFake()
+            self.sail = sail_servo_fake.SailServoFake()
+            self.tail = sail_servo_fake.SailServoFake()
             self.get_logger().info('Simulation mode enabled. Serial communication is disabled.')
         else:
             self.sail = sail_servo.SailServo(self.sail_port)
