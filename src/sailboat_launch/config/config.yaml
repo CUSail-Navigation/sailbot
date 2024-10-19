@@ -13,5 +13,5 @@ sailbot: #Namespace
    
    servo:
       ros__parameters:
-         sail_port: "/dev/ttyUSB0"
-         tail_port: "/dev/ttyUSB1"
+         sail_port: "/dev/serial/by-id/usb-Teensyduino_Triple_Serial_16089010-if02"
+         tail_port: "/dev/serial/by-id/usb-Teensyduino_Triple_Serial_16089010-if04"

@@ -15,8 +15,8 @@ class Servo(Node):
         super().__init__('servo')
 
         # Declare parameters
-        self.declare_parameter('sail_port', '/dev/ttyUSB0')
-        self.declare_parameter('tail_port', '/dev/ttyUSB1') #TODO: Change to by-id
+        self.declare_parameter('sail_port', '/dev/serial/by-id/usb-Teensyduino_Triple_Serial_16089010-if02')
+        self.declare_parameter('tail_port', '/dev/serial/by-id/usb-Teensyduino_Triple_Serial_16089010-if04') #TODO: Change to by-id
         self.declare_parameter('simulated', False)
 
         self.sail_port = self.get_parameter('sail_port').value
