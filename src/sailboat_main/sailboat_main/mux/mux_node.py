@@ -1,25 +1,29 @@
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Int32  # Assuming the sail and rudder topics use Int32 messages
+from std_msgs.msg import Int32, String # Assuming the sail and rudder topics use Int32 messages
 
 class MuxNode(Node):
     def __init__(self):
         super().__init__('mux_node')
 
-        # Switch flag, set this according to your logic (e.g., radio control or algo control)
+        # Switch flag; default is true, changed by topic below
         self.use_radio = True
+
+        # Mux topic for changing control_mode topic
+        self.control_mode_sub = self.create_subscription(
+            String, 'control_mode', self.control_mode_callback, 10)
 
         # Subscribers for radio topics
         self.radio_sail_sub = self.create_subscription(
-            Int32, 'radio-sail', self.radio_sail_callback, 10)
+            Int32, 'radio_sail', self.radio_sail_callback, 10)
         self.radio_rudder_sub = self.create_subscription(
-            Int32, 'radio-rudder', self.radio_rudder_callback, 10)
+            Int32, 'radio_rudder', self.radio_rudder_callback, 10)
 
         # Subscribers for algorithm topics
         self.algo_sail_sub = self.create_subscription(
-            Int32, 'algo-sail', self.algo_sail_callback, 10)
+            Int32, 'algo_sail', self.algo_sail_callback, 10)
         self.algo_rudder_sub = self.create_subscription(
-            Int32, 'algo-rudder', self.algo_rudder_callback, 10)
+            Int32, 'algo_rudder', self.algo_rudder_callback, 10)
 
         # Publishers for muxed output (rudder_angle and sail)
         self.rudder_pub = self.create_publisher(Int32, 'rudder_angle', 10)
@@ -45,6 +49,13 @@ class MuxNode(Node):
 
     def algo_rudder_callback(self, msg):
         self.algo_rudder = msg.data
+
+    def control_mode_callback(self, msg):
+        if msg.data == 'radio':
+            self.use_radio = True
+        elif msg.data == 'algorithm':
+            self.use_radio = False
+        self.get_logger().info(f'Switched control mode: {msg.data}')
 
     def publish_muxed_values(self):
         # Mux logic: switch between radio or algorithm input based on `use_radio`

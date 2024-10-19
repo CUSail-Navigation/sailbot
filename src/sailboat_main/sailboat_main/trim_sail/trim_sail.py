@@ -27,7 +27,7 @@ class TrimSail(Node):
         self.subscription  # prevent unused variable warning
 
         # Publisher for sail angle
-        self.publisher_ = self.create_publisher(Int32, '/algo-sail', 10)
+        self.publisher_ = self.create_publisher(Int32, 'algo_sail', 10)
 
     def wind_callback(self, msg):
         """
