@@ -17,3 +17,7 @@ sailbot: #Namespace
       ros__parameters:
          servo_port: "/dev/ttyUSB1"
          simulated: true
+
+   radio:
+      ros__parameters:
+         simulated: true

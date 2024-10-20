@@ -35,10 +35,34 @@ def generate_launch_description():
       parameters=[config]
    )
 
+   radio_cmd = Node(
+      package='sailboat_main',
+      executable='radio',
+      name='radio',
+      namespace='sailbot',
+      parameters=[config]
+   )
+
+   mux_cmd = Node(
+      package='sailboat_main',
+      executable='mux',
+      name='mux',
+      namespace='sailbot',
+      parameters=[config]
+   )
+
    main_algo_cmd  = Node(
       package='sailboat_main',
       executable='main_algo',
       name='main_algo',
+      namespace='sailbot',
+      parameters=[config]
+   )
+
+   trim_sail_cmd = Node(
+      package='sailboat_main',
+      executable='trim_sail',
+      name='trim_sail',
       namespace='sailbot',
       parameters=[config]
    )
@@ -58,6 +82,9 @@ def generate_launch_description():
    ld.add_action(anemometer_cmd)
    ld.add_action(servo_cmd)
    ld.add_action(main_algo_cmd)
+   ld.add_action(trim_sail_cmd)
    ld.add_action(event_driver_cmd)
+   ld.add_action(radio_cmd)
+   ld.add_action(mux_cmd)
 
    return ld

@@ -19,8 +19,8 @@ class EventDriverNode(Node):
         # Create a NavSatFix message
         gps_msg = NavSatFix()
 
-        # Fill in some random latitude and longitude values for demonstration
-        gps_msg.latitude = random.uniform(-90.0, 90.0)    # Random latitude
+        # Set latitude range to avoid exceeding UTM bounds (valid latitude is between -80 and 84)
+        gps_msg.latitude = random.uniform(-80.0, 84.0)  # Random latitude within UTM valid range
         gps_msg.longitude = random.uniform(-180.0, 180.0)  # Random longitude
 
         # Log the GPS message being published
