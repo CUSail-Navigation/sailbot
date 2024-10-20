@@ -143,7 +143,7 @@ In this setup, the development process follows a typical Software Development Li
    - To start testing, simply run the Docker image with the command we defined earlier:
 
      ```bash
-     docker run -it --rm --name ros2_container \
+      docker run -it --rm -p 8000:7000 -p 9090:9090 --name ros2_container \
      -v $(pwd)/src:/home/ros2_user/ros2_ws/src \
      ros2_humble_custom
      ```
