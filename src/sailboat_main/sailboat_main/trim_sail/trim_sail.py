@@ -67,11 +67,15 @@ def main(args=None):
 
     trim_sail = TrimSail()
 
-    rclpy.spin(trim_sail)
 
     # Destroy the node explicitly
     # (optional - otherwise it will be done automatically
     # when the garbage collector destroys the node object)
+    try:
+        rclpy.spin(trim_sail)
+    except KeyboardInterrupt:
+        pass
+    
     trim_sail.destroy_node()
     rclpy.shutdown()
 

@@ -1,10 +1,18 @@
 import numpy as np
 import rclpy
+
 from rclpy.node import Node
+from rclpy.service import Service
+
 import utm
 from sensor_msgs.msg import NavSatFix, Imu
 from geometry_msgs.msg import Point
 from std_msgs.msg import Bool, Int32
+from rclpy.task import Future
+
+from sailboat_interface.srv import Waypoint
+
+
 import math
 
 class MainAlgo(Node):
@@ -17,25 +25,12 @@ class MainAlgo(Node):
         super().__init__('main_algo')
         self.get_logger().info('Main-algo started successfully')  # Check if this line prints
 
-
         #Subscription for current location
         self.subscription_curr_loc = self.create_subscription(
             NavSatFix,
             '/gps',
             self.curr_gps_callback,
             10)
-
-        # self.subscription_tacking = self.create_subscription(
-        #     Bool,
-        #     '/tacking_status',
-        #     self.tacking_callback,
-        #     10)
-
-        # self.subscription_tacking_point = self.create_subscription(
-        #     Point,
-        #     '/tacking_point',
-        #     self.tacking_point_callback,
-        #     10)
 
         #Subscription for heading direction
         self.subscription_heading_dir = self.create_subscription(
@@ -44,41 +39,72 @@ class MainAlgo(Node):
             self.heading_dir_callback,
             10)
 
-        #Subscription for current destination
-        self.subscription_curr_dest = self.create_subscription(
-            NavSatFix,
-            '/current_destination',
-            self.curr_dest_callback,
-            10)
+        # #Subscription for current destination
+        # self.subscription_curr_dest = self.create_subscription(
+        #     NavSatFix,
+        #     '/current_destination',
+        #     self.curr_dest_callback,
+        #     10)
 
         # Publisher for rudder angle
         self.rudder_angle_pub = self.create_publisher(Int32, 'algo_rudder', 10)
 
         # Internal state
-        self.curr_loc = None
+        self.curr_loc = Point()
         self.tacking = False
         self.tacking_point = None
         self.heading_dir = 0.0
-        self.curr_dest = None
+        self.curr_dest = Point()
+
+        self.request_new_waypoint()
+
+
+
+    def request_new_waypoint(self):
+        self.cli = self.create_client(Waypoint, 'get_waypoint')
+        while not self.cli.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Waypoint service not available, waiting...')
+
+        self.req = Waypoint.Request()
+        self.future = self.cli.call_async(self.req)
+        #rclpy.spin_until_future_complete(self,self.future)
+        self.future.add_done_callback(self.waypoint_response_callback)
+
+    def waypoint_response_callback(self, future: Future):
+        try:
+            response = future.result()
+            if response.success:
+                resp = response.waypoint
+
+                utm_coords = utm.from_latlon(resp.longitude, resp.latitude)
+
+                self.curr_dest.x = utm_coords[0]
+                self.curr_dest.y = utm_coords[1]
+                self.get_logger().info(f'New waypoint received: {self.curr_dest}')
+            else:
+                self.get_logger().info('No more waypoints available: Retry in 1 second')
+                sleep(1)
+
+
+        except Exception as e:
+            self.get_logger().error(f'Service call failed: {e}')
 
     def curr_gps_callback(self, msg):
         """
         Use the NavSatFix data to assign value to self.curr_loc
         """
-        utm_coords = utm.from_latlon(msg.latitude, msg.longitude)
+        utm_coords = utm.from_latlon(msg.longitude, msg.latitude)
         utm_x, utm_y = utm_coords[0], utm_coords[1]
         self.curr_loc = Point()
         self.curr_loc.x = utm_x
         self.curr_loc.y = utm_y
+
+        dist_to_dest = math.dist((self.curr_loc.x,self.curr_loc.y), (self.curr_dest.x,self.curr_dest.y))
+        self.get_logger().info(f'Distance to destination: {dist_to_dest}')
+        if(dist_to_dest < 5):
+            self.request_new_waypoint()
         self.calculate_rudder_angle()
 
-    # def tacking_callback(self, msg):
-    #     self.tacking = msg.data
-    #     self.calculate_rudder_angle()
-
-    # def tacking_point_callback(self, msg):
-    #     self.tacking_point = msg
-    #     self.calculate_rudder_angle()
 
     def heading_dir_callback(self, msg):
         """
@@ -87,18 +113,18 @@ class MainAlgo(Node):
         data = msg.orientation
         roll_x, roll_y, roll_z = euler_from_quaternion(data.x, data.y, data.z, data.w)
         self.heading_dir = np.degrees(roll_x)
-        self.calculate_rudder_angle()
+        #self.calculate_rudder_angle()
 
-    def curr_dest_callback(self, msg):
-        """
-        Use the NavSatFix data to assign value to self.curr_dest
-        """
-        utm_coords = utm.from_latlon(msg.latitude, msg.longitude)
-        utm_x, utm_y = utm_coords[0], utm_coords[1]
-        self.curr_dest = Point()
-        self.curr_dest.x = utm_x
-        self.curr_dest.y = utm_y
-        self.calculate_rudder_angle()
+    # def curr_dest_callback(self, msg):
+    #     """
+    #     Use the NavSatFix data to assign value to self.curr_dest
+    #     """
+    #     utm_coords = utm.from_latlon(msg.latitude, msg.longitude)
+    #     utm_x, utm_y = utm_coords[0], utm_coords[1]
+    #     self.curr_dest = Point()
+    #     self.curr_dest.x = utm_x
+    #     self.curr_dest.y = utm_y
+    #     self.calculate_rudder_angle()
 
     def calculate_rudder_angle(self):
         """
@@ -173,9 +199,14 @@ def main(args=None):
 
     main_algo = MainAlgo()
 
-    rclpy.spin(main_algo)
 
     # Explicitly destroy the node when done
+    try:
+        rclpy.spin(main_algo)
+    except KeyboardInterrupt:
+        pass
+
+
     main_algo.destroy_node()
     rclpy.shutdown()
 

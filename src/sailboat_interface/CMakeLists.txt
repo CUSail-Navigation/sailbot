@@ -11,11 +11,15 @@ find_package(ament_cmake REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/SailTail.msg"
-  DEPENDENCIES std_msgs # Add packages that above messages depend on, in this case geometry_msgs for Sphere.msg
+  "srv/Waypoint.srv"
+
+  DEPENDENCIES std_msgs sensor_msgs # Add packages that above messages depend on, in this case geometry_msgs for Sphere.msg
 )
 
 
