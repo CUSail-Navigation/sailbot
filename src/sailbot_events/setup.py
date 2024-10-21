@@ -21,7 +21,6 @@ setup(
     entry_points={
         'console_scripts': [
             'event_driver = sailbot_events.event_driver.event_driver_node:main',
-            'waypoint_service = sailbot_events.event_driver.waypoint_service:main',
         ],
     },
 )

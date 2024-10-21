@@ -68,14 +68,14 @@ class Servo(Node):
         Callback function for the 'sail' topic. Delegates the message to the sail handler.
         """
         self.sail.send_command(msg.data, 0)
-      #  self.get_logger().info(f'Received Sail: {msg.data}')
+        self.get_logger().info(f'Received Sail: {msg.data}')
     
     def rudder_callback(self, msg):
         """
         Callback function for the 'rudder_angle' topic. Delegates the message to the rudder handler.
         """
         self.tail.send_command(msg.data, 0)
-      #  self.get_logger().info(f'Received Rudder Angle: {msg.data}')
+        self.get_logger().info(f'Received Rudder Angle: {msg.data}')
 
     def destroy_node(self):
         """

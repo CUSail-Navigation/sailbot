@@ -21,4 +21,3 @@ sailbot: #Namespace
    radio:
       ros__parameters:
          simulated: true
-

@@ -9,11 +9,8 @@ class FakeAirMar:
     """
     def __init__(self):
         # Initialize with a random starting position and heading
-        # self.latitude = np.random.uniform(-80, 84)
-
-        # self.longitude = np.random.uniform(-180, 180)
-        self.latitude = 42.876379
-        self.longitude = -77.007822
+        self.latitude = np.random.uniform(-80, 84)
+        self.longitude = np.random.uniform(-180, 180)
         self.heading = np.random.uniform(0, 360)
         self.rate_of_turn = np.random.uniform(-1, 1)  # Random rate of turn in degrees per second
 

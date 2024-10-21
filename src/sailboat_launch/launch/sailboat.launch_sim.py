@@ -67,18 +67,10 @@ def generate_launch_description():
       parameters=[config]
    )
 
-   # event_driver_cmd  = Node(
-   #    package='sailbot_events',
-   #    executable='event_driver',
-   #    name='event_driver',
-   #    namespace='sailbot',
-   #    parameters=[config]
-   # )
-
-   waypoint_service_cmd = Node(
+   event_driver_cmd  = Node(
       package='sailbot_events',
-      executable='waypoint_service',
-      name='waypoint_service',
+      executable='event_driver',
+      name='event_driver',
       namespace='sailbot',
       parameters=[config]
    )
@@ -103,8 +95,7 @@ def generate_launch_description():
    ld.add_action(servo_cmd)
    ld.add_action(main_algo_cmd)
    ld.add_action(trim_sail_cmd)
-   #ld.add_action(event_driver_cmd)
-   ld.add_action(waypoint_service_cmd)
+   ld.add_action(event_driver_cmd)
    ld.add_action(radio_cmd)
    ld.add_action(mux_cmd)
    ld.add_action(rosbridge_node)
