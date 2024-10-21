@@ -1,3 +1,4 @@
 Adafruit_ADS1x15==1.0.2
 pyserial==3.5
 utm==0.7.0
+geopy==2.4.1
