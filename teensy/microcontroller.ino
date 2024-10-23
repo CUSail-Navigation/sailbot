@@ -39,7 +39,7 @@ void loop() {
       // End of command, convert input to angle and move servo1
       int sail_angle = servoInput1.toInt();
       servoSail.write(map(sail_angle, 0, 90, 1700, 1050));  // Move servo1
-      SerialUSB1.print("Sail set to PWM: ");
+      SerialUSB1.print("Sail set to angle: ");
       SerialUSB1.println(sail_angle);
       servoInput1 = "";  // Clear buffer after processing
     } else {
@@ -54,7 +54,7 @@ void loop() {
       // End of command, convert input to angle and move servo1
       int tail_angle = servoInput2.toInt();
       servoTail.write(map(tail_angle, -30, 30, 1275, 1625));  // Move servo1
-      SerialUSB2.print("Tail set to PWM: ");
+      SerialUSB2.print("Tail set to angle: ");
       SerialUSB2.println(tail_angle);
       servoInput2 = "";  // Clear buffer after processing
     } else {
