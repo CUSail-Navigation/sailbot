@@ -77,6 +77,10 @@
             <span class="status-label">Sail:</span>
             <span class="status-value" id="sail-value">N/A</span>
         </div>
+        <div class="status-row">
+            <span class="status-label">Wind Angle: </span>
+            <span class="status-value" id="wind-value">N/A</span>
+        </div>
     </div>
 
     <script>
@@ -183,6 +187,17 @@
 
             sailTopic.subscribe(function (message) {
                 updateValue('sail-value', message.data);
+            });
+
+            // Subscribe to /sailbot/wind_angle
+            const windAngleTopic = new ROSLIB.Topic({
+                ros: ros,
+                name: '/sailboat/wind_angle',
+                messageType: 'std_msgs/Int32'
+            });
+
+            windAngleTopic.subscribe(function (message) {
+                updateValue('wind-value', message.data);
             });
         }
 
