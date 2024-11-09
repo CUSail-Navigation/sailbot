@@ -78,6 +78,34 @@
             border-radius: 5px;
             cursor: pointer;
         }
+
+        /* Dropdown button styling */
+        .dropdown-button {
+            background-color: #696D83;
+            color: white;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* Dropdown content (hidden by default) */
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #F9F9F9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+        }
+
+        /* Dropdown links */
+        .dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
     </style>
 </head>
 
@@ -145,6 +173,22 @@
             </div>
             <div class="button-group">
                 <button type="button" id="submit-waypoint">Submit Waypoint</button>
+            </div>
+        </div>
+    </div>
+    <div class="table-container">
+        <h1>Algorithm Chooser</h1>
+        <div class="table">
+            <div class="status-row">
+                <span class="status-label">Algorithms: </span>
+            </div>
+            <div class="dropdown">
+                <button class="dropdown-button" onclick="toggleDropdown()">Select Algorithm</button>
+                <div id="dropdown-content" class="dropdown-content">
+                    <a href="#">Algorithm 1</a>
+                    <a href="#">Algorithm 2</a>
+                    <a href="#">Algorithm 3</a>
+                </div>
             </div>
         </div>
     </div>
@@ -254,6 +298,23 @@
         window.onload = function () {
             connectToROS();
         };
+        // Function to toggle dropdown visibility
+        function toggleDropdown() {
+            var dropdownContent = document.getElementById("dropdown-content");
+            dropdownContent.style.display = dropdownContent.style.display === "block" ? "none" : "block";
+        }
+        // Close dropdown if clicking outside of it
+        window.onclick = function (event) {
+            if (!event.target.matches('.dropdown-button')) {
+                var dropdowns = document.getElementsByClassName("dropdown-content");
+                for (var i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.style.display === "block") {
+                        openDropdown.style.display = "none";
+                    }
+                }
+            }
+        }
     </script>
 </body>
 
