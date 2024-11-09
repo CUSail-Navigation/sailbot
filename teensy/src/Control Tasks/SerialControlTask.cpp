@@ -23,7 +23,10 @@ void SerialControlTask::execute()
             sfr::serial::dropped_packets,
             constants::serial::TX_END_FLAG};
 
+        last_telemetry_send_time = millis();
         Serial.write(data, sizeof(data));
         send_telemetry = false;
     }
+    current_time = millis();
+
 }
