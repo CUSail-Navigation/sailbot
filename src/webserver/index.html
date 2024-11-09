@@ -81,6 +81,14 @@
             <span class="status-label">Wind Angle: </span>
             <span class="status-value" id="wind-value">N/A</span>
         </div>
+        <div class="status-row">
+            <span class="status-label">Sailboat Longitude: </span>
+            <span class="status-value" id="sailboat-longitude">N/A</span>
+        </div>
+        <div class="status-row">
+            <span class="status-label">Sailboat Latitude: </span>
+            <span class="status-value" id="sailboat-latitude">N/A</span>
+        </div>
     </div>
 
     <script>
@@ -192,13 +200,26 @@
             // Subscribe to /sailbot/wind_angle
             const windAngleTopic = new ROSLIB.Topic({
                 ros: ros,
-                name: '/sailboat/wind_angle',
+                name: '/sailbot/wind_angle',
                 messageType: 'std_msgs/Int32'
             });
 
             windAngleTopic.subscribe(function (message) {
                 updateValue('wind-value', message.data);
             });
+
+            // Subscribe to /sailbot/longitude
+            const longitudeTopic = new ROSLIB.Topic({
+                ros: ros,
+                name: '/sailbot/longitude',
+                messageType: 'std_msgs/Int32'
+            });
+            // Subscribe to /sailbot/latitude
+            const latitudeTopic = new ROSLIB.Topic({
+            ros: ros,
+            name: '/sailbot/latitude',
+            messageType: 'std_msgs/Int32'
+        });
         }
 
         // Connect to ROS when the page loads
