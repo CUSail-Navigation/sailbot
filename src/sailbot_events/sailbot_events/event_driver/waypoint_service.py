@@ -9,6 +9,7 @@ class WaypointService(Node):
     def __init__(self):
         super().__init__('waypoint_service')
         self.service = self.create_service(Waypoint, 'get_waypoint', self.provide_waypoint_callback)
+        '''TODO: EDIT FOR WAYPOINT INSERTION FROM WEBSERVER'''
         default_points = [
         "42.876400267,-77.00778818759738",
         "42.876373,-77.007596",
