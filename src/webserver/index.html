@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,203 +10,206 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
-            background-color: #f0f0f0;
+            background-color: #F0F0F0;
         }
-
+        .table-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-left: auto;
+            max-width: 620px;
+        }
         h1 {
-            text-align: center;
+            margin-bottom: 10px;
         }
-
-        .status-table {
+        .table {
             width: 100%;
             max-width: 600px;
-            margin: auto;
+            margin: 0px 20 20px 20px;
             background-color: #fff;
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            float: right;
         }
-
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        input[type="number"] {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 150px;
+            text-align: right;
+        }
         .status-row {
             display: flex;
             justify-content: space-between;
             margin-bottom: 10px;
         }
-
         .status-label {
             font-weight: bold;
         }
-
         .status-value {
             font-style: italic;
         }
     </style>
 </head>
-
 <body>
-
-    <h1>Sailbot Status Dashboard</h1>
-
-    <div class="status-table">
-        <div class="status-row">
-            <span class="status-label">Algo Rudder:</span>
-            <span class="status-value" id="algo-rudder-value">N/A</span>
-        </div>
-        <div class="status-row">
-            <span class="status-label">Algo Sail:</span>
-            <span class="status-value" id="algo-sail-value">N/A</span>
-        </div>
-        <div class="status-row">
-            <span class="status-label">Control Mode:</span>
-            <span class="status-value" id="control-mode-value">N/A</span>
-        </div>
-        <div class="status-row">
-            <span class="status-label">Radio Rudder:</span>
-            <span class="status-value" id="radio-rudder-value">N/A</span>
-        </div>
-        <div class="status-row">
-            <span class="status-label">Radio Sail:</span>
-            <span class="status-value" id="radio-sail-value">N/A</span>
-        </div>
-        <div class="status-row">
-            <span class="status-label">Rudder Angle:</span>
-            <span class="status-value" id="rudder-angle-value">N/A</span>
-        </div>
-        <div class="status-row">
-            <span class="status-label">Sail:</span>
-            <span class="status-value" id="sail-value">N/A</span>
-        </div>
-        <div class="status-row">
-            <span class="status-label">Wind Angle: </span>
-            <span class="status-value" id="wind-value">N/A</span>
-        </div>
-        <div class="status-row">
-            <span class="status-label">Sailboat Longitude: </span>
-            <span class="status-value" id="sailboat-longitude">N/A</span>
-        </div>
-        <div class="status-row">
-            <span class="status-label">Sailboat Latitude: </span>
-            <span class="status-value" id="sailboat-latitude">N/A</span>
+    <div class="table-container">
+        <h1>Sailbot Status Dashboard</h1>
+        <div class="table">
+            <div class="status-row">
+                <span class="status-label">Algo Rudder:</span>
+                <span class="status-value" id="algo-rudder-value">N/A</span>
+            </div>
+            <div class="status-row">
+                <span class="status-label">Algo Sail:</span>
+                <span class="status-value" id="algo-sail-value">N/A</span>
+            </div>
+            <div class="status-row">
+                <span class="status-label">Control Mode:</span>
+                <span class="status-value" id="control-mode-value">N/A</span>
+            </div>
+            <div class="status-row">
+                <span class="status-label">Radio Rudder:</span>
+                <span class="status-value" id="radio-rudder-value">N/A</span>
+            </div>
+            <div class="status-row">
+                <span class="status-label">Radio Sail:</span>
+                <span class="status-value" id="radio-sail-value">N/A</span>
+            </div>
+            <div class="status-row">
+                <span class="status-label">Rudder Angle:</span>
+                <span class="status-value" id="rudder-angle-value">N/A</span>
+            </div>
+            <div class="status-row">
+                <span class="status-label">Sail:</span>
+                <span class="status-value" id="sail-value">N/A</span>
+            </div>
+            <div class="status-row">
+                <span class="status-label">Wind Angle: </span>
+                <span class="status-value" id="wind-angle-value">N/A</span>
+            </div>
+            <div class="status-row">
+                <span class="status-label"> Sailboat Longitude: </span>
+                <span class="status-value" id="longitude-value">N/A</span>
+            </div>
+            <div class="status-row">
+                <span class="status-label"> Sailboat Latitude: </span>
+                <span class="status-value" id="latitude-value">N/A</span>
+            </div>
         </div>
     </div>
-
+    <div class="table-container">
+        <h1>Waypoint Input</h1>
+        <div class="table">
+            <div class="status-row">
+                <span class="status-label">Longitude:</span>
+                <div class="input-group">
+                    <input type="text" id="longitude" name="longitude" inputmode="numeric"
+                        placeholder="Enter longitude">
+                </div>
+            </div>
+            <div class="status-row">
+                <span class="status-label">Latitude:</span>
+                <div class="input-group">
+                    <input type="text" id="latitude" name="latitude" inputmode="numeric" placeholder="Enter latitude">
+                </div>
+            </div>
+        </div>
+    </div>
     <script>
         let ros;
-
         function connectToROS() {
             const rosbridgeAddress = "ws://localhost:9090";
             ros = new ROSLIB.Ros({
                 url: rosbridgeAddress
             });
-
             ros.on('connection', function () {
                 console.log('Connected to rosbridge server.');
                 subscribeToTopics();
             });
-
             ros.on('error', function (error) {
                 console.error('Error connecting to rosbridge server:', error);
             });
-
             ros.on('close', function () {
                 console.log('Connection to rosbridge server closed.');
             });
         }
-
         function subscribeToTopics() {
             // Helper function to update DOM element with topic data
             function updateValue(elementId, value) {
                 document.getElementById(elementId).innerText = value;
             }
-
             // Subscribe to /sailbot/algo_rudder
             const algoRudderTopic = new ROSLIB.Topic({
                 ros: ros,
                 name: '/sailbot/algo_rudder',
                 messageType: 'std_msgs/Int32'
             });
-
             algoRudderTopic.subscribe(function (message) {
                 updateValue('algo-rudder-value', message.data);
             });
-
             // Subscribe to /sailbot/algo_sail
             const algoSailTopic = new ROSLIB.Topic({
                 ros: ros,
                 name: '/sailbot/algo_sail',
                 messageType: 'std_msgs/Int32'
             });
-
             algoSailTopic.subscribe(function (message) {
                 updateValue('algo-sail-value', message.data);
             });
-
             // Subscribe to /sailbot/control_mode
             const controlModeTopic = new ROSLIB.Topic({
                 ros: ros,
                 name: '/sailbot/control_mode',
                 messageType: 'std_msgs/String'
             });
-
             controlModeTopic.subscribe(function (message) {
                 updateValue('control-mode-value', message.data);
             });
-
             // Subscribe to /sailbot/radio_rudder
             const radioRudderTopic = new ROSLIB.Topic({
                 ros: ros,
                 name: '/sailbot/radio_rudder',
                 messageType: 'std_msgs/Int32'
             });
-
             radioRudderTopic.subscribe(function (message) {
                 updateValue('radio-rudder-value', message.data);
             });
-
             // Subscribe to /sailbot/radio_sail
             const radioSailTopic = new ROSLIB.Topic({
                 ros: ros,
                 name: '/sailbot/radio_sail',
                 messageType: 'std_msgs/Int32'
             });
-
             radioSailTopic.subscribe(function (message) {
                 updateValue('radio-sail-value', message.data);
             });
-
             // Subscribe to /sailbot/rudder_angle
             const rudderAngleTopic = new ROSLIB.Topic({
                 ros: ros,
                 name: '/sailbot/rudder_angle',
                 messageType: 'std_msgs/Int32'
             });
-
             rudderAngleTopic.subscribe(function (message) {
                 updateValue('rudder-angle-value', message.data);
             });
-
             // Subscribe to /sailbot/sail
             const sailTopic = new ROSLIB.Topic({
                 ros: ros,
                 name: '/sailbot/sail',
                 messageType: 'std_msgs/Int32'
             });
-
             sailTopic.subscribe(function (message) {
                 updateValue('sail-value', message.data);
             });
-
-            // Subscribe to /sailbot/wind_angle
-            const windAngleTopic = new ROSLIB.Topic({
-                ros: ros,
-                name: '/sailbot/wind_angle',
-                messageType: 'std_msgs/Int32'
-            });
-
             windAngleTopic.subscribe(function (message) {
                 updateValue('wind-value', message.data);
             });
-
             // Subscribe to /sailbot/longitude
             const longitudeTopic = new ROSLIB.Topic({
                 ros: ros,
@@ -216,18 +218,15 @@
             });
             // Subscribe to /sailbot/latitude
             const latitudeTopic = new ROSLIB.Topic({
-            ros: ros,
-            name: '/sailbot/latitude',
-            messageType: 'std_msgs/Int32'
-        });
+                ros: ros,
+                name: '/sailbot/latitude',
+                messageType: 'std_msgs/Int32'
+            });
         }
-
         // Connect to ROS when the page loads
         window.onload = function () {
             connectToROS();
         };
     </script>
-
 </body>
-
 </html>
