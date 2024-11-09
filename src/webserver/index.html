@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,6 +13,7 @@
             padding: 20px;
             background-color: #F0F0F0;
         }
+
         .table-container {
             display: flex;
             flex-direction: column;
@@ -19,9 +21,11 @@
             margin-left: auto;
             max-width: 620px;
         }
+
         h1 {
             margin-bottom: 10px;
         }
+
         .table {
             width: 100%;
             max-width: 600px;
@@ -32,11 +36,13 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             float: right;
         }
+
         .input-group {
             display: flex;
             align-items: center;
             gap: 10px;
         }
+
         input[type="number"] {
             padding: 5px;
             border: 1px solid #ccc;
@@ -44,19 +50,37 @@
             width: 150px;
             text-align: right;
         }
+
         .status-row {
             display: flex;
             justify-content: space-between;
             margin-bottom: 10px;
         }
+
         .status-label {
             font-weight: bold;
         }
+
         .status-value {
             font-style: italic;
         }
+
+        .button-group {
+            float: right;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
     </style>
 </head>
+
 <body>
     <div class="table-container">
         <h1>Sailbot Status Dashboard</h1>
@@ -118,6 +142,9 @@
                 <div class="input-group">
                     <input type="text" id="latitude" name="latitude" inputmode="numeric" placeholder="Enter latitude">
                 </div>
+            </div>
+            <div class="button-group">
+                <button type="button" id="submit-waypoint">Submit Waypoint</button>
             </div>
         </div>
     </div>
@@ -229,4 +256,5 @@
         };
     </script>
 </body>
+
 </html>
