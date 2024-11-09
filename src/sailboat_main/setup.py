@@ -22,8 +22,10 @@ setup(
     entry_points={
         'console_scripts': [
             'servo = sailboat_main.servo.servo_node:main',
-            'radio = sailboat_main.radio:main',
+            'radio = sailboat_main.radio.radio_node:main',
             'main_algo = sailboat_main.main_algo.main_algo:main',
+            'trim_sail = sailboat_main.trim_sail.trim_sail:main',
+            'mux = sailboat_main.mux.mux_node:main'
         ],
     },
 )
