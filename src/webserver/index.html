@@ -210,6 +210,18 @@
                 console.log('Connection to rosbridge server closed.');
             });
         }
+        function parseGpsData(message) {
+            const latitude = message.latitude;
+            const longitude = message.longitude;
+
+            // Format the latitude and longitude to your desired precision
+            const formattedLatitude = latitude.toFixed(6);
+            const formattedLongitude = longitude.toFixed(6);
+
+            // Update the DOM elements
+            document.getElementById('latitude-value').innerText = formattedLatitude;
+            document.getElementById('longitude-value').innerText = formattedLongitude;
+        }
         function subscribeToTopics() {
             // Helper function to update DOM element with topic data
             function updateValue(elementId, value) {
@@ -278,21 +290,12 @@
             sailTopic.subscribe(function (message) {
                 updateValue('sail-value', message.data);
             });
-            windAngleTopic.subscribe(function (message) {
-                updateValue('wind-value', message.data);
-            });
-            // Subscribe to /sailbot/longitude
-            const longitudeTopic = new ROSLIB.Topic({
+            const gpsTopic = new ROSLIB.Topic({
                 ros: ros,
-                name: '/sailbot/longitude',
-                messageType: 'std_msgs/Int32'
+                name: '/gps',
+                messageType: 'sensor_msgs/NavSatFix'
             });
-            // Subscribe to /sailbot/latitude
-            const latitudeTopic = new ROSLIB.Topic({
-                ros: ros,
-                name: '/sailbot/latitude',
-                messageType: 'std_msgs/Int32'
-            });
+            gpsTopic.subscribe(parseGpsData);
         }
         // Connect to ROS when the page loads
         window.onload = function () {
