@@ -103,24 +103,42 @@ function subscribeToTopics() {
     });
     gpsTopic.subscribe(parseGpsData);
 }
+
 // Connect to ROS when the page loads
 window.onload = function () {
     connectToROS();
 };
+
 // Function to toggle dropdown visibility
 function toggleDropdown() {
-    var dropdownContent = document.getElementById("dropdown-content");
+    const dropdownContent = document.getElementById("dropdown-content");
     dropdownContent.style.display = dropdownContent.style.display === "block" ? "none" : "block";
 }
+
+// Function to update the dropdown button text based on selection
+function selectMode(mode) {
+    const modeButton = document.getElementById("mode-button");
+    modeButton.innerText = mode; // Update button text
+    toggleDropdown(); // Close the dropdown
+
+    // Publish the selected mode to the /control_mode topic
+    const message = new ROSLIB.Message({ data: mode.toLowerCase() });
+    controlModeTopic.publish(message);
+    console.log(`Published control mode: ${mode.toLowerCase()}`);
+}
+
 // Close dropdown if clicking outside of it
 window.onclick = function (event) {
     if (!event.target.matches('.dropdown-button')) {
-        var dropdowns = document.getElementsByClassName("dropdown-content");
-        for (var i = 0; i < dropdowns.length; i++) {
-            var openDropdown = dropdowns[i];
+        const dropdowns = document.getElementsByClassName("dropdown-content");
+        for (let i = 0; i < dropdowns.length; i++) {
+            const openDropdown = dropdowns[i];
             if (openDropdown.style.display === "block") {
                 openDropdown.style.display = "none";
             }
         }
     }
-}
+};
+
+
+

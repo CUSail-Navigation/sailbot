@@ -77,21 +77,20 @@
         </div>
     </div>
     <div class="table-container">
-        <h1>Algorithm Chooser</h1>
+        <h1>Algo/RC Chooser</h1>
         <div class="table">
             <div class="status-row">
-                <span class="status-label">Algorithms: </span>
+                <span class="status-label">Options: </span>
             </div>
             <div class="dropdown">
-                <button class="dropdown-button" onclick="toggleDropdown()">Select Algorithm</button>
+                <button class="dropdown-button" id="mode-button" onclick="toggleDropdown()">Select Mode</button>
                 <div id="dropdown-content" class="dropdown-content">
-                    <a href="#">Algorithm 1</a>
-                    <a href="#">Algorithm 2</a>
-                    <a href="#">Algorithm 3</a>
+                    <a href="#" onclick="selectMode('Algorithm')">Algorithm</a>
+                    <a href="#" onclick="selectMode('Radio Control')">Radio</a>
                 </div>
             </div>
         </div>
-    </div>
+    </div>    
     <script src="script.js"></script>
 </body>
 
