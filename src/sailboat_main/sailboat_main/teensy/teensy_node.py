@@ -1,0 +1,136 @@
+import rclpy
+from rclpy.node import Node
+from sailboat_interface.msg import SailTail
+from std_msgs.msg import Int32
+
+from . import teensy
+from . import teensy_fake
+
+
+
+class Teensy(Node):
+    """
+    ROS2 Node responsible for subscribing to the 'servo' topic and
+    delegating the received messages to the appropriate servo handler.
+    """
+    def __init__(self):
+        super().__init__('teensy')
+
+        # declare parameters 
+        # TODO: add these to config.yaml
+        self.declare_parameter('teensy_port', '/dev/serial/by-id/SOMEPORT')
+        self.declare_parameter('simulated', False)
+
+        # teensy sends data every 0.5s, chose .25s read period to avoid overflow   
+        self.declare_parameter('rx_period', 0.250) 
+
+        # get parameters
+        self.timer_period = self.get_parameter('rx_period').value
+        self.teensy_port = self.get_parameter('teensy_port').value
+        self.simulated = self.get_parameter('simulated').value
+
+        # initialize the appropriate servo handler based on the simulation mode
+        if self.simulated: 
+            self.teensy = teensy_fake.TeensyFake()
+            self.get_logger().info('Simulation mode enabled. Serial communication is disabled.')
+        else:
+            self.teensy = teensy.TeensyHardware(self.teensy_port)
+            self.get_logger().info(f'Real mode enabled. Serial communication on {self.sail_port} .')
+        
+        self.desired_sail = 0
+        self.desired_rudder = 0
+
+        # telemetry data publishers
+        self.wind_angle_pub = self.create_publisher(Int32, 'wind', 10)
+        self.actual_sail_angle_pub = self.create_publisher(Int32, 'actual_sail_angle', 10)
+        self.actual_rudder_angle_pub = self.create_publisher(Int32, 'actual_rudder_angle', 10)
+        self.dropped_packets_pub = self.create_publisher(Int32, 'dropped_packets', 10)
+
+        # callback to read teensy data
+        self.timer = self.create_timer(self.timer_period, self.check_telemetry)
+
+        # subscriptions to sail and rudder topics
+        self.subscription = self.create_subscription(
+            Int32,
+            'sail',
+            self.sail_callback,
+            10)
+
+        self.subscription = self.create_subscription(
+            Int32,
+            'rudder_angle',
+            self.rudder_callback,
+            10)
+    
+    def check_telemetry(self):
+        """
+        Timer based function that checks for teensy telemetry data. Publishes
+        data to telemetry topics.
+        """
+        self.get_logger().info("Check telemetry callback entered")
+        if (self.teensy.is_telemetry()):
+            wind_angle, sail_angle, rudder_angle, dropped_packets = self.teensy.read_telemetry() 
+
+            wind_angle_msg = Int32()
+            wind_angle_msg.data = wind_angle
+            self.wind_angle_pub.publish(wind_angle_msg)
+
+            sail_angle_msg = Int32()
+            sail_angle_msg.data = sail_angle
+            self.actual_sail_angle_pub.publish(sail_angle_msg)
+
+            rudder_angle_msg = Int32()
+            rudder_angle_msg.data = rudder_angle
+            self.actual_rudder_angle_pub.publish(rudder_angle_msg)
+
+            dropped_packets_msg = Int32()
+            dropped_packets_msg.data = dropped_packets
+            self.dropped_packets_pub.publish(dropped_packets_msg)
+
+            self.get_logger().info(f"{'Wind angle:':<20} {wind_angle}")
+            self.get_logger().info(f"{'Actual sail angle:':<20} {sail_angle}")
+            self.get_logger().info(f"{'Actual tail angle:':<20} {rudder_angle}")
+            self.get_logger().info(f"{'Dropped packets:':<20} {dropped_packets}")
+            
+        self.get_logger().info("No telemetry received")
+
+    def sail_callback(self, msg):
+        """
+        Callback function for the 'sail' topic. Sends the updated sail and the
+        previously set rudder.
+        """
+        self.desired_sail = msg.data
+        self.get_logger().info(f"Sail callback-sent to Teensy sail:{self.desired_sail}, rudder: {self.desired_rudder}")
+
+        self.teensy.send_command(self.desired_sail, self.desired_rudder)
+    
+    def rudder_callback(self, msg):
+        """
+        Callback function for the 'rudder_angle' topic. Sends the updated rudder
+        and the previously set sail.
+        """
+        self.desired_rudder = msg.data
+        self.get_logger().info(f"Rudder callback-sent to Teensy sail:{self.desired_sail}, rudder: {self.desired_rudder}")
+        self.teensy.send_command(self.desired_sail, self.desired_rudder)
+
+    def destroy_node(self):
+        """
+        Override the destroy_node method to clean up resources used by the handler.
+        """
+        super().destroy_node()
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    teensy = Teensy()
+
+    try:
+        rclpy.spin(teensy)
+    except KeyboardInterrupt:
+        pass
+
+    teensy.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()

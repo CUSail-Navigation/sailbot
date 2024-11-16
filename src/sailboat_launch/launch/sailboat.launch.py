@@ -19,27 +19,81 @@ def generate_launch_description():
       parameters=[config]
    )
 
-   anemometer_cmd = Node(
-      package='sailboat_sensors',
-      executable='anemometer',
-      name='anemometer',
+   teensy_cmd = Node(
+         package='sailboat_main',
+         executable='teensy',
+         name='teensy',
+         namespace='sailbot',
+         parameters=[config]
+      )
+
+   radio_cmd = Node(
+      package='sailboat_main',
+      executable='radio',
+      name='radio',
       namespace='sailbot',
       parameters=[config]
    )
 
-   servo_cmd = Node(
+   mux_cmd = Node(
       package='sailboat_main',
-      executable='servo',
-      name='servo',
+      executable='mux',
+      name='mux',
       namespace='sailbot',
       parameters=[config]
    )
+
+   main_algo_cmd  = Node(
+      package='sailboat_main',
+      executable='main_algo',
+      name='main_algo',
+      namespace='sailbot',
+      parameters=[config]
+   )
+
+   trim_sail_cmd = Node(
+      package='sailboat_main',
+      executable='trim_sail',
+      name='trim_sail',
+      namespace='sailbot',
+      parameters=[config]
+   )
+
+   waypoint_service_cmd = Node(
+      package='sailbot_events',
+      executable='waypoint_service',
+      name='waypoint_service',
+      namespace='sailbot',
+      parameters=[config]
+   )
+   # anemometer_cmd = Node(
+   #    package='sailboat_sensors',
+   #    executable='anemometer',
+   #    name='anemometer',
+   #    namespace='sailbot',
+   #    parameters=[config]
+   # )
+
+   # servo_cmd = Node(
+   #    package='sailboat_main',
+   #    executable='servo',
+   #    name='servo',
+   #    namespace='sailbot',
+   #    parameters=[config]
+   # )
 
    ld = LaunchDescription()
 
    # Sensors
    ld.add_action(gps_cmd)
-   ld.add_action(anemometer_cmd)
-   ld.add_action(servo_cmd)
-
+   # ld.add_action(anemometer_cmd)
+   # ld.add_action(servo_cmd)
+   ld.add_action(teensy_cmd)
+   ld.add_action(main_algo_cmd)
+   ld.add_action(trim_sail_cmd)
+   #ld.add_action(event_driver_cmd)
+   ld.add_action(waypoint_service_cmd)
+   ld.add_action(radio_cmd)
+   ld.add_action(mux_cmd)
+   # ld.add_action(rosbridge_node)
    return ld
