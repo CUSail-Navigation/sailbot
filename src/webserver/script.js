@@ -1,4 +1,5 @@
 let ros;
+let controlModeTopic;
 function connectToROS() {
     const rosbridgeAddress = "ws://localhost:9090";
     ros = new ROSLIB.Ros({
@@ -51,7 +52,7 @@ function subscribeToTopics() {
         updateValue('algo-sail-value', message.data);
     });
     // Subscribe to /sailbot/control_mode
-    const controlModeTopic = new ROSLIB.Topic({
+    controlModeTopic = new ROSLIB.Topic({
         ros: ros,
         name: '/sailbot/control_mode',
         messageType: 'std_msgs/String'
