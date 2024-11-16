@@ -88,6 +88,11 @@ class SailAirMar:
                 return long
             else:
                 return 0
+    
+    def readAirMarVelocity(self):
+        """Returns the velocity in knots."""
+        with self.lock:
+            return float(self.readings['speed']) if self.readings['speed'] != '' else 0
 
     def _convertToPolar(self,raw_heading):
         """Converts the heading to polar coordinates."""

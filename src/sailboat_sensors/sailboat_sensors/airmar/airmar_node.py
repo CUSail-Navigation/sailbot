@@ -39,6 +39,10 @@ class AirMar(Node):
         return self.airmar.readAirMarLatitude()
     def getLong(self):
         return self.airmar.readAirMarLongitude()
+    def getVelocity(self):
+        return self.airmar.readAirMarVelocity()
+    def getAngularVelocity(self):
+        return self.airmar.readAirMarROT()
 
     def gps_callback(self):
         nav_sat_msg = NavSatFix()
