@@ -71,16 +71,17 @@
         <h1>Waypoint Input</h1>
         <div class="table">
             <div class="status-row">
-                <span class="status-label">Longitude:</span>
+                <span class="status-label">Latitude:</span>
                 <div class="input-group">
-                    <input type="text" id="longitude" name="longitude" inputmode="numeric"
-                        placeholder="Enter longitude">
+                    <input type="number" id="latitude" name="latitude" inputmode="decimal" placeholder="Enter latitude"
+                        required>
                 </div>
             </div>
             <div class="status-row">
-                <span class="status-label">Latitude:</span>
+                <span class="status-label">Longitude:</span>
                 <div class="input-group">
-                    <input type="text" id="latitude" name="latitude" inputmode="numeric" placeholder="Enter latitude">
+                    <input type="number" id="longitude" name="longitude" inputmode="decimal"
+                        placeholder="Enter longitude" required>
                 </div>
             </div>
             <div class="button-group">
@@ -102,7 +103,7 @@
                 </div>
             </div>
         </div>
-    </div>    
+    </div>
     <script src="script.js"></script>
 </body>
 

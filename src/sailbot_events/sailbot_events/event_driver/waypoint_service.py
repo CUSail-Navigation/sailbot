@@ -8,7 +8,9 @@ from sailboat_interface.srv import Waypoint
 class WaypointService(Node):
     def __init__(self):
         super().__init__('waypoint_service')
+        self.lock = Lock()
         self.service = self.create_service(Waypoint, 'get_waypoint', self.provide_waypoint_callback)
+        self.add_waypoint_service = self.create_service(Waypoint, 'add_waypoint', self.add_waypoint_callback)
         '''TODO: EDIT FOR WAYPOINT INSERTION FROM WEBSERVER'''
         default_points = [
         "42.876400267,-77.00778818759738",
@@ -34,22 +36,39 @@ class WaypointService(Node):
 
 
     def provide_waypoint_callback(self, request, response):
-        self.get_logger().info('Incoming Request')
-        if self.current_index < len(self.waypoints):
-            waypoint = self.waypoints[self.current_index]
-            response.waypoint = NavSatFix()
-            response.waypoint.header.frame_id = 'map'
-            response.waypoint.header.stamp = self.get_clock().now().to_msg()
-            response.waypoint.longitude = float(waypoint[0])
-            response.waypoint.latitude = float(waypoint[1])
-            response.success = True
-            self.current_index += 1
-        else:
-            self.get_logger().info('No waypoints in list')
+        with self.lock:
+            self.get_logger().info('Incoming Request')
+            if self.current_index < len(self.waypoints):
+                waypoint = self.waypoints[self.current_index]
+                response.waypoint = NavSatFix()
+                response.waypoint.header.frame_id = 'map'
+                response.waypoint.header.stamp = self.get_clock().now().to_msg()
+                response.waypoint.longitude = float(waypoint[0])
+                response.waypoint.latitude = float(waypoint[1])
+                response.success = True
+                self.current_index += 1
+            else:
+                self.get_logger().info('No waypoints in list')
 
-            response.success = False
-        return response
+                response.success = False
+            return response
+    
+    def add_waypoint(self, latitude, longitude):
+        self.waypoints.append([latitude, longitude])
+        self.get_logger().info(f"Added new waypoint: Latitude {latitude}, Longitude {longitude}")
 
+    def add_waypoint_callback(self, request, response):
+        with self.lock:
+            try:
+                latitude = request.latitude
+                longitude = request.longitude
+                self.add_waypoint(latitude, longitude)
+                response.success = True
+                response.message = "Waypoint added successfully."
+            except Exception as e:
+                response.success = False
+                response.message = f"Error adding waypoint: {str(e)}"
+            return response
 
 def main(args=None):
     rclpy.init(args=args)

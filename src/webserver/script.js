@@ -1,4 +1,3 @@
-
 let ros;
 function connectToROS() {
     const rosbridgeAddress = "ws://localhost:9090";
@@ -103,7 +102,41 @@ function subscribeToTopics() {
     });
     gpsTopic.subscribe(parseGpsData);
 }
+function submitWaypoint() {
+    const latitude = parseFloat(document.getElementById('latitude').value);
+    const longitude = parseFloat(document.getElementById('longitude').value);
 
+    if (isNaN(latitude) || isNaN(longitude)) {
+        alert("Please enter valid numeric latitude and longitude.");
+        return;
+    }
+
+    console.log("Submitting waypoint:", latitude, longitude);
+
+    // Call the ROS service to add the waypoint
+    const waypointService = new ROSLIB.Service({
+        ros: ros,
+        name: '/add_waypoint',
+        serviceType: 'sailboat_interface/srv/AddWaypoint'
+    });
+
+    const request = new ROSLIB.ServiceRequest({
+        latitude: latitude,
+        longitude: longitude
+    });
+
+    waypointService.callService(request, function (response) {
+        console.log("called waypoint service")
+        if (response.success) {
+            console.log("Waypoint added successfully!");
+        } else {
+            console.log("Failed to add waypoint.");
+        }
+    });
+}
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('submit-waypoint').addEventListener('click', submitWaypoint);
+});
 // Connect to ROS when the page loads
 window.onload = function () {
     connectToROS();
