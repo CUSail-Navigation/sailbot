@@ -22,10 +22,11 @@ namespace constants
     {
         constexpr uint8_t TX_START_FLAG = 0XFF;
         constexpr uint8_t TX_END_FLAG = 0xEE;
-        constexpr uint32_t TX_PERIOD_MS = 1000;
+        constexpr uint32_t TX_PERIOD_MS = 500;
 
         constexpr uint8_t RX_START_FLAG = 0xFF;
         constexpr uint8_t RX_END_FLAG = 0xEE;
+        constexpr uint8_t RX_TIMEOUT_MS = 100;
 
         constexpr uint32_t BAUD_RATE = 9600;
     }
