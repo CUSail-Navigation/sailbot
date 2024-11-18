@@ -6,7 +6,7 @@ sailbot: #Namespace
    airmar: #Node
       ros__parameters:
          airmar_port: "/dev/ttyACM0"
-         use_fake_data: true
+         use_fake_data: false
    
    teensy:
       ros__parameters:
