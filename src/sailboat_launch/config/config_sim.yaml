@@ -8,14 +8,9 @@ sailbot: #Namespace
          airmar_port: "/dev/ttyACM0"
          use_fake_data: true
    
-   anemometer:
+   teensy:
       ros__parameters:
-         anemometer_port: "/dev/ttyUSB0"
-         use_fake_data: true
-   
-   servo:
-      ros__parameters:
-         servo_port: "/dev/ttyUSB1"
+         teensy_port: "COM9"
          simulated: true
 
    radio:

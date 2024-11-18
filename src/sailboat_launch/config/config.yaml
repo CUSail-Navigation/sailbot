@@ -6,12 +6,9 @@ sailbot: #Namespace
    airmar: #Node
       ros__parameters:
          airmar_port: "/dev/ttyACM0"
+         use_fake_data: false
    
-   anemometer:
+   teensy:
       ros__parameters:
-         anemometer_port: "usb-Teensyduino_Triple_Serial_16089010-if00"
-   
-   servo:
-      ros__parameters:
-         sail_port: "/dev/serial/by-id/usb-Teensyduino_Triple_Serial_16089010-if02"
-         tail_port: "/dev/serial/by-id/usb-Teensyduino_Triple_Serial_16089010-if04"
+         teensy_port: "/dev/ttyS8"
+         simulated: false
