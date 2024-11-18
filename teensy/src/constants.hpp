@@ -26,7 +26,6 @@ namespace constants
 
         constexpr uint8_t RX_START_FLAG = 0xFF;
         constexpr uint8_t RX_END_FLAG = 0xEE;
-        constexpr uint8_t RX_TIMEOUT_MS = 100;
 
         constexpr uint32_t BAUD_RATE = 9600;
     }
