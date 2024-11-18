@@ -10,19 +10,23 @@ from . import teensy_fake
 
 class Teensy(Node):
     """
-    ROS2 Node responsible for subscribing to the 'servo' topic and
-    delegating the received messages to the appropriate servo handler.
+    ROS 2 Node that interfaces with a Teensy microcontroller to control and 
+    monitor the Sailbot's hardware, including the sail and rudder. It 
+    communicates with the Teensy either in real mode (via serial communication) 
+    or simulated mode, depending on configuration parameters. The class handles 
+    reading telemetry data (e.g., wind angle, sail angle, rudder angle, and 
+    dropped packets) and sending control commands to the sail and rudder via 
+    ROS topic subscriptions.
     """
     def __init__(self):
         super().__init__('teensy')
 
         # declare parameters 
-        # TODO: add these to config.yaml
         self.declare_parameter('teensy_port', '/dev/serial/by-id/SOMEPORT')
         self.declare_parameter('simulated', False)
 
         # teensy sends data every 0.5s, chose .25s read period to avoid overflow   
-        self.declare_parameter('rx_period', 0.250) 
+        self.declare_parameter('rx_period', 0.500) 
 
         # get parameters
         self.timer_period = self.get_parameter('rx_period').value
@@ -35,8 +39,9 @@ class Teensy(Node):
             self.get_logger().info('Simulation mode enabled. Serial communication is disabled.')
         else:
             self.teensy = teensy.TeensyHardware(self.teensy_port)
-            self.get_logger().info(f'Real mode enabled. Serial communication on {self.sail_port} .')
+            self.get_logger().info(f'Real mode enabled. Serial communication on {self.teensy_port}.')
         
+        # keep track of our desired sail and rudder angles
         self.desired_sail = 0
         self.desired_rudder = 0
 
@@ -68,31 +73,30 @@ class Teensy(Node):
         data to telemetry topics.
         """
         self.get_logger().info("Check telemetry callback entered")
-        if (self.teensy.is_telemetry()):
-            wind_angle, sail_angle, rudder_angle, dropped_packets = self.teensy.read_telemetry() 
-
+        data = {}
+        if (self.teensy.read_telemetry(data) == 0):
             wind_angle_msg = Int32()
-            wind_angle_msg.data = wind_angle
+            wind_angle_msg.data = data["wind_angle"]
             self.wind_angle_pub.publish(wind_angle_msg)
 
             sail_angle_msg = Int32()
-            sail_angle_msg.data = sail_angle
+            sail_angle_msg.data = data["sail_angle"]
             self.actual_sail_angle_pub.publish(sail_angle_msg)
 
             rudder_angle_msg = Int32()
-            rudder_angle_msg.data = rudder_angle
+            rudder_angle_msg.data = data["rudder_angle"]
             self.actual_rudder_angle_pub.publish(rudder_angle_msg)
 
             dropped_packets_msg = Int32()
-            dropped_packets_msg.data = dropped_packets
+            dropped_packets_msg.data = data["dropped_packets"]
             self.dropped_packets_pub.publish(dropped_packets_msg)
 
-            self.get_logger().info(f"{'Wind angle:':<20} {wind_angle}")
-            self.get_logger().info(f"{'Actual sail angle:':<20} {sail_angle}")
-            self.get_logger().info(f"{'Actual tail angle:':<20} {rudder_angle}")
-            self.get_logger().info(f"{'Dropped packets:':<20} {dropped_packets}")
-            
-        self.get_logger().info("No telemetry received")
+            self.get_logger().info(f"{'Wind angle:':<20} {wind_angle_msg.data}")
+            self.get_logger().info(f"{'Actual sail angle:':<20} {sail_angle_msg.data}")
+            self.get_logger().info(f"{'Actual tail angle:':<20} {rudder_angle_msg.data}")
+            self.get_logger().info(f"{'Dropped packets:':<20} {dropped_packets_msg.data}")
+        else:
+            self.get_logger().info("No telemetry received")
 
     def sail_callback(self, msg):
         """
@@ -102,7 +106,10 @@ class Teensy(Node):
         self.desired_sail = msg.data
         self.get_logger().info(f"Sail callback-sent to Teensy sail:{self.desired_sail}, rudder: {self.desired_rudder}")
 
-        self.teensy.send_command(self.desired_sail, self.desired_rudder)
+        if self.teensy.send_command(self.desired_sail, self.desired_rudder) == 0:
+            self.get_logger().info(f"Message sent to servo")
+        else:
+            self.get_logger().warn(f"Message failed to send to servo")
     
     def rudder_callback(self, msg):
         """
@@ -111,7 +118,11 @@ class Teensy(Node):
         """
         self.desired_rudder = msg.data
         self.get_logger().info(f"Rudder callback-sent to Teensy sail:{self.desired_sail}, rudder: {self.desired_rudder}")
-        self.teensy.send_command(self.desired_sail, self.desired_rudder)
+
+        if self.teensy.send_command(self.desired_sail, self.desired_rudder) == 0:
+            self.get_logger().info(f"Message sent to servo")
+        else:
+            self.get_logger().warn(f"Message failed to send to servo")
 
     def destroy_node(self):
         """

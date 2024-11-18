@@ -1,13 +1,14 @@
 import random
 
 class TeensyFake: 
-    START_BYTE = 0xFF
-    END_BYTE = 0xFE
+    """
+    Simulates communication with a Teensy 4.0 via a serial connection. Class methods
+    send fake serial messages to the Teensy, receives and processes telemetry data, 
+    and performs any necessary conversions of transmitted and received data.
+    """
 
-    """
-    Handles real servo communication via serial connection.
-    Sends commands to a physical servo device.
-    """
+    START_BYTE = 0xff
+    END_BYTE = 0xee
     def __init__(self, ):
         self.wind_angle = random.randint(0, 360)
         self.wind_step = random.uniform(-5, 5) 
@@ -17,15 +18,17 @@ class TeensyFake:
 
         print("Simulated TeensyFake initialized")
 
-    def is_telemetry(self):
-        return random.randint(0,1)
-
-    def read_telemetry(self):
+    def read_telemetry(self, data):
         """
         Return simulated packet data
         :param packet: Teensy packet
         """
-        return self._generate_random_wind(), self.last_sail, self.last_tail, self.dropped_packets
+        data["wind_angle"] = self._generate_random_wind()
+        data["sail_angle"] = self.last_sail
+        data["rudder_angle"] = self.last_rudder
+        data["dropped_packets"] = self.dropped_packets
+
+        return random.randint(0,1)
 
     def _generate_random_wind(self):
         """
@@ -43,7 +46,7 @@ class TeensyFake:
         return int(self.wind_angle)
     
 
-    def send_command(self, sail, tail):
+    def send_command(self, sail, rudder):
         """
         Send a properly formatted command packet to the servo.
 
@@ -51,7 +54,7 @@ class TeensyFake:
         :param tail: Tail position (integer)
         """
         self.last_sail = sail
-        self.last_tail = tail
-        command_packet = bytearray([self.START_BYTE, sail, tail, self.END_BYTE])
+        self.last_rudder = rudder
+        command_packet = bytearray([self.START_BYTE, sail, rudder, self.END_BYTE])
 
         print(f'Sent to FakeTeensy: {command_packet}')

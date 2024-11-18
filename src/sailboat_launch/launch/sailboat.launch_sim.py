@@ -19,22 +19,6 @@ def generate_launch_description():
       parameters=[config]
    )
 
-   # anemometer_cmd = Node(
-   #    package='sailboat_sensors',
-   #    executable='anemometer',
-   #    name='anemometer',
-   #    namespace='sailbot',
-   #    parameters=[config]
-   # )
-
-   # servo_cmd = Node(
-   #    package='sailboat_main',
-   #    executable='servo',
-   #    name='servo',
-   #    namespace='sailbot',
-   #    parameters=[config]
-   # )
-
    teensy_cmd = Node(
       package='sailboat_main',
       executable='teensy',
@@ -107,8 +91,6 @@ def generate_launch_description():
 
    # Sensors
    ld.add_action(gps_cmd)
-   # ld.add_action(anemometer_cmd)
-   # ld.add_action(servo_cmd)
    ld.add_action(teensy_cmd)
    ld.add_action(main_algo_cmd)
    ld.add_action(trim_sail_cmd)
