@@ -17,3 +17,10 @@ sailbot: #Namespace
       ros__parameters:
          simulated: true
 
+   waypoint_service:
+      ros__parameters:
+         waypoints:
+            - "65.473,232.01"
+            - "71.471,129.326"
+            - "81.099,86.541"
+
