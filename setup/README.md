@@ -67,6 +67,14 @@ With this structure, the `setup` folder contains all the configuration needed to
 
 ---
 
+## Step 1.5 Ensure Unix Style Endings for `setup_ros.sh`
+
+To avoid issues with line endings that may prevent `setup_ros.sh` from running properly in the Docker container, execute the following command to convert the file to Unix-style line endings:
+
+```bash
+sed -i 's/\r$//' setup/setup_ros.sh
+```
+
 ## Step 2: Build the Docker Image
 
 1. Now, build the Docker image. You will need to run this command from the `setup` folder:
