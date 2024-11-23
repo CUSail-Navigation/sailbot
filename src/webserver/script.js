@@ -1,5 +1,6 @@
 let ros;
 let controlModeTopic;
+const waypoints = [];
 function connectToROS() {
     const rosbridgeAddress = "ws://localhost:9090";
     ros = new ROSLIB.Ros({
@@ -109,7 +110,8 @@ document.getElementById('submit-waypoint').addEventListener('click', function ()
     if (latitude && longitude) {
         const waypoint = `${latitude}, ${longitude}`;
         addWaypointToQueue(waypoint);
-        console.log('Done');
+        waypoints.push(waypoint);
+        displayWaypoints();
     }
     else {
         alert('Please enter both latitude and longitude.');
@@ -118,22 +120,36 @@ document.getElementById('submit-waypoint').addEventListener('click', function ()
 });
 function addWaypointToQueue(waypoint) {
     const ros = new ROSLIB.Ros({ url: 'ws://localhost:9090' });
-    const waypointQueueTopic = new ROSLIB.Topic({ ros: ros, name: '/waypoint_queue', messageType: 'std_msgs/String' });
+    const waypointQueueTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: 'sailbot/waypoint_queue',
+        messageType: 'std_msgs/String'
+    });
     const waypointMessage = new ROSLIB.Message({ data: waypoint });
     waypointQueueTopic.publish(waypointMessage);
     console.log(`Published waypoint: ${waypoint}`);
 }
+function displayWaypoints() {
+    const waypointListElement = document.getElementById('waypoint-list'); waypointListElement.innerHTML = '';
+    waypoints.forEach(waypoint => {
+        const waypointElement = document.createElement('div');
+        waypointElement.textContent = waypoint; waypointListElement.appendChild(waypointElement);
+    });
+}
 function getWaypoints() {
-    const ros = new ROSLIB.Ros({ url: 'ws://localhost:9090' });
-    const getWaypointClient = new ROSLIB.Service({ ros: ros, name: '/get_waypoint', serviceType: 'sailboat_interface/srv/Waypoint' });
+    const ros = new ROSLIB.Ros({ url: 'ws://localhost:9090' }); ros.on('connection', function () {
+        console.log('Connected to websocket server.');
+    });
+    const getWaypointClient = new ROSLIB.Service({
+        ros: ros,
+        name: '/sailbot/get_waypoint',
+        serviceType: 'sailboat_interface/srv/Waypoint'
+    });
     const request = new ROSLIB.ServiceRequest();
     getWaypointClient.callService(request, function (result) {
         if (result.success) {
             console.log(`Received waypoint: Latitude ${result.waypoint.latitude}, Longitude ${result.waypoint.longitude}`);
-        }
-        else {
-            console.log('No waypoints in list');
-        }
+        } else { console.log('No waypoints in list'); }
     });
 }
 // Connect to ROS when the page loads

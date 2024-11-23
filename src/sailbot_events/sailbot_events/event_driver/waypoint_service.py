@@ -36,7 +36,7 @@ class WaypointService(Node):
         return waypoints
     
     def waypoint_queue_callback(self, msg):
-        # parse msg of the form '{long}, {lat}'
+        # parse msg of the form '{lat}, {long}'
         with self.lock:
             try: 
                 lat, long = map(float, msg.data.split(', '))
@@ -53,8 +53,8 @@ class WaypointService(Node):
                 response.waypoint = NavSatFix()
                 response.waypoint.header.frame_id = 'map'
                 response.waypoint.header.stamp = self.get_clock().now().to_msg()
-                response.waypoint.longitude = waypoint[0]
-                response.waypoint.latitude = waypoint[1]
+                response.waypoint.latitude = waypoint[0]
+                response.waypoint.longitude = waypoint[1]
                 response.success = True
                 self.current_index += 1
             else:
