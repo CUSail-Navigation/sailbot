@@ -41,15 +41,11 @@ function parseQuaternionData(message) {
     quaternionZ = message.z;
     quaternionW = message.w
 
-    quaternionX = quaternionX.toFixed(6)
-    quaternionY = quaternionY.toFixed(6)
-    quaternionZ = quaternionZ.toFixed(6)
-    quaternionW = quaternionW.toFixed(6)
+    heading = quaternionToHeading(quaternionX, quaternionY, quaternionZ, quaternionW)
+
+    formattedHeading = heading.toFixed(6);
     
-    document.getElementById('quaternion-x-value').innerText = quaternionX;
-    document.getElementById('quaternion-y-value').innerText = quaternionY;
-    document.getElementById('quaternion-z-value').innerText = quaternionZ;
-    document.getElementById('quaternion-w-value').innerText = quaternionW;
+    document.getElementById('heading-value').innerText = formattedHeading;
 }
 
 function parseAngularVelocityData(message) {
