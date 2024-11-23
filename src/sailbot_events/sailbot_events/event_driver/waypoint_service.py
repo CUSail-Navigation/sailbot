@@ -43,7 +43,7 @@ class WaypointService(Node):
                 self.waypoints.append((lat, long))
                 self.get_logger().info(f'Updated Waypoint queue: {self.waypoints}')
             except Exception as e:
-                self.get_logger().info(f'Waypoint queue could not parse msg: {msg} due to error {str(e)}')
+                self.get_logger().error(f'Waypoint queue could not parse msg: {msg} due to error {str(e)}')
 
     def provide_waypoint_callback(self, request, response):
         with self.lock:
