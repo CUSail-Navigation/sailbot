@@ -75,16 +75,16 @@ def generate_launch_description():
       parameters=[config]
    )
 
-   # # Add the rosbridge_server node
-   # rosbridge_node = Node(
-   #      package='rosbridge_server',
-   #      executable='rosbridge_websocket',
-   #      name='rosbridge_websocket',
-   #      output='screen',
-   #      parameters=[{
-   #          'port': 9090  # This is the default WebSocket port for rosbridge
-   #      }]
-   #  )
+   # Add the rosbridge_server node
+   rosbridge_node = Node(
+        package='rosbridge_server',
+        executable='rosbridge_websocket',
+        name='rosbridge_websocket',
+        output='screen',
+        parameters=[{
+            'port': 9090  # This is the default WebSocket port for rosbridge
+        }]
+    )
 
 
    ld = LaunchDescription()
@@ -98,6 +98,6 @@ def generate_launch_description():
    ld.add_action(waypoint_service_cmd)
    ld.add_action(radio_cmd)
    ld.add_action(mux_cmd)
-   # ld.add_action(rosbridge_node)
+   ld.add_action(rosbridge_node)
 
    return ld
