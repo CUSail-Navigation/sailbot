@@ -3,3 +3,5 @@ pyserial==3.5
 utm==0.7.0
 geopy==2.4.1
 rosdoc2
+opencv-python==4.8.0.74
+
