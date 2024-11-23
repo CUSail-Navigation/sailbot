@@ -29,6 +29,59 @@ function parseGpsData(message) {
     document.getElementById('latitude-value').innerText = formattedLatitude;
     document.getElementById('longitude-value').innerText = formattedLongitude;
 }
+
+function parseImuData(message) {
+    parseQuaternionData(message.orientation);
+    parseAngularVelocityData(message.angular_velocity);
+}
+
+function parseQuaternionData(message) {
+    quaternionX = message.x;
+    quaternionY = message.y;
+    quaternionZ = message.z;
+    quaternionW = message.w
+
+    quaternionX = quaternionX.toFixed(6)
+    quaternionY = quaternionY.toFixed(6)
+    quaternionZ = quaternionZ.toFixed(6)
+    quaternionW = quaternionW.toFixed(6)
+    
+    document.getElementById('quaternion-x-value').innerText = quaternionX;
+    document.getElementById('quaternion-y-value').innerText = quaternionY;
+    document.getElementById('quaternion-z-value').innerText = quaternionZ;
+    document.getElementById('quaternion-w-value').innerText = quaternionW;
+}
+
+function parseAngularVelocityData(message) {
+    angularVelocityZ = message.z; 
+
+    angularVelocityZ = angularVelocityZ.toFixed(6);
+
+    document.getElementById('angular-velocity-z-value').innerText = angularVelocityZ
+}
+
+/**
+ * Converts a quaternion to a heading angle in degrees.
+ * @param {number} x - The x component of the quaternion.
+ * @param {number} y - The y component of the quaternion.
+ * @param {number} z - The z component of the quaternion.
+ * @param {number} w - The w component of the quaternion.
+ * @returns {number} The heading angle in degrees.
+ */
+
+function quaternionToHeading(x, y, z, w) {
+    // Compute the heading angle (yaw) from the quaternion
+    const siny_cosp = 2 * (w * z + x * y);
+    const cosy_cosp = 1 - 2 * (y * y + z * z);
+    const headingRadians = Math.atan2(siny_cosp, cosy_cosp);
+    
+    // Convert the heading from radians to degrees
+    const headingDegrees = headingRadians * (180 / Math.PI);
+    
+    // Normalize to the range [0, 360)
+    return (headingDegrees + 360) % 360;
+}
+
 function subscribeToTopics() {
     // Helper function to update DOM element with topic data
     function updateValue(elementId, value) {
@@ -103,6 +156,13 @@ function subscribeToTopics() {
         messageType: 'sensor_msgs/NavSatFix'
     });
     gpsTopic.subscribe(parseGpsData);
+
+    const imuTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: '/imu',
+        messageType: 'sensor_msgs/msg/Imu'
+    });
+    imuTopic.subscribe(parseImuData);
 }
 document.getElementById('submit-waypoint').addEventListener('click', function () {
     const latitude = document.getElementById('latitude').value;
@@ -187,6 +247,3 @@ window.onclick = function (event) {
         }
     }
 };
-
-
-
