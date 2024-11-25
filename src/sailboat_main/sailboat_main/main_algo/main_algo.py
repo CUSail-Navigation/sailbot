@@ -23,7 +23,14 @@ class MainAlgo(Node):
     
     def __init__(self):
         super().__init__('main_algo')
-        self.get_logger().info('Main-algo started successfully')  # Check if this line prints
+
+        self.declare_parameter('timer_period', 0.500) 
+        self.timer_period = self.get_parameter('timer_period').value
+
+        self.declare_parameter('tacking_buffer', 15)
+        self.tacking_buffer = self.get_parameter('tacking_buffer').value
+
+        self.tack_time_tracker = 0
 
         #Subscription for current location
         self.subscription_curr_loc = self.create_subscription(
@@ -39,6 +46,15 @@ class MainAlgo(Node):
             self.heading_dir_callback,
             10)
 
+        #Subscription for wind direction
+        self.subscription_wind_dir = self.create_subscription(
+            Int32,
+            '/wind',
+            self.wind_callback,
+            10)
+
+        self.timer = self.create_timer(self.timer_period, self.step)
+
         # #Subscription for current destination
         # self.subscription_curr_dest = self.create_subscription(
         #     NavSatFix,
@@ -50,6 +66,7 @@ class MainAlgo(Node):
         self.rudder_angle_pub = self.create_publisher(Int32, 'algo_rudder', 10)
 
         # Internal state
+        self.wind_dir = 0
         self.curr_loc = Point()
         self.tacking = False
         self.tacking_point = None
@@ -57,6 +74,8 @@ class MainAlgo(Node):
         self.curr_dest = Point()
 
         self.request_new_waypoint()
+        self.get_logger().info('Main-algo started successfully')  # Check if this line prints
+
 
 
 
@@ -105,6 +124,11 @@ class MainAlgo(Node):
             self.request_new_waypoint()
         self.calculate_rudder_angle()
 
+    def wind_callback(self, msg):
+        """
+        Use the wind data from msg to assign value to self.wind_dir
+        """
+        self.wind_dir = msg.data
 
     def heading_dir_callback(self, msg):
         """
@@ -113,7 +137,6 @@ class MainAlgo(Node):
         data = msg.orientation
         roll_x, roll_y, roll_z = euler_from_quaternion(data.x, data.y, data.z, data.w)
         self.heading_dir = np.degrees(roll_x)
-        #self.calculate_rudder_angle()
 
     # def curr_dest_callback(self, msg):
     #     """
@@ -141,14 +164,19 @@ class MainAlgo(Node):
             return
 
         # Choose tacking point or destination based on tacking status
-        if self.tacking:
-            final = self.tacking_point
-            x_distance = final.x - self.curr_loc.x
-            y_distance = final.y - self.curr_loc.y
-        else:
-            final = self.curr_dest
-            x_distance = final.x - self.curr_loc.x
-            y_distance = final.y - self.curr_loc.y
+        # if self.in_nogo():
+        #     final = self.tacking_point
+        #     x_distance = final.x - self.curr_loc.x
+        #     y_distance = final.y - self.curr_loc.y
+        # else:
+        #     final = self.curr_dest
+        #     x_distance = final.x - self.curr_loc.x
+        #     y_distance = final.y - self.curr_loc.y
+
+        #Handle tacking logic in step
+        final = self.curr_dest
+        x_distance = final.x - self.curr_loc.x
+        y_distance = final.y - self.curr_loc.y
 
         target_bearing = np.arctan2(y_distance, x_distance) * 180 / np.pi
         self.get_logger().info(f'Target Bearing: {target_bearing}')
@@ -170,7 +198,50 @@ class MainAlgo(Node):
         rudder_angle_msg.data = rudder_angle
 
         self.rudder_angle_pub.publish(rudder_angle_msg)
-    
+        
+    def in_nogo(self):
+        """
+        Check if the boat is in nogo zone based on the wind direction
+        """
+        return (150 < self.wind_dir < 210)
+
+    def calculateTP(self):
+        """
+        Calcualte tacking point to begin tacking. uses winddir + dest
+        Assuming that the boat is heading towards the positive x-axis and the destination
+        """
+        x = self.curr_gps_callback.x()
+        y = self.curr_gps_callback.y()
+
+        dist2dest = math.dist((self.curr_loc.x,self.curr_loc.y), (self.curr_dest.x,self.curr_dest.y)) 
+
+        if self.wind_dir >= 180 and self.wind_dir <= 210:
+            x_TP = x + dist2Dest*np.cos(np.deg2rad(45-self.wind_dir))*np.sin(np.deg2rad(45+self.wind_dir))
+            y_TP = y - dist2Dest*np.cos(np.deg2rad(45-self.wind_dir))*np.cos(np.deg2rad(45+self.wind_dir))
+            tackingPoint = (x_TP, y_TP)
+        elif self.wind_dir >= 150 and self.wind_dir <= 180:
+            self.wind_dir = 360 - self.wind_dir
+            x_TP = x + dist2Dest*np.cos(np.deg2rad(45-self.wind_dir))*np.sin(np.deg2rad(45+self.wind_dir))
+            y_TP = y + dist2Dest*np.cos(np.deg2rad(45-self.wind_dir))*np.cos(np.deg2rad(45+self.wind_dir))
+            tackingPoint = (x_TP, y_TP)
+        return tackingPoint
+
+    def step(self):
+        """
+        Sail. 
+        """
+        self.calculate_rudder_angle()
+        if self.in_nogo() and not self.tacking:
+            self.tacking = True
+            self.tacking_point = self.calculateTP()
+            self.tack_time_tracker = 0
+        elif self.tacking:
+            self.tack_time_tracker += self.timer_period
+            if self.tack_time_tracker >= self.tacking_buffer:
+                self.tacking = False
+                self.tacking_point = None
+
+
 def euler_from_quaternion(x, y, z, w):
         """
         This is a helper function.

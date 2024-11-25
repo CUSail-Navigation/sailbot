@@ -24,3 +24,7 @@ sailbot: #Namespace
             - "71.471,129.326"
             - "81.099,86.541"
 
+   main_algo:
+      ros__parameters:
+         tacking_buffer: 15
+
