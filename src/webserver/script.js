@@ -159,6 +159,24 @@ function subscribeToTopics() {
         messageType: 'sensor_msgs/msg/Imu'
     });
     imuTopic.subscribe(parseImuData);
+
+    const actualRudderAngleTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: '/sailbot/actual_rudder_angle',
+        messageType: 'std_msgs/msg/Int32'
+    })
+    actualRudderAngleTopic.subscribe(function (message) {
+        updateValue('actual-tail-angle-value', message.data);
+    });
+
+    const actualSailAngleTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: '/sailbot/actual_sail_angle',
+        messageType: 'std_msgs/msg/Int32'
+    })
+    actualSailAngleTopic.subscribe(function (message) {
+        updateValue('actual-sail-angle-value', message.data);
+    });
 }
 document.getElementById('submit-waypoint').addEventListener('click', function () {
     const latitude = document.getElementById('latitude').value;
