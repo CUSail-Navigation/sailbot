@@ -1,37 +1,27 @@
 import math
 import numpy as np
 import openmeteo_requests
-from scipy.spatial import cKDTree
-
-
 def make_coords(top_left, bot_right, tile_size=1.0):
-    tile_lat = tile_size * (1 / 111.132)
+    tile_lat = tile_size * (1 / 110.574)
     avg_lat = (top_left[0] + bot_right[0]) / 2
     tile_long = tile_size * (1 / (111.320 * math.cos(math.radians(avg_lat))))
-
     lat_delta = abs(bot_right[0] - top_left[0])
     long_delta = abs(bot_right[1] - top_left[1])
-
-    num_rows = math.ceil(lat_delta / tile_lat) + 1
-    num_cols = math.ceil(long_delta / tile_long) + 1
+    num_rows = math.ceil(lat_delta / tile_lat)
+    num_cols = math.ceil(long_delta / tile_long)
     lats = []
     longs = []
-
     for i in range(num_rows):
         for j in range(num_cols):
-            new_lat = top_left[0] - (tile_lat * i)
-            new_long = top_left[1] + (tile_long * j)
+            new_lat = top_left[0] - (tile_lat / 2) - (tile_lat * i)
+            new_long = top_left[1] + (tile_long / 2) + (tile_long * j)
             lats.append(new_lat)
             longs.append(new_long)
-
     return lats, longs, num_rows, num_cols
-
 def get_wind(lats, longs):
     openmeteo = openmeteo_requests.Client()
-
     response_coords = []
     wind_vectors = []
-
     url = "https://api.open-meteo.com/v1/forecast"
     params = {
         "latitude": lats,
@@ -40,7 +30,6 @@ def get_wind(lats, longs):
         "cell_selection": "sea"
     }
     responses = openmeteo.weather_api(url, params=params)
-
     for response in responses:
         current = response.Current()
         current_wind_speed_10m = current.Variables(0).Value()
@@ -48,10 +37,9 @@ def get_wind(lats, longs):
         if (response.Latitude(), response.Longitude()) not in response_coords:
             wind_vectors.append((current_wind_speed_10m, current_wind_direction_10m))
             response_coords.append((response.Latitude(), response.Longitude()))
-    
+
     return response_coords, wind_vectors
 
-<<<<<<< HEAD
 def get_wind_direction(lats, longs):
     openmeteo = openmeteo_requests.Client()
 
@@ -77,14 +65,18 @@ def get_wind_direction(lats, longs):
 
     return response_coords, wind_vectors
 
+
+top_left = (42.945263, -76.767474)
+bot_right = (42.459643, -76.500470)
 top_left = (42.454862524617326, -76.47741838081413)
 bot_right = (42.45394077761382, -76.47648601746894)
 big_lats, big_longs, big_num_rows, big_num_cols = make_coords(top_left, bot_right)
 response_coords, wind_vectors = get_wind(big_lats, big_longs)
 lats, longs, num_rows, num_cols = make_coords(top_left, bot_right, 0.01)
-print(response_coords)
-print(wind_vectors)
-print(list(zip(lats, longs)))
+#print(response_coords)
+#print(wind_vectors)
+#print(list(zip(lats, longs)))
+#print(list(zip(lats, longs)))
 
 # Python program for A* Search Algorithm
 import math
@@ -105,8 +97,10 @@ class Cell:
         self.h = 0
 
 # Define the size of the grid
-ROW = 10
-COL = 10
+ROW = num_rows
+COL = num_cols
+print(ROW)
+print(COL)
 
 # Check if a cell is valid (within the grid)
 def is_valid(row, col):
@@ -244,54 +238,40 @@ def a_star_search(grid, src, dest):
 # the row/col are not lat/long
 # wind directions need better no sail zone directions
 def map_tile_status(current_row, current_col, invest_row, invest_col):
-    #invest tile is above current tile
-    if(current_row < invest_row and current_col == invest_col):
-        if get_wind_direction(invest_row, invest_col) > 135 and if get_wind_direction(invest_row, invest_col) < 225:
+    # Retrieve latitude and longitude for the investigated tile
+    latitude = lats[invest_row * num_cols + invest_col]
+    longitude = longs[invest_row * num_cols + invest_col]
+
+    # Retrieve wind direction
+    wind_direction = get_wind_direction([latitude], [longitude])[1][0]  # Get the first wind direction
+
+    # Determine navigability based on wind direction
+    if current_row < invest_row and current_col == invest_col:  # Tile is above
+        if 135 <= wind_direction <= 225:
             return False
-        else:
-            return True 
-    #invest tile is below current tile
-    if get_wind_direction(invest_row, invest_col) > 0 and get_wind_direction(invest_row, invest_col) < 45 or get_wind_direction(invest_row, invest_col) > 315 and  get_wind_direction(invest_row, invest_col) < 360:
-        if get_wind_direction(invest_row, invest_col) == 0:
+    elif current_row > invest_row and current_col == invest_col:  # Tile is below
+        if wind_direction <= 45 or wind_direction >= 315:
             return False
-        else:
-            return True 
-    #invest tile is right of current tile
-    if get_wind_direction(invest_row, invest_col) > 225 and get_wind_direction(invest_row, invest_col) < 315:
-        if get_wind_direction(invest_row, invest_col) == 270:
+    elif current_row == invest_row and current_col < invest_col:  # Tile is right
+        if 225 <= wind_direction <= 315:
             return False
-        else:
-            return True 
-    #invest tile is left of current tile
-    if get_wind_direction(invest_row, invest_col) > 45 and get_wind_direction(invest_row, invest_col) < 135:
-        if get_wind_direction(invest_row, invest_col) == 90:
+    elif current_row == invest_row and current_col > invest_col:  # Tile is left
+        if 45 <= wind_direction <= 135:
             return False
-        else:
-            return True 
-    #invest tile is up-right of current tile
-    if(current_row > invest_row and current_col < invest_col):
-        if get_wind_direction(invest_row, invest_col) == 225:
+    elif current_row > invest_row and current_col < invest_col:  # Tile is up-right
+        if 180 <= wind_direction <= 270:
             return False
-        else:
-            return True 
-    #invest tile is up-left of current tile
-    if(current_row > invest_row and current_col > invest_col):
-        if get_wind_direction(invest_row, invest_col) == 135:
+    elif current_row > invest_row and current_col > invest_col:  # Tile is up-left
+        if 90 <= wind_direction <= 180:
             return False
-        else:
-            return True 
-    #invest tile is down-right of current tile
-    if(current_row < invest_row and current_col < invest_col):
-        if get_wind_direction(invest_row, invest_col) == 315:
+    elif current_row < invest_row and current_col < invest_col:  # Tile is down-right
+        if wind_direction >= 270:
             return False
-        else:
-            return True 
-    #invest tile is down-left of current tile
-    if(current_row < invest_row and current_col > invest_col):
-        if get_wind_direction(invest_row, invest_col) == 45:
+    elif current_row < invest_row and current_col > invest_col:  # Tile is down-left
+        if wind_direction <= 90:
             return False
-        else:
-            return True 
+
+    return True  # If no blocking condition is met
 
 
 def update_grid(grid, row, col):
@@ -313,7 +293,7 @@ def update_grid(grid, row, col):
 # Driver Code
 def main():
     # Define the source and destination
-    src = [5, 5]
+    src = [10, 5]
     dest = [0, 0]
 
     # Initialize the grid
@@ -327,37 +307,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-=======
-def to_cartesian(latlongs, offset):
-    radius = 6371
-
-    latlongs = np.array(latlongs)
-    lats =  latlongs[:, 0]
-    longs = latlongs[:, 1]
-    
-    x_coords = radius * (math.pi / 180) * math.cos(math.radians(offset[0])) * (longs - offset[1])
-    y_coords = radius * (math.pi / 180) * (lats - offset[0])
-
-    return list(zip(x_coords, y_coords))
-
-def match_coords(matrix_coords, response_coords, response_vectors):
-    vectors = []
-    tree = cKDTree(response_coords)
-
-    for matrix_coord in matrix_coords:
-        dist, i = tree.query(matrix_coord)
-        vectors.append(response_vectors[i])
-    
-    return vectors
-
-top_left = (42.45343636267326, -76.51696225640684)
-bot_right = (42.43163543249084, -76.47096590129155)
-lats, longs, num_rows, num_cols = make_coords(top_left, bot_right, 1)
-big_lats, big_longs, big_num_rows, big_num_cols = make_coords(top_left, bot_right)
-response_latlongs, response_vectors = get_wind(big_lats, big_longs)
-
-matrix_coords = to_cartesian(list(zip(lats, longs)), top_left)
-response_coords = to_cartesian(response_latlongs, top_left)
-matrix_vectors = match_coords(matrix_coords, response_coords, response_vectors)
-vector_matrix = np.array(matrix_vectors).reshape(num_rows, num_cols, 2)
->>>>>>> d10d0237c2da76646944b11e3a6843650a48437d
