@@ -1,6 +1,20 @@
 let ros;
 let controlModeTopic;
 const waypoints = [];
+
+console.log("script.js loaded successfully");
+
+// Initialize the Google Map
+window.initMap = function () {
+    const defaultLocation = { lat: 0, lng: 0 }; // Default center
+
+    // Create a new map instance
+    const map = new google.maps.Map(document.getElementById("map"), {
+        center: defaultLocation, // Center the map at the default location
+        zoom: 2, // Set an initial zoom level
+    });
+};
+
 function connectToROS() {
     const rosbridgeAddress = "ws://localhost:9090";
     ros = new ROSLIB.Ros({
@@ -261,3 +275,4 @@ window.onclick = function (event) {
         }
     }
 };
+
