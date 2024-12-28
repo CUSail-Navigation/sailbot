@@ -11,6 +11,7 @@ from std_msgs.msg import Bool, Int32
 from rclpy.task import Future
 
 from sailboat_interface.srv import Waypoint
+from time import sleep
 
 
 import math
@@ -49,7 +50,7 @@ class MainAlgo(Node):
         #Subscription for wind direction
         self.subscription_wind_dir = self.create_subscription(
             Int32,
-            '/wind',
+            'wind',
             self.wind_callback,
             10)
 
@@ -159,9 +160,7 @@ class MainAlgo(Node):
         """
         # x = (5 / 0)
         # self.get_logger().info("Calculating rudder angle.")
-        if self.curr_loc is None or (self.tacking and self.tacking_point is None) or self.curr_dest is None:
-            # Not enough information to calculate rudder angle yet
-            return
+
 
         # Choose tacking point or destination based on tacking status
         # if self.in_nogo():
@@ -174,7 +173,10 @@ class MainAlgo(Node):
         #     y_distance = final.y - self.curr_loc.y
 
         #Handle tacking logic in step
-        final = self.curr_dest
+        if self.tacking: 
+            final = self.tacking_point
+        else:
+            final = self.curr_dest
         x_distance = final.x - self.curr_loc.x
         y_distance = final.y - self.curr_loc.y
 
@@ -203,6 +205,7 @@ class MainAlgo(Node):
         """
         Check if the boat is in nogo zone based on the wind direction
         """
+        self.get_logger().info(f'Wind Direction: {self.wind_dir}')
         return (150 < self.wind_dir < 210)
 
     def calculateTP(self):
@@ -210,36 +213,48 @@ class MainAlgo(Node):
         Calcualte tacking point to begin tacking. uses winddir + dest
         Assuming that the boat is heading towards the positive x-axis and the destination
         """
-        x = self.curr_gps_callback.x()
-        y = self.curr_gps_callback.y()
+        x = self.curr_loc.x
+        y = self.curr_loc.y
 
-        dist2dest = math.dist((self.curr_loc.x,self.curr_loc.y), (self.curr_dest.x,self.curr_dest.y)) 
+        dist2dest = math.dist((x,y), (self.curr_dest.x,self.curr_dest.y)) 
 
         if self.wind_dir >= 180 and self.wind_dir <= 210:
-            x_TP = x + dist2Dest*np.cos(np.deg2rad(45-self.wind_dir))*np.sin(np.deg2rad(45+self.wind_dir))
-            y_TP = y - dist2Dest*np.cos(np.deg2rad(45-self.wind_dir))*np.cos(np.deg2rad(45+self.wind_dir))
+            x_TP = x + dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.sin(np.deg2rad(45+self.wind_dir))
+            y_TP = y - dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.cos(np.deg2rad(45+self.wind_dir))
             tackingPoint = (x_TP, y_TP)
         elif self.wind_dir >= 150 and self.wind_dir <= 180:
             self.wind_dir = 360 - self.wind_dir
-            x_TP = x + dist2Dest*np.cos(np.deg2rad(45-self.wind_dir))*np.sin(np.deg2rad(45+self.wind_dir))
-            y_TP = y + dist2Dest*np.cos(np.deg2rad(45-self.wind_dir))*np.cos(np.deg2rad(45+self.wind_dir))
+            x_TP = x + dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.sin(np.deg2rad(45+self.wind_dir))
+            y_TP = y + dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.cos(np.deg2rad(45+self.wind_dir))
             tackingPoint = (x_TP, y_TP)
-        return tackingPoint
+        tp = Point()
+        tp.x = x_TP
+        tp.y = y_TP
+        return tp
 
     def step(self):
         """
         Sail. 
         """
-        self.calculate_rudder_angle()
+        if self.curr_loc is None or (self.tacking and self.tacking_point is None) or self.curr_dest is None:
+            # Not enough information to calculate rudder angle yet
+            return
+
         if self.in_nogo() and not self.tacking:
+            self.get_logger().info("Beginning Tacking")
             self.tacking = True
             self.tacking_point = self.calculateTP()
             self.tack_time_tracker = 0
         elif self.tacking:
             self.tack_time_tracker += self.timer_period
             if self.tack_time_tracker >= self.tacking_buffer:
+                self.get_logger().info("End Tack")
+
                 self.tacking = False
                 self.tacking_point = None
+        self.calculate_rudder_angle()
+
+        self.get_logger().info("Sailing")
 
 
 def euler_from_quaternion(x, y, z, w):
