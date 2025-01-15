@@ -9,6 +9,7 @@ class TeensyHardware:
 
     START_BYTE = 0xff
     END_BYTE = 0xee
+    PACKET_LENGTH = 5
 
     def __init__(self, port):
         self.port = port
@@ -33,7 +34,7 @@ class TeensyHardware:
                 self.packet_started = True
                 self.buffer = []
             # if we see a packet end byte, process the buffer data
-            elif incoming_byte == self.END_BYTE.to_bytes(1, 'big') and len(self.buffer) == 4:
+            elif incoming_byte == self.END_BYTE.to_bytes(1, 'big') and len(self.buffer) == PACKET_LENGTH:
                 self.packet_started = False
                 data["wind_angle"], \
                 data["sail_angle"], \

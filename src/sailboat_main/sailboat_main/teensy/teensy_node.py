@@ -22,7 +22,7 @@ class Teensy(Node):
         super().__init__('teensy')
 
         # declare parameters 
-        self.declare_parameter('teensy_port', 'COM3')
+        self.declare_parameter('teensy_port', '/dev/ttyACM0')
         self.declare_parameter('simulated', False)
 
         # teensy sends data every 0.5s, chose .25s read period to avoid overflow   
