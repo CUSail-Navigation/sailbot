@@ -9,7 +9,7 @@ namespace sfr
 {
     namespace anemometer
     {
-        extern uint8_t wind_angle;
+        extern uint16_t wind_angle;
     }
     namespace servo
     {
