@@ -15,7 +15,7 @@ void ServoControlTask::execute()
         uint8_t rudder_angle = sfr::serial::buffer[1];
 
         // update sfr values based on incoming serial data if checks pass
-        if (sail_angle > constants::servo::SAIL_MIN_ANGLE && sail_angle < constants::servo::SAIL_MAX_ANGLE)
+        if (sail_angle >= constants::servo::SAIL_MIN_ANGLE && sail_angle <= constants::servo::SAIL_MAX_ANGLE)
         {
             sfr::servo::sail_angle = sail_angle;
             sfr::servo::sail_pwm = angle_to_pwm(sail_angle);
@@ -24,7 +24,7 @@ void ServoControlTask::execute()
             actuate_servo(sail_servo, sfr::servo::sail_pwm);
         }
 
-        if (rudder_angle > constants::servo::RUDDER_MIN_ANGLE && rudder_angle < constants::servo::RUDDER_MAX_ANGLE)
+        if (rudder_angle >= constants::servo::RUDDER_MIN_ANGLE && rudder_angle <= constants::servo::RUDDER_MAX_ANGLE)
         {
             sfr::servo::rudder_angle = rudder_angle;
             sfr::servo::rudder_pwm = angle_to_pwm(rudder_angle);
@@ -38,7 +38,8 @@ void ServoControlTask::execute()
 
 uint32_t ServoControlTask::angle_to_pwm(uint8_t angle)
 {
-    return map(angle, 0, 90, 1050, 1300); // TODO: find out what these numbers mean
+    // FIXME: this is hardcoded for our specific scenario
+    return angle * 2;
 }
 
 void ServoControlTask::actuate_servo(Servo &servo, uint32_t pwm)
