@@ -13,7 +13,9 @@
     <div class="main-container">
         <div class="left-column">
             <div class="map-container">
-                <div id="map" style="height: 1000px; width: 100%;"></div>
+                <div class="map-content">
+                    <div id="map"></div>
+                </div>
                 <div class="waypoint-list">
                     <span class="status-label">Waypoints:</span>
                     <span class="status-value" id="waypoint-list"></span>
@@ -84,7 +86,7 @@
                         <span class="status-label"> Rate of Turn (Z): </span>
                         <span class="status-value" id="angular-velocity-z-value">N/A</span>
                     </div>
-        </div>
+                </div>
             </div>
             <div class="table-container">
                 <h1>Waypoint Input</h1>
@@ -127,8 +129,8 @@
     </div>
     <script src="script.js"></script>
     <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDcSjRQno8uBG6SORlASvFUZxa2xDpccz0&callback=initMap">
-    </script>
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDcSjRQno8uBG6SORlASvFUZxa2xDpccz0&callback=initMap">
+        </script>
 </body>
 
 </html>

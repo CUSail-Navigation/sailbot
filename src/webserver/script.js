@@ -4,12 +4,15 @@ const waypoints = [];
 
 console.log("script.js loaded successfully");
 
+let map; // Global variable for the map instance
+let sailboatMarker; // Global variable for the sailboat marker
+
 // Initialize the Google Map
 window.initMap = function () {
     const defaultLocation = { lat: 0, lng: 0 }; // Default center
 
     // Create a new map instance
-    const map = new google.maps.Map(document.getElementById("map"), {
+    map = new google.maps.Map(document.getElementById("map"), {
         center: defaultLocation, // Center the map at the default location
         zoom: 2, // Set an initial zoom level
     });
@@ -42,6 +45,27 @@ function parseGpsData(message) {
     // Update the DOM elements
     document.getElementById('latitude-value').innerText = formattedLatitude;
     document.getElementById('longitude-value').innerText = formattedLongitude;
+
+    // Add or update the sailboat marker on the map
+    const sailboatLocation = { lat: latitude, lng: longitude };
+
+    if (!sailboatMarker) {
+        // Create a new marker if it doesn't exist
+        sailboatMarker = new google.maps.Marker({
+            position: sailboatLocation,
+            map: map,
+            title: "Sailboat Location",
+            icon: {
+                url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png", // Custom marker icon (optional)
+            },
+        });
+    } else {
+        // Update the marker's position
+        sailboatMarker.setPosition(sailboatLocation);
+    }
+
+    // Optionally center the map on the sailboat
+    map.setCenter(sailboatLocation);
 }
 
 function parseImuData(message) {
@@ -58,12 +82,12 @@ function parseQuaternionData(message) {
     heading = quaternionToHeading(quaternionX, quaternionY, quaternionZ, quaternionW)
 
     formattedHeading = heading.toFixed(6);
-    
+
     document.getElementById('heading-value').innerText = formattedHeading;
 }
 
 function parseAngularVelocityData(message) {
-    angularVelocityZ = message.z; 
+    angularVelocityZ = message.z;
 
     angularVelocityZ = angularVelocityZ.toFixed(6);
 
@@ -84,10 +108,10 @@ function quaternionToHeading(x, y, z, w) {
     const siny_cosp = 2 * (w * z + x * y);
     const cosy_cosp = 1 - 2 * (y * y + z * z);
     const headingRadians = Math.atan2(siny_cosp, cosy_cosp);
-    
+
     // Convert the heading from radians to degrees
     const headingDegrees = headingRadians * (180 / Math.PI);
-    
+
     // Normalize to the range [0, 360)
     return (headingDegrees + 360) % 360;
 }
