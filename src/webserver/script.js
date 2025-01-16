@@ -219,16 +219,34 @@ function subscribeToTopics() {
 document.getElementById('submit-waypoint').addEventListener('click', function () {
     const latitude = document.getElementById('latitude').value;
     const longitude = document.getElementById('longitude').value;
+
     if (latitude && longitude) {
+        // Create a waypoint string for storage
         const waypoint = `${latitude}, ${longitude}`;
-        addWaypointToQueue(waypoint);
-        waypoints.push(waypoint);
-        displayWaypoints();
-    }
-    else {
+        addWaypointToQueue(waypoint); // Send the waypoint to ROS
+        waypoints.push(waypoint); // Add to local waypoints array
+        displayWaypoints(); // Update the waypoint list in the UI
+
+        // Parse latitude and longitude to create a LatLng object
+        const latLng = {
+            lat: parseFloat(latitude),
+            lng: parseFloat(longitude),
+        };
+
+        // Add a marker for the new waypoint on the map
+        new google.maps.Marker({
+            position: latLng,
+            map: map,
+            title: `Waypoint (${latitude}, ${longitude})`,
+        });
+
+        console.log(`Waypoint added: ${waypoint}`);
+    } else {
+        // Alert the user if inputs are missing
         alert('Please enter both latitude and longitude.');
     }
-    getWaypoints();
+
+    getWaypoints(); // Fetch the waypoints from ROS
 });
 function addWaypointToQueue(waypoint) {
     const ros = new ROSLIB.Ros({ url: 'ws://localhost:9090' });
