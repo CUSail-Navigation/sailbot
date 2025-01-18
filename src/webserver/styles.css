@@ -72,6 +72,12 @@ h1 {
     float: right;
 }
 
+.table.status {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
 .input-group {
     display: flex;
     align-items: center;
@@ -90,6 +96,10 @@ input[type="number"] {
 .status-row {
     display: flex;
     justify-content: space-between;
+
+}
+
+.status-row.second {
     margin-bottom: 10px;
 }
 

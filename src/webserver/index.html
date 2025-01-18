@@ -25,26 +25,26 @@
         <div class="right-column">
             <div class="table-container">
                 <h1>Sailbot Status Dashboard</h1>
-                <div class="table">
-                    <div class="status-row">
-                        <span class="status-label algo-mode">Algo Rudder:</span>
-                        <span class="status-value algo-mode" id="algo-rudder-value">N/A</span>
-                    </div>
-                    <div class="status-row">
-                        <span class="status-label algo-mode">Algo Sail:</span>
-                        <span class="status-value algo-mode" id="algo-sail-value">N/A</span>
-                    </div>
+                <div class="table status">
                     <div class="status-row">
                         <span class="status-label">Control Mode:</span>
                         <span class="status-value" id="control-mode-value">N/A</span>
                     </div>
-                    <div class="status-row">
-                        <span class="status-label rc-mode">Radio Rudder:</span>
-                        <span class="status-value rc-mode" id="radio-rudder-value">N/A</span>
+                    <div class="status-row algo-mode">
+                        <span class="status-label">Algo Rudder:</span>
+                        <span class="status-value" id="algo-rudder-value">N/A</span>
                     </div>
-                    <div class="status-row">
-                        <span class="status-label rc-mode">Radio Sail:</span>
-                        <span class="status-value rc-mode" id="radio-sail-value">N/A</span>
+                    <div class="status-row algo-mode">
+                        <span class="status-label">Algo Sail:</span>
+                        <span class="status-value" id="algo-sail-value">N/A</span>
+                    </div>
+                    <div class="status-row rc-mode">
+                        <span class="status-label">Radio Rudder:</span>
+                        <span class="status-value" id="radio-rudder-value">N/A</span>
+                    </div>
+                    <div class="status-row rc-mode">
+                        <span class="status-label">Radio Sail:</span>
+                        <span class="status-value" id="radio-sail-value">N/A</span>
                     </div>
                     <div class="status-row">
                         <span class="status-label">Rudder Angle:</span>
@@ -91,14 +91,14 @@
             <div class="table-container">
                 <h1>Waypoint Input</h1>
                 <div class="table">
-                    <div class="status-row">
+                    <div class="status-row second">
                         <span class="status-label">Latitude:</span>
                         <div class="input-group">
                             <input type="number" id="latitude" name="latitude" inputmode="decimal"
                                 placeholder="Enter latitude" required>
                         </div>
                     </div>
-                    <div class="status-row">
+                    <div class="status-row second">
                         <span class="status-label">Longitude:</span>
                         <div class="input-group">
                             <input type="number" id="longitude" name="longitude" inputmode="decimal"
@@ -113,7 +113,7 @@
             <div class="table-container">
                 <h1>Algo/RC Chooser</h1>
                 <div class="table">
-                    <div class="status-row">
+                    <div class="status-row second">
                         <span class="status-label">Options: </span>
                     </div>
                     <div class="dropdown">
@@ -129,7 +129,7 @@
     </div>
     <script src="script.js"></script>
     <script async defer
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDcSjRQno8uBG6SORlASvFUZxa2xDpccz0&callback=initMap">
+        src="https://maps.googleapis.com/maps/api/js?key=key&callback=initMap">
         </script>
 </body>
 

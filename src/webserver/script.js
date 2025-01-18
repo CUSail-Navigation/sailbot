@@ -323,16 +323,13 @@ function conditionalRender() {
     let controlModeVal = document.getElementById("control-mode-value").innerText.trim();
     let algoVals = document.querySelectorAll(".algo-mode");
     let rcVals = document.querySelectorAll(".rc-mode");
-    console.log('in conditional render function')
     if (controlModeVal == "algorithm") {
-        algoVals.forEach(el => el.style.display = "block");
+        algoVals.forEach(el => el.style.display = "flex");
         rcVals.forEach(el => el.style.display = "none");
-        console.log('in algo mode')
     }
     if (controlModeVal == "radio control") {
         algoVals.forEach(el => el.style.display = "none"); 
-        rcVals.forEach(el => el.style.display = "block");
-        console.log('in radio mode')
+        rcVals.forEach(el => el.style.display = "flex");
     }
 }
 
