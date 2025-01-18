@@ -1,21 +1,35 @@
 let ros;
 let controlModeTopic;
-function connectToROS() {
-    const rosbridgeAddress = "ws://localhost:9090";
+
+function connectToROS(url) {
     ros = new ROSLIB.Ros({
-        url: rosbridgeAddress
+        url: url
     });
+
     ros.on('connection', function () {
-        console.log('Connected to rosbridge server.');
+        console.log('Connected to rosbridge server at:', url);
         subscribeToTopics();
     });
+
     ros.on('error', function (error) {
         console.error('Error connecting to rosbridge server:', error);
     });
+
     ros.on('close', function () {
         console.log('Connection to rosbridge server closed.');
     });
 }
+
+// Add event listener for the button
+document.getElementById('connect-to-ros').addEventListener('click', function () {
+    const rosbridgeAddress = document.getElementById('ros-url').value;
+    if (rosbridgeAddress) {
+        connectToROS(rosbridgeAddress);
+    } else {
+        console.error('Please enter a valid ROS URL.');
+    }
+});
+
 function parseGpsData(message) {
     const latitude = message.latitude;
     const longitude = message.longitude;
@@ -138,9 +152,9 @@ function submitWaypoint() {
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('submit-waypoint').addEventListener('click', submitWaypoint);
 });
-// Connect to ROS when the page loads
+
 window.onload = function () {
-    connectToROS();
+    // Nothing for now
 };
 
 // Function to toggle dropdown visibility
