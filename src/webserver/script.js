@@ -147,6 +147,7 @@ function subscribeToTopics() {
     });
     controlModeTopic.subscribe(function (message) {
         updateValue('control-mode-value', message.data);
+        conditionalRender();
     });
     // Subscribe to /sailbot/radio_rudder
     const radioRudderTopic = new ROSLIB.Topic({
@@ -319,16 +320,18 @@ window.onclick = function (event) {
 };
 
 function conditionalRender() {
-    let controlModeVal = document.getElementById("control-mode-value");
-    let algoVals = document.querySelector(".algo-mode");
-    let rcVals = document.querySelector(".rc-mode");
+    let controlModeVal = document.getElementById("control-mode-value").innerText.trim();
+    let algoVals = document.querySelectorAll(".algo-mode");
+    let rcVals = document.querySelectorAll(".rc-mode");
     console.log('in conditional render function')
-    if (controlModeVal == "Algorithm") {
-        rcVals.display = 'none';
+    if (controlModeVal == "algorithm") {
+        algoVals.forEach(el => el.style.display = "block");
+        rcVals.forEach(el => el.style.display = "none");
         console.log('in algo mode')
     }
-    if (controlModeVal == "Radio") {
-        algoVals.display = 'none';
+    if (controlModeVal == "radio control") {
+        algoVals.forEach(el => el.style.display = "none"); 
+        rcVals.forEach(el => el.style.display = "block");
         console.log('in radio mode')
     }
 }
