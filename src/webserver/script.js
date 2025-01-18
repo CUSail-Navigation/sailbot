@@ -318,3 +318,18 @@ window.onclick = function (event) {
     }
 };
 
+function conditionalRender() {
+    let controlModeVal = document.getElementById("control-mode-value");
+    let algoVals = document.querySelector(".algo-mode");
+    let rcVals = document.querySelector(".rc-mode");
+    console.log('in conditional render function')
+    if (controlModeVal == "Algorithm") {
+        rcVals.display = 'none';
+        console.log('in algo mode')
+    }
+    if (controlModeVal == "Radio") {
+        algoVals.display = 'none';
+        console.log('in radio mode')
+    }
+}
+
