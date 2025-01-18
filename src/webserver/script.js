@@ -56,7 +56,7 @@ function parseGpsData(message) {
             map: map,
             title: "Sailboat Location",
             icon: {
-                url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png", // Custom marker icon (optional)
+                url: "boat.png", // Custom marker icon (optional)
             },
         });
     } else {
