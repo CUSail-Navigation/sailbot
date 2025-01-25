@@ -1,3 +1,4 @@
+import heapq
 import math
 import numpy as np
 import openmeteo_requests
@@ -11,24 +12,26 @@ class WindAPI(Node):
     def __init__(self):
         super().__init__('wind_api')
         self.wind_api_pub = self.create_publisher(Float64MultiArray, 'wind_api', 10)
-
-        self.publish_path()
+        self.timer = self.create_timer(3, self.publish_path)
 
     def find_path(self, top_left, bot_right):
         big_lats, big_longs, big_num_rows, big_num_cols = make_coords(top_left, bot_right)
         response_coords, wind_vectors = get_wind(big_lats, big_longs)
         lats, longs, num_rows, num_cols = make_coords(top_left, bot_right, 0.01)
+        wind_matrix = match_coords(zip(lats, longs), response_coords, wind_vectors)
+        wind_matrix = np.array(wind_matrix).reshape(num_rows, num_cols, 2)
+        print(wind_matrix)
+        print(num_rows, num_cols)
         # Do the pathfinding
         final_coords = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
         return final_coords
     
     def publish_path(self):
-        coords = self.find_path((0, 0), (.02, .02))
+        coords = self.find_path((0, 0), (.0008, .0008))
         wind_api_msg = Float64MultiArray()
         wind_api_msg.data = coords
         self.wind_api_pub.publish(wind_api_msg)
-        print(coords)
-
+        print(wind_api_msg)
 
 def make_coords(top_left, bot_right, tile_size=1.0):
     tile_lat = tile_size * (1 / 110.574)
@@ -47,6 +50,7 @@ def make_coords(top_left, bot_right, tile_size=1.0):
             lats.append(new_lat)
             longs.append(new_long)
     return lats, longs, num_rows, num_cols
+
 def get_wind(lats, longs):
     openmeteo = openmeteo_requests.Client()
     response_coords = []
@@ -117,35 +121,18 @@ def match_coords(matrix_coords, response_coords, response_vectors):
     
     return vectors
 
-
-top_left = (42.945263, -76.767474)
-bot_right = (42.459643, -76.500470)
-top_left = (42.454862524617326, -76.47741838081413)
-bot_right = (42.45394077761382, -76.47648601746894)
-big_lats, big_longs, big_num_rows, big_num_cols = make_coords(top_left, bot_right)
-response_coords, wind_vectors = get_wind(big_lats, big_longs)
-lats, longs, num_rows, num_cols = make_coords(top_left, bot_right, 0.01)
-#print(response_coords)
-#print(wind_vectors)
-#print(list(zip(lats, longs)))
-#print(list(zip(lats, longs)))
-
-# Python program for A* Search Algorithm
-import math
-import heapq
-
 # Define the Cell class
 class Cell:
     def __init__(self):
-      # Parent cell's row index
+        # Parent cell's row index
         self.parent_i = 0
-    # Parent cell's column index
+        # Parent cell's column index
         self.parent_j = 0
- # Total cost of the cell (g + h)
+        # Total cost of the cell (g + h)
         self.f = float('inf')
-    # Cost from start to this cell
+        # Cost from start to this cell
         self.g = float('inf')
-    # Heuristic cost from this cell to destination
+        # Heuristic cost from this cell to destination
         self.h = 0
 
 # Define the size of the grid
