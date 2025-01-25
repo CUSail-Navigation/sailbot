@@ -12,7 +12,8 @@ class WindAPI(Node):
     def __init__(self):
         super().__init__('wind_api')
         self.wind_api_pub = self.create_publisher(Float64MultiArray, 'wind_api', 10)
-        self.timer = self.create_timer(3, self.publish_path)
+        # self.timer = self.create_timer(3, self.publish_path)
+        self.publish_path()
 
     def find_path(self, top_left, bot_right):
         big_lats, big_longs, big_num_rows, big_num_cols = make_coords(top_left, bot_right)
@@ -20,10 +21,11 @@ class WindAPI(Node):
         lats, longs, num_rows, num_cols = make_coords(top_left, bot_right, 0.01)
         wind_matrix = match_coords(zip(lats, longs), response_coords, wind_vectors)
         wind_matrix = np.array(wind_matrix).reshape(num_rows, num_cols, 2)
-        print(wind_matrix)
-        print(num_rows, num_cols)
-        # Do the pathfinding
-        final_coords = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
+        final_coords = find_path(wind_matrix, num_rows, num_cols, [0, 0], [3, 0])
+        print()
+        print()
+        print(final_coords)
+        # final_coords = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
         return final_coords
     
     def publish_path(self):
@@ -73,28 +75,28 @@ def get_wind(lats, longs):
 
     return response_coords, wind_vectors
 
-def get_wind_direction(lats, longs):
-    openmeteo = openmeteo_requests.Client()
+# def get_wind_direction(lats, longs):
+#     openmeteo = openmeteo_requests.Client()
 
-    response_coords = []
-    wind_vectors = []
+#     response_coords = []
+#     wind_vectors = []
 
-    url = "https://api.open-meteo.com/v1/forecast"
-    params = {
-        "latitude": lats,
-        "longitude": longs,
-        "current": ["wind_speed_10m", "wind_direction_10m"],
-        "cell_selection": "nearest"
-    }
-    responses = openmeteo.weather_api(url, params=params)
+#     url = "https://api.open-meteo.com/v1/forecast"
+#     params = {
+#         "latitude": lats,
+#         "longitude": longs,
+#         "current": ["wind_speed_10m", "wind_direction_10m"],
+#         "cell_selection": "nearest"
+#     }
+#     responses = openmeteo.weather_api(url, params=params)
 
-    for response in responses:
-        current = response.Current()
-        current_wind_speed_10m = current.Variables(0).Value()
-        current_wind_direction_10m = current.Variables(1).Value()
-        if (response.Latitude(), response.Longitude()) not in response_coords:
-            wind_vectors.append(current_wind_direction_10m)
-            response_coords.append((response.Latitude(), response.Longitude()))
+#     for response in responses:
+#         current = response.Current()
+#         current_wind_speed_10m = current.Variables(0).Value()
+#         current_wind_direction_10m = current.Variables(1).Value()
+#         if (response.Latitude(), response.Longitude()) not in response_coords:
+#             wind_vectors.append(current_wind_direction_10m)
+#             response_coords.append((response.Latitude(), response.Longitude()))
 
     return response_coords, wind_vectors
 
@@ -120,236 +122,244 @@ def match_coords(matrix_coords, response_coords, response_vectors):
         vectors.append(response_vectors[i])
     
     return vectors
+def find_path(wind_matrix, num_rows, num_cols, src, dest):
+    # Define the Cell class
+    class Cell:
+        def __init__(self):
+            # Parent cell's row index
+            self.parent_i = 0
+            # Parent cell's column index
+            self.parent_j = 0
+            # Total cost of the cell (g + h)
+            self.f = float('inf')
+            # Cost from start to this cell
+            self.g = float('inf')
+            # Heuristic cost from this cell to destination
+            self.h = 0
 
-# Define the Cell class
-class Cell:
-    def __init__(self):
-        # Parent cell's row index
-        self.parent_i = 0
-        # Parent cell's column index
-        self.parent_j = 0
-        # Total cost of the cell (g + h)
-        self.f = float('inf')
-        # Cost from start to this cell
-        self.g = float('inf')
-        # Heuristic cost from this cell to destination
-        self.h = 0
+    # Define the size of the grid
+    ROW = num_rows
+    COL = num_cols
+    print("number of rows: ",ROW)
+    print("number of columns: ",COL)
 
-# Define the size of the grid
-ROW = num_rows
-COL = num_cols
-print("number of rows: ",ROW)
-print("number of columns: ",COL)
 
-# Check if a cell is valid (within the grid)
-def is_valid(row, col):
-    return (row >= 0) and (row < ROW) and (col >= 0) and (col < COL)
+    # Check if a cell is valid (within the grid)
+    def is_valid(row, col):
+        return (row >= 0) and (row < ROW) and (col >= 0) and (col < COL)
 
-# Check if a cell is unblocked
-def is_unblocked(grid, row, col):
-    #return grid[row][col] == 1
-    return True
+    # Check if a cell is unblocked
+    def is_unblocked(grid, row, col):
+        #return grid[row][col] == 1
+        return True
 
-# Check if a cell is the destination
-def is_destination(row, col, dest):
-    return row == dest[0] and col == dest[1]
+    # Check if a cell is the destination
+    def is_destination(row, col, dest):
+        return row == dest[0] and col == dest[1]
 
-# Calculate the heuristic value of a cell (Euclidean distance to destination)
-def calculate_h_value(row, col, dest):
-    return ((row - dest[0]) ** 2 + (col - dest[1]) ** 2) ** 0.5
+    # Calculate the heuristic value of a cell (Euclidean distance to destination)
+    def calculate_h_value(row, col, dest):
+        return ((row - dest[0]) ** 2 + (col - dest[1]) ** 2) ** 0.5
 
-# Trace the path from source to destination
-def trace_path(cell_details, dest):
-    path = []
-    row = dest[0]
-    col = dest[1]
+    # Trace the path from source to destination
+    def trace_path(cell_details, dest):
+        path = []
+        path_coords = []
+        row = dest[0]
+        col = dest[1]
 
-    # Trace the path from destination to source using parent cells
-    while not (cell_details[row][col].parent_i == row and cell_details[row][col].parent_j == col):
+        # Trace the path from destination to source using parent cells
+        while not (cell_details[row][col].parent_i == row and cell_details[row][col].parent_j == col):
+            path.append((row, col))
+            temp_row = cell_details[row][col].parent_i
+            temp_col = cell_details[row][col].parent_j
+            row = temp_row
+            col = temp_col
+
+        # Add the source cell to the path
         path.append((row, col))
-        temp_row = cell_details[row][col].parent_i
-        temp_col = cell_details[row][col].parent_j
-        row = temp_row
-        col = temp_col
 
-    # Add the source cell to the path
-    path.append((row, col))
+        # Reverse the path to get the path from source to destination
+        path.reverse()
 
-    # Reverse the path to get the path from source to destination
-    path.reverse()
+        for i in path:
+            templat = i[0] * 180 / math.pi / 6378
+            templong = i[1] * 180 / math.pi / 6378 / math.cos(math.radians(templat))
+            path_coords.append(templat)
+            path_coords.append(templong)
+            print(f"{templat},{templong}", end=" ")
+        print()
 
-    for i in path:
-        templat = i[0] * 180 / math.pi / 6378
-        templong = i[1] * 180 / math.pi / 6378 / math.cos(math.radians(templat))
-        print(f"{templat},{templong}", end=" ")
-    print()
+        for i in path:
+            print("->", i, end=" ")
+        print()
 
-    for i in path:
-        print("->", i, end=" ")
-    print()
+        return path_coords
 
-# Implement the A* search algorithm
-def a_star_search(grid, src, dest):
-    # Check if the source and destination are valid
-    if not is_valid(src[0], src[1]) or not is_valid(dest[0], dest[1]):
-        print("Source or destination is invalid")
-        return
+    # Implement the A* search algorithm
+    def a_star_search(grid, src, dest):
+        # Check if the source and destination are valid
+        if not is_valid(src[0], src[1]) or not is_valid(dest[0], dest[1]):
+            print("Source or destination is invalid")
+            return
 
-    # Check if the source and destination are unblocked
-    if not is_unblocked(grid, src[0], src[1]) or not is_unblocked(grid, dest[0], dest[1]):
-        print("Source or the destination is blocked")
-        return
+        # Check if the source and destination are unblocked
+        if not is_unblocked(grid, src[0], src[1]) or not is_unblocked(grid, dest[0], dest[1]):
+            print("Source or the destination is blocked")
+            return
 
-    # Check if we are already at the destination
-    if is_destination(src[0], src[1], dest):
-        print("We are already at the destination")
-        return
+        # Check if we are already at the destination
+        if is_destination(src[0], src[1], dest):
+            print("We are already at the destination")
+            return
 
-    # Initialize the closed list (visited cells)
-    closed_list = [[False for _ in range(COL)] for _ in range(ROW)]
-    # Initialize the details of each cell
-    cell_details = [[Cell() for _ in range(COL)] for _ in range(ROW)]
+        # Initialize the closed list (visited cells)
+        closed_list = [[False for _ in range(COL)] for _ in range(ROW)]
+        # Initialize the details of each cell
+        cell_details = [[Cell() for _ in range(COL)] for _ in range(ROW)]
 
-    # Initialize the start cell details
-    i = src[0]
-    j = src[1]
-    cell_details[i][j].f = 0
-    cell_details[i][j].g = 0
-    cell_details[i][j].h = 0
-    cell_details[i][j].parent_i = i
-    cell_details[i][j].parent_j = j
+        # Initialize the start cell details
+        i = src[0]
+        j = src[1]
+        cell_details[i][j].f = 0
+        cell_details[i][j].g = 0
+        cell_details[i][j].h = 0
+        cell_details[i][j].parent_i = i
+        cell_details[i][j].parent_j = j
 
-    # Initialize the open list (cells to be visited) with the start cell
-    open_list = []
-    heapq.heappush(open_list, (0.0, i, j))
+        # Initialize the open list (cells to be visited) with the start cell
+        open_list = []
+        heapq.heappush(open_list, (0.0, i, j))
 
-    # Initialize the flag for whether destination is found
-    found_dest = False
+        # Initialize the flag for whether destination is found
+        found_dest = False
 
-    # Main loop of A* search algorithm
-    while len(open_list) > 0:
-        # Pop the cell with the smallest f value from the open list
-        p = heapq.heappop(open_list)
+        # Main loop of A* search algorithm
+        while len(open_list) > 0:
+            # Pop the cell with the smallest f value from the open list
+            p = heapq.heappop(open_list)
 
-        # Mark the cell as visited
-        i = p[1]
-        j = p[2]
-        closed_list[i][j] = True
+            # Mark the cell as visited
+            i = p[1]
+            j = p[2]
+            closed_list[i][j] = True
 
-        # Dynamically update grid based on current cell
-        grid = update_grid(grid, i, j)
+            # Dynamically update grid based on current cell
+            grid = update_grid(grid, i, j)
 
-        # For each direction, check the successors
-        directions = [(0, 1), (0, -1), (1, 0), (-1, 0),
-                        (1, 1), (1, -1), (-1, 1), (-1, -1)]
-        for dir in directions:
-            new_i = i + dir[0]
-            new_j = j + dir[1]
+            # For each direction, check the successors
+            directions = [(0, 1), (0, -1), (1, 0), (-1, 0),
+                            (1, 1), (1, -1), (-1, 1), (-1, -1)]
+            for dir in directions:
+                new_i = i + dir[0]
+                new_j = j + dir[1]
 
-            # If the successor is valid, unblocked, and not visited
-            if is_valid(new_i, new_j) and is_unblocked(grid, new_i, new_j) and not closed_list[new_i][new_j]:
-                # If the successor is the destination
-                if is_destination(new_i, new_j, dest):
-                    # Set the parent of the destination cell
-                    cell_details[new_i][new_j].parent_i = i
-                    cell_details[new_i][new_j].parent_j = j
-                    print("The destination cell is found")
-                    # Trace and print the path from source to destination
-                    trace_path(cell_details, dest)
-                    found_dest = True
-                    return
-                else:
-                    # Calculate the new f, g, and h values
-                    g_new = cell_details[i][j].g + 1.0
-                    h_new = calculate_h_value(new_i, new_j, dest)
-                    f_new = g_new + h_new
+                # If the successor is valid, unblocked, and not visited
+                if is_valid(new_i, new_j) and is_unblocked(grid, new_i, new_j) and not closed_list[new_i][new_j]:
+                    # If the successor is the destination
+                    if is_destination(new_i, new_j, dest):
+                        # Set the parent of the destination cell
+                        cell_details[new_i][new_j].parent_i = i
+                        cell_details[new_i][new_j].parent_j = j
+                        print("The destination cell is found")
+                        # Trace and print the path from source to destination
+                        path_coords = trace_path(cell_details, dest)
+                        found_dest = True
+                        return path_coords
+                    else:
+                        # Calculate the new f, g, and h values
+                        g_new = cell_details[i][j].g + 1.0
+                        h_new = calculate_h_value(new_i, new_j, dest)
+                        f_new = g_new + h_new
 
-                    # If the cell is not in the open list or the new f value is smaller
-                    if cell_details[new_i][new_j].f == float('inf') or cell_details[new_i][new_j].f > f_new:
-                        if map_tile_status(i, j, new_i, new_j):
-                            # Add the cell to the open list
-                            heapq.heappush(open_list, (f_new, new_i, new_j))
-                            # Update the cell details
-                            cell_details[new_i][new_j].f = f_new
-                            cell_details[new_i][new_j].g = g_new
-                            cell_details[new_i][new_j].h = h_new
-                            cell_details[new_i][new_j].parent_i = i
-                            cell_details[new_i][new_j].parent_j = j
+                        # If the cell is not in the open list or the new f value is smaller
+                        if cell_details[new_i][new_j].f == float('inf') or cell_details[new_i][new_j].f > f_new:
+                            if map_tile_status(i, j, new_i, new_j):
+                                # Add the cell to the open list
+                                heapq.heappush(open_list, (f_new, new_i, new_j))
+                                # Update the cell details
+                                cell_details[new_i][new_j].f = f_new
+                                cell_details[new_i][new_j].g = g_new
+                                cell_details[new_i][new_j].h = h_new
+                                cell_details[new_i][new_j].parent_i = i
+                                cell_details[new_i][new_j].parent_j = j
 
-    # If the destination is not found after visiting all cells
-    if not found_dest:
-        print("Failed to find the destination cell")
+        # If the destination is not found after visiting all cells
+        if not found_dest:
+            print("Failed to find the destination cell")
 
-def map_tile_status(current_row, current_col, invest_row, invest_col):
-    # Retrieve latitude and longitude for the investigated tile
-    latitude = lats[invest_row * num_cols + invest_col]
-    longitude = longs[invest_row * num_cols + invest_col]
+    def map_tile_status(current_row, current_col, invest_row, invest_col):
+        # Retrieve latitude and longitude for the investigated tile
+        # latitude = lats[invest_row * num_cols + invest_col]
+        # longitude = longs[invest_row * num_cols + invest_col]
 
-    # Retrieve wind direction
-    wind_direction = get_wind([latitude], [longitude])[1][0][1]  # Get the first wind direction
+        # Retrieve wind direction
+        wind_direction = wind_matrix[invest_row][invest_col][1]
 
-    # Determine navigability based on wind direction
-    if current_row < invest_row and current_col == invest_col:  # Tile is above
-        if 135 <= wind_direction and wind_direction <= 225:
-            return False
-    elif current_row > invest_row and current_col == invest_col:  # Tile is below
-        if wind_direction <= 45 or wind_direction >= 315:
-            return False
-    elif current_row == invest_row and current_col < invest_col:  # Tile is right
-        if 225 <= wind_direction and wind_direction <= 315:
-            return False
-    elif current_row == invest_row and current_col > invest_col:  # Tile is left
-        if 45 <= wind_direction and wind_direction <= 135:
-            return False
-    elif current_row > invest_row and current_col < invest_col:  # Tile is up-right
-        if 180 <= wind_direction and wind_direction <= 270:
-            return False
-    elif current_row > invest_row and current_col > invest_col:  # Tile is up-left
-        if 90 <= wind_direction and wind_direction <= 180:
-            return False
-    elif current_row < invest_row and current_col < invest_col:  # Tile is down-right
-        if wind_direction >= 270:
-            return False
-    elif current_row < invest_row and current_col > invest_col:  # Tile is down-left
-        if wind_direction <= 90:
-            return False
+        # wind_direction = get_wind([latitude], [longitude])[1][0][1]  # Get the first wind direction
 
-    return True  # If no blocking condition is met
+        # Determine navigability based on wind direction
+        if current_row < invest_row and current_col == invest_col:  # Tile is above
+            if 135 <= wind_direction and wind_direction <= 225:
+                return False
+        elif current_row > invest_row and current_col == invest_col:  # Tile is below
+            if wind_direction <= 45 or wind_direction >= 315:
+                return False
+        elif current_row == invest_row and current_col < invest_col:  # Tile is right
+            if 225 <= wind_direction and wind_direction <= 315:
+                return False
+        elif current_row == invest_row and current_col > invest_col:  # Tile is left
+            if 45 <= wind_direction and wind_direction <= 135:
+                return False
+        elif current_row > invest_row and current_col < invest_col:  # Tile is up-right
+            if 180 <= wind_direction and wind_direction <= 270:
+                return False
+        elif current_row > invest_row and current_col > invest_col:  # Tile is up-left
+            if 90 <= wind_direction and wind_direction <= 180:
+                return False
+        elif current_row < invest_row and current_col < invest_col:  # Tile is down-right
+            if wind_direction >= 270:
+                return False
+        elif current_row < invest_row and current_col > invest_col:  # Tile is down-left
+            if wind_direction <= 90:
+                return False
 
+        return True  # If no blocking condition is met
 
-def update_grid(grid, row, col):
-    # Update surrounding cells based on conditions
-    for x in range(-1, 2):  # Loop through neighbors
-        for y in range(-1, 2):
-            if x == 0 and y == 0:  # Skip the current cell
-                continue
-            new_row = row + x
-            new_col = col + y
-            if is_valid(new_row, new_col):  # Ensure it's within grid bounds
-                if map_tile_status(row, col, new_row, new_col):
-                    grid[new_row][new_col] = 1  # unblocked
-                else:
-                    grid[new_row][new_col] = 0  # blocked
-    for i in range (0, num_rows):
-        print(grid[i])
-    print()
-    return grid 
+    def update_grid(grid, row, col):
+        # Update surrounding cells based on conditions
+        for x in range(-1, 2):  # Loop through neighbors
+            for y in range(-1, 2):
+                if x == 0 and y == 0:  # Skip the current cell
+                    continue
+                new_row = row + x
+                new_col = col + y
+                if is_valid(new_row, new_col):  # Ensure it's within grid bounds
+                    if map_tile_status(row, col, new_row, new_col):
+                        grid[new_row][new_col] = 1  # unblocked
+                    else:
+                        grid[new_row][new_col] = 0  # blocked
+        for i in range (0, num_rows):
+            print(grid[i])
+        print()
+        return grid 
 
-# Driver Code
-def a_star():
-    # Define the source and destination
-    src = [0, 0]
-    dest = [3, 0]
+    # Driver Code
+    def a_star():
+        # Define the source and destination
+        # src = [0, 0]
+        # dest = [3, 0]
 
-    # Initialize the grid
-    grid = [[2 for _ in range(COL)] for _ in range(ROW)]
+        # Initialize the grid
+        grid = [[2 for _ in range(COL)] for _ in range(ROW)]
 
-    # Update the grid based on the starting position
-    grid = update_grid(grid, src[0], src[1])
+        # Update the grid based on the starting position
+        grid = update_grid(grid, src[0], src[1])
 
-    # Run the A* search algorithm
-    a_star_search(grid, src, dest)
+        # Run the A* search algorithm
+        return a_star_search(grid, src, dest)
 
+    return a_star()
 
 
 def main(args=None):
