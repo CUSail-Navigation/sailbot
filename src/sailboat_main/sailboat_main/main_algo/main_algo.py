@@ -58,36 +58,42 @@ class MainAlgo(Node):
 
         self.request_new_waypoint()
 
-
-
     def request_new_waypoint(self):
-        self.cli = self.create_client(Waypoint, 'get_waypoint')
+        self.cli = self.create_client(Waypoint, 'mutate_waypoint_queue')
         while not self.cli.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Waypoint service not available, waiting...')
 
+        # Set up the request with the "get" command
         self.req = Waypoint.Request()
+        self.req.command = "get"
+        self.req.argument = ""  # No argument needed for the "get" command
+
         self.future = self.cli.call_async(self.req)
-        #rclpy.spin_until_future_complete(self,self.future)
+        # Use a callback to handle the response
         self.future.add_done_callback(self.waypoint_response_callback)
 
     def waypoint_response_callback(self, future: Future):
         try:
             response = future.result()
             if response.success:
-                resp = response.waypoint
+                # Parse the received waypoints from the service response
+                waypoints = eval(response.message)  # Convert string to list of tuples
+                if waypoints:
+                    # Extract the next waypoint
+                    next_waypoint = waypoints[0]
+                    self.get_logger().info(f'New waypoint received: {next_waypoint}')
 
-                utm_coords = utm.from_latlon(resp.longitude, resp.latitude)
-
-                self.curr_dest.x = utm_coords[0]
-                self.curr_dest.y = utm_coords[1]
-                self.get_logger().info(f'New waypoint received: {self.curr_dest}')
+                    # Convert latitude and longitude to UTM coordinates
+                    utm_coords = utm.from_latlon(next_waypoint[1], next_waypoint[0])
+                    self.curr_dest.x = utm_coords[0]
+                    self.curr_dest.y = utm_coords[1]
+                else:
+                    self.get_logger().info('No waypoints available in the queue.')
             else:
-                self.get_logger().info('No more waypoints available: Retry in 1 second')
-                sleep(1)
-
-
+                self.get_logger().info('Failed to retrieve waypoints from the service.')
         except Exception as e:
-            self.get_logger().error(f'Service call failed: {e}')
+            self.get_logger().error(f'Error in waypoint_response_callback: {str(e)}')
+
 
     def curr_gps_callback(self, msg):
         """
