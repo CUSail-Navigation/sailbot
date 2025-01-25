@@ -1,8 +1,12 @@
 # Waypoint.srv
 
 # Request
----
+string command   # Command: "get" or "set" or "pop"
 
+# the argument for "set" is a semicolo- separated list of comma-separated ordered pairs. ex. 1,2;3,4
+string argument  # Argument for "set" command; ignored for "get" and "pop" commands.
+
+---
 # Response
-sensor_msgs/NavSatFix waypoint
-bool success
+string message   # Response message
+bool success     # Success status

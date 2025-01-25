@@ -61,7 +61,8 @@ class AirMar(Node):
         imu_msg.angular_velocity.z = self.airmar.readAirMarROT()
         self.publisher_imu.publish(imu_msg)
 
-        self.get_logger().info('Publishing Airmar Data: ' + 'Lat: ' + str(nav_sat_msg.latitude) + ' Long: ' + str(nav_sat_msg.longitude) + ' Heading: ' + str(yaw))
+        self.get_logger().info('Publishing GPS Data: ' + 'Lat: ' + str(nav_sat_msg.latitude) + ' Long: ' + str(nav_sat_msg.longitude))
+        self.get_logger().info(f'Publishing IMU Data: Orientation = ({qx}, {qy}, {qz}, {qw}), Angular Velocity (Z) = {imu_msg.angular_velocity.z}' )
 
 
     def euler_to_quaternion(self, yaw, pitch, roll):

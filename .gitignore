@@ -11,6 +11,10 @@ log/
 CMakeLists.txt.user
 colcon.meta
 
+# Sys logs
+sys/sys.log
+sys/ros.out
+
 # Python cache
 __pycache__/
 
