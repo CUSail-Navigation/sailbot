@@ -1,8 +1,9 @@
 # Waypoint.srv
 
 # Request
+string command   # Command: "get" or "set"
+string argument  # Argument for "set" command; ignored for "get" command
 ---
-
 # Response
-sensor_msgs/NavSatFix waypoint
-bool success
+string message   # Response message
+bool success     # Success status
