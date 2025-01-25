@@ -1,8 +1,8 @@
 # Waypoint.srv
 
 # Request
-string command   # Command: "get" or "set"
-string argument  # Argument for "set" command; ignored for "get" command
+string command   # Command: "get" or "set" or "pop"
+string argument  # Argument for "set" command; ignored for "get" and "pop" commands
 ---
 # Response
 string message   # Response message
