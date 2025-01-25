@@ -7,9 +7,11 @@ let waypoints = []; // Global array for storing waypoints
 const waypointMarkers = {}; // Global dictionary for waypoint markers
 let map; // Global variable for the map instance
 let sailboatMarker; // Global variable for the sailboat marker
+let sailPlanCoordinates; // Global variable for sailboat path coordinates
+let sailPath; // Global variable for the sailboat trail
 
 // Initialize the Google Map
-window.initMap = function () {
+function initMap() {
     const defaultLocation = { lat: 0, lng: 0 }; // Default center
 
     // Create a new map instance
@@ -17,7 +19,26 @@ window.initMap = function () {
         center: defaultLocation, // Center the map at the default location
         zoom: 2, // Set an initial zoom level
     });
+
+    sailPlanCoordinates = [];
+        sailPath = new google.maps.Polyline({
+        path: sailPlanCoordinates,
+        geodesic: true,
+        strokeColor: "#FF0000",
+        strokeOpacity: 1.0,
+        strokeWeight: 2,
+      });
+    
+      sailPath.setMap(map);
 };
+window.initMap = initMap;
+
+function updateTrail(latitude, longitude) {
+    sailPlanCoordinates.push({lat: latitude, lng: longitude});
+    sailPath.setPath(sailPlanCoordinates);
+    sailPath.setMap(map);
+
+}
 
 function connectToROS() {
     const rosbridgeAddress = "ws://localhost:9090";
@@ -63,12 +84,14 @@ function parseGpsData(message) {
     } else {
         // Update the marker's position
         sailboatMarker.setPosition(sailboatLocation);
+        updateTrail(latitude, longitude);
     }
 
     // Optionally center the map on the sailboat
     map.setCenter(sailboatLocation);
     map.setZoom(18);
 }
+
 
 function parseImuData(message) {
     parseQuaternionData(message.orientation);
