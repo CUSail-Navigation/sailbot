@@ -1,9 +1,10 @@
 let ros;
 let controlModeTopic;
-const waypoints = [];
 
 console.log("script.js loaded successfully");
 
+let waypoints = []; // Global array for storing waypoints
+const waypointMarkers = {}; // Global dictionary for waypoint markers
 let map; // Global variable for the map instance
 let sailboatMarker; // Global variable for the sailboat marker
 
@@ -66,6 +67,7 @@ function parseGpsData(message) {
 
     // Optionally center the map on the sailboat
     map.setCenter(sailboatLocation);
+    map.setZoom(18);
 }
 
 function parseImuData(message) {
@@ -235,11 +237,13 @@ document.getElementById('submit-waypoint').addEventListener('click', function ()
         };
 
         // Add a marker for the new waypoint on the map
-        new google.maps.Marker({
+        const marker = new google.maps.Marker({
             position: latLng,
             map: map,
             title: `Waypoint (${latitude}, ${longitude})`,
         });
+
+        waypointMarkers[waypoint] = marker;
 
         console.log(`Waypoint added: ${waypoint}`);
     } else {
@@ -247,7 +251,8 @@ document.getElementById('submit-waypoint').addEventListener('click', function ()
         alert('Please enter both latitude and longitude.');
     }
 
-    getWaypoints(); // Fetch the waypoints from ROS
+    getWaypointQueue()
+    getWaypoints(); // Fetch most recent waypoint from ROS
 });
 function addWaypointToQueue(waypoint) {
     const ros = new ROSLIB.Ros({ url: 'ws://localhost:9090' });
@@ -261,11 +266,45 @@ function addWaypointToQueue(waypoint) {
     console.log(`Published waypoint: ${waypoint}`);
 }
 function displayWaypoints() {
-    const waypointListElement = document.getElementById('waypoint-list'); waypointListElement.innerHTML = '';
-    waypoints.forEach(waypoint => {
+    const waypointListElement = document.getElementById('waypoint-list');
+    waypointListElement.innerHTML = ''; // Clear existing list
+
+    waypoints.forEach((waypoint, index) => {
         const waypointElement = document.createElement('div');
-        waypointElement.textContent = waypoint; waypointListElement.appendChild(waypointElement);
+        waypointElement.classList.add('waypoint-item');
+
+        // Create the text for the waypoint
+        const waypointText = document.createElement('span');
+        waypointText.textContent = waypoint;
+        waypointElement.appendChild(waypointText);
+
+        // Create the delete button
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Delete';
+        deleteButton.classList.add('delete-button');
+        deleteButton.addEventListener('click', () => {
+            deleteWaypoint(index);
+        });
+        waypointElement.appendChild(deleteButton);
+
+        waypointListElement.appendChild(waypointElement);
     });
+}
+function deleteWaypoint(index) {
+    // Remove the waypoint from the local array
+    const waypoint = waypoints[index];
+
+    // Remove the marker from the map
+    if (waypointMarkers[waypoint]) {
+        waypointMarkers[waypoint].setMap(null); // Removes the marker from the map
+        delete waypointMarkers[waypoint]; // Remove the marker from the object
+    }
+
+    // Remove the waypoint from the array
+    waypoints.splice(index, 1);
+
+    // Update the display
+    displayWaypoints();
 }
 function getWaypoints() {
     const ros = new ROSLIB.Ros({ url: 'ws://localhost:9090' }); ros.on('connection', function () {
@@ -279,8 +318,37 @@ function getWaypoints() {
     const request = new ROSLIB.ServiceRequest();
     getWaypointClient.callService(request, function (result) {
         if (result.success) {
-            console.log(`Received waypoint: Latitude ${result.waypoint.latitude}, Longitude ${result.waypoint.longitude}`);
-        } else { console.log('No waypoints in list'); }
+            console.log(`Latest waypoint: Latitude ${result.waypoint.latitude}, Longitude ${result.waypoint.longitude}`);
+        } else { console.log('No Waypoints in List'); }
+    });
+}
+function getWaypointQueue() {
+    const ros = new ROSLIB.Ros({ url: 'ws://localhost:9090' });
+    ros.on('connection', function () {
+        console.log('Connected to websocket server. getWaypointQueue()');
+    });
+
+    const getWaypointClient = new ROSLIB.Service({
+        ros: ros,
+        name: '/sailbot/get_waypoint_queue',
+        serviceType: 'sailboat_interface/srv/WaypointQueue'
+    });
+
+    const request = new ROSLIB.ServiceRequest();
+
+    getWaypointClient.callService(request, function (result) {
+        if (result.success) {
+            if (Array.isArray(result.waypoints) && result.waypoints.length > 0) {
+                console.log('Waypoint Queue:');
+                result.waypoints.forEach((waypoint, index) => {
+                    console.log(`Waypoint ${index + 1}: Latitude ${waypoint.latitude}, Longitude ${waypoint.longitude}`);
+                });
+            } else {
+                console.log('No waypoints in the queue or invalid waypoints data.');
+            }
+        } else {
+            console.log('Failed to retrieve waypoints.');
+        }
     });
 }
 // Connect to ROS when the page loads
@@ -328,7 +396,7 @@ function conditionalRender() {
         rcVals.forEach(el => el.style.display = "none");
     }
     if (controlModeVal == "radio control") {
-        algoVals.forEach(el => el.style.display = "none"); 
+        algoVals.forEach(el => el.style.display = "none");
         rcVals.forEach(el => el.style.display = "flex");
     }
 }
