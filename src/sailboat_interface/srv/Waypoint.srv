@@ -2,7 +2,10 @@
 
 # Request
 string command   # Command: "get" or "set" or "pop"
-string argument  # Argument for "set" command; ignored for "get" and "pop" commands
+
+# the argument for "set" is a semicolo- separated list of comma-separated ordered pairs. ex. 1,2;3,4
+string argument  # Argument for "set" command; ignored for "get" and "pop" commands.
+
 ---
 # Response
 string message   # Response message
