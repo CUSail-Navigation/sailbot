@@ -1,7 +1,36 @@
 import math
 import numpy as np
 import openmeteo_requests
-def make_coords(top_left, bot_right, tile_size=1):
+import rclpy
+from rclpy.node import Node
+from scipy.spatial import cKDTree
+from std_msgs.msg import Float64MultiArray
+
+
+class WindAPI(Node):
+    def __init__(self):
+        super().__init__('wind_api')
+        self.wind_api_pub = self.create_publisher(Float64MultiArray, 'wind_api', 10)
+
+        self.publish_path()
+
+    def find_path(self, top_left, bot_right):
+        big_lats, big_longs, big_num_rows, big_num_cols = make_coords(top_left, bot_right)
+        response_coords, wind_vectors = get_wind(big_lats, big_longs)
+        lats, longs, num_rows, num_cols = make_coords(top_left, bot_right, 0.01)
+        # Do the pathfinding
+        final_coords = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
+        return final_coords
+    
+    def publish_path(self):
+        coords = self.find_path((0, 0), (.02, .02))
+        wind_api_msg = Float64MultiArray()
+        wind_api_msg.data = coords
+        self.wind_api_pub.publish(wind_api_msg)
+        print(coords)
+
+
+def make_coords(top_left, bot_right, tile_size=1.0):
     tile_lat = tile_size * (1 / 110.574)
     avg_lat = (top_left[0] + bot_right[0]) / 2
     tile_long = tile_size * (1 / (111.320 * math.cos(math.radians(avg_lat))))
@@ -40,6 +69,55 @@ def get_wind(lats, longs):
             response_coords.append((response.Latitude(), response.Longitude()))
 
     return response_coords, wind_vectors
+
+def get_wind_direction(lats, longs):
+    openmeteo = openmeteo_requests.Client()
+
+    response_coords = []
+    wind_vectors = []
+
+    url = "https://api.open-meteo.com/v1/forecast"
+    params = {
+        "latitude": lats,
+        "longitude": longs,
+        "current": ["wind_speed_10m", "wind_direction_10m"],
+        "cell_selection": "nearest"
+    }
+    responses = openmeteo.weather_api(url, params=params)
+
+    for response in responses:
+        current = response.Current()
+        current_wind_speed_10m = current.Variables(0).Value()
+        current_wind_direction_10m = current.Variables(1).Value()
+        if (response.Latitude(), response.Longitude()) not in response_coords:
+            wind_vectors.append(current_wind_direction_10m)
+            response_coords.append((response.Latitude(), response.Longitude()))
+
+    return response_coords, wind_vectors
+
+
+def to_cartesian(latlongs, offset):
+    radius = 6371
+
+    latlongs = np.array(latlongs)
+    lats =  latlongs[:, 0]
+    longs = latlongs[:, 1]
+    
+    x_coords = radius * (math.pi / 180) * math.cos(math.radians(offset[0])) * (longs - offset[1])
+    y_coords = radius * (math.pi / 180) * (lats - offset[0])
+
+    return list(zip(x_coords, y_coords))
+
+def match_coords(matrix_coords, response_coords, response_vectors):
+    vectors = []
+    tree = cKDTree(response_coords)
+
+    for matrix_coord in matrix_coords:
+        dist, i = tree.query(matrix_coord)
+        vectors.append(response_vectors[i])
+    
+    return vectors
+
 
 top_left = (42.945263, -76.767474)
 bot_right = (42.459643, -76.500470)
@@ -272,7 +350,7 @@ def update_grid(grid, row, col):
     return grid 
 
 # Driver Code
-def main():
+def a_star():
     # Define the source and destination
     src = [0, 0]
     dest = [3, 0]
@@ -286,5 +364,20 @@ def main():
     # Run the A* search algorithm
     a_star_search(grid, src, dest)
 
-if __name__ == "__main__":
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    wind_api = WindAPI()
+
+    try:
+        rclpy.spin(wind_api)
+    except KeyboardInterrupt:
+        pass
+
+    wind_api.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
     main()
+    
