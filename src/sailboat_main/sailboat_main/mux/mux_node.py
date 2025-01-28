@@ -6,8 +6,8 @@ class MuxNode(Node):
     def __init__(self):
         super().__init__('mux_node')
 
-        # Switch flag; default is true, changed by topic below
-        self.use_radio = True
+        # Switch flag; default is false, changed by topic below
+        self.use_radio = False
 
         # Mux topic for changing control_mode topic
         self.control_mode_sub = self.create_subscription(
