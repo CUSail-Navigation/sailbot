@@ -1,5 +1,6 @@
 let ros;
 let controlModeTopic;
+let waypointTopic;
 
 console.log("script.js loaded successfully");
 
@@ -21,20 +22,20 @@ function initMap() {
     });
 
     sailPlanCoordinates = [];
-        sailPath = new google.maps.Polyline({
+    sailPath = new google.maps.Polyline({
         path: sailPlanCoordinates,
         geodesic: true,
         strokeColor: "#FF0000",
         strokeOpacity: 1.0,
         strokeWeight: 2,
-      });
-    
-      sailPath.setMap(map);
+    });
+
+    sailPath.setMap(map);
 };
 window.initMap = initMap;
 
 function updateTrail(latitude, longitude) {
-    sailPlanCoordinates.push({lat: latitude, lng: longitude});
+    sailPlanCoordinates.push({ lat: latitude, lng: longitude });
     sailPath.setPath(sailPlanCoordinates);
     sailPath.setMap(map);
 
@@ -141,6 +142,8 @@ function quaternionToHeading(x, y, z, w) {
     return (headingDegrees + 360) % 360;
 }
 
+let waypointService;
+
 function subscribeToTopics() {
     // Helper function to update DOM element with topic data
     function updateValue(elementId, value) {
@@ -241,16 +244,25 @@ function subscribeToTopics() {
     actualSailAngleTopic.subscribe(function (message) {
         updateValue('actual-sail-angle-value', message.data);
     });
+    waypointService = new ROSLIB.Service({
+        ros: ros,
+        name: '/sailbot/mutate_waypoint_queue',
+        serviceType: 'sailboat_interface/srv/Waypoint'
+    });
 }
+// Connect to ROS when the page loads
+window.onload = function () {
+    connectToROS();
+};
 document.getElementById('submit-waypoint').addEventListener('click', function () {
     const latitude = document.getElementById('latitude').value;
     const longitude = document.getElementById('longitude').value;
 
     if (latitude && longitude) {
         // Create a waypoint string for storage
-        const waypoint = `${latitude}, ${longitude}`;
+        const waypoint = `${latitude},${longitude}`;
+        waypoints.push(waypoint)
         addWaypointToQueue(waypoint); // Send the waypoint to ROS
-        waypoints.push(waypoint); // Add to local waypoints array
         displayWaypoints(); // Update the waypoint list in the UI
 
         // Parse latitude and longitude to create a LatLng object
@@ -263,7 +275,7 @@ document.getElementById('submit-waypoint').addEventListener('click', function ()
         const marker = new google.maps.Marker({
             position: latLng,
             map: map,
-            title: `Waypoint (${latitude}, ${longitude})`,
+            title: `Waypoint (${latitude},${longitude})`,
         });
 
         waypointMarkers[waypoint] = marker;
@@ -273,20 +285,24 @@ document.getElementById('submit-waypoint').addEventListener('click', function ()
         // Alert the user if inputs are missing
         alert('Please enter both latitude and longitude.');
     }
-
-    getWaypointQueue()
-    getWaypoints(); // Fetch most recent waypoint from ROS
 });
 function addWaypointToQueue(waypoint) {
-    const ros = new ROSLIB.Ros({ url: 'ws://localhost:9090' });
-    const waypointQueueTopic = new ROSLIB.Topic({
-        ros: ros,
-        name: 'sailbot/waypoint_queue',
-        messageType: 'std_msgs/String'
+    const waypointsString = waypoints.join(';');
+
+    const request = new ROSLIB.ServiceRequest({
+        command: "set",
+        argument: waypointsString
     });
-    const waypointMessage = new ROSLIB.Message({ data: waypoint });
-    waypointQueueTopic.publish(waypointMessage);
-    console.log(`Published waypoint: ${waypoint}`);
+
+    waypointService.callService(request, function (result) {
+        if (result.success) {
+            console.log(result.message);
+        } else {
+            console.error(result.message);
+        }
+    });
+
+    getWaypointQueue();
 }
 function displayWaypoints() {
     const waypointListElement = document.getElementById('waypoint-list');
@@ -326,59 +342,49 @@ function deleteWaypoint(index) {
     // Remove the waypoint from the array
     waypoints.splice(index, 1);
 
+    let request;
+
+    if (waypoints.length === 0) {
+        request = new ROSLIB.ServiceRequest({
+            command: "pop",
+            argument: ""
+        })
+    }
+    else {
+        const waypointsString = waypoints.length > 0 ? waypoints.join(';') : '';
+
+        request = new ROSLIB.ServiceRequest({
+            command: "set",
+            argument: waypointsString
+        });
+    }
+
+    waypointService.callService(request, function (result) {
+        if (result.success) {
+            console.log(result.message);
+        } else {
+            console.error(result.message);
+        }
+    });
+
     // Update the display
+    getWaypointQueue();
     displayWaypoints();
 }
-function getWaypoints() {
-    const ros = new ROSLIB.Ros({ url: 'ws://localhost:9090' }); ros.on('connection', function () {
-        console.log('Connected to websocket server.');
-    });
-    const getWaypointClient = new ROSLIB.Service({
-        ros: ros,
-        name: '/sailbot/get_waypoint',
-        serviceType: 'sailboat_interface/srv/Waypoint'
-    });
-    const request = new ROSLIB.ServiceRequest();
-    getWaypointClient.callService(request, function (result) {
-        if (result.success) {
-            console.log(`Latest waypoint: Latitude ${result.waypoint.latitude}, Longitude ${result.waypoint.longitude}`);
-        } else { console.log('No Waypoints in List'); }
-    });
-}
 function getWaypointQueue() {
-    const ros = new ROSLIB.Ros({ url: 'ws://localhost:9090' });
-    ros.on('connection', function () {
-        console.log('Connected to websocket server. getWaypointQueue()');
+    const getRequest = new ROSLIB.ServiceRequest({
+        command: "get",
+        argument: ""
     });
 
-    const getWaypointClient = new ROSLIB.Service({
-        ros: ros,
-        name: '/sailbot/get_waypoint_queue',
-        serviceType: 'sailboat_interface/srv/WaypointQueue'
-    });
-
-    const request = new ROSLIB.ServiceRequest();
-
-    getWaypointClient.callService(request, function (result) {
-        if (result.success) {
-            if (Array.isArray(result.waypoints) && result.waypoints.length > 0) {
-                console.log('Waypoint Queue:');
-                result.waypoints.forEach((waypoint, index) => {
-                    console.log(`Waypoint ${index + 1}: Latitude ${waypoint.latitude}, Longitude ${waypoint.longitude}`);
-                });
-            } else {
-                console.log('No waypoints in the queue or invalid waypoints data.');
-            }
+    waypointService.callService(getRequest, function (getResult) {
+        if (getResult.success) {
+            console.log("Current ROS waypoint queue:", getResult.message);
         } else {
-            console.log('Failed to retrieve waypoints.');
+            console.error("Failed to fetch waypoint queue:", getResult.message);
         }
     });
 }
-// Connect to ROS when the page loads
-window.onload = function () {
-    connectToROS();
-};
-
 // Function to toggle dropdown visibility
 function toggleDropdown() {
     const dropdownContent = document.getElementById("dropdown-content");
