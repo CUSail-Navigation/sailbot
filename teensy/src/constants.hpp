@@ -29,4 +29,8 @@ namespace constants
 
         constexpr uint32_t BAUD_RATE = 9600;
     }
+    namespace led
+    {
+        constexpr uint8_t LED_PIN = 13;
+    }
 }
