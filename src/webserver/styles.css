@@ -152,11 +152,11 @@ button {
 
 #sailboat-angle-dashboard {
     display: flex;
-    justify-content: space-around;
+    justify-content: space-evenly;
     align-items: center;
 }
 
-#dial {
+.dial {
     text-align: center;
     margin: 10px; 
 }

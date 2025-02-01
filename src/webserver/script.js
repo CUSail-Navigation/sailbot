@@ -110,6 +110,7 @@ function parseQuaternionData(message) {
     formattedHeading = heading.toFixed(6);
 
     document.getElementById('heading-value').innerText = formattedHeading;
+    updateHeadAngle(formattedHeading, 'heading-value-dial')
 }
 
 function parseAngularVelocityData(message) {
@@ -565,6 +566,73 @@ function updateTailAngle(angle, id) {
     // Update Needle
     const angleRadians = (angle - 90) * (Math.PI / 180); // Convert degrees to radians and rotate to align with dial
     needleT.transition()
+        .duration(500) // Smooth transition
+        .attr("transform", `rotate(${angle - 90})`);
+
+    // Update Text Display
+    document.getElementById(id).innerText = "Angle: " + angle;
+}
+
+
+// // Code for Heading dial Configuration
+const widthH = 150;
+const heightH = 150;
+const radiusH = Math.min(width, height) / 2;
+const needleLengthH = radius * 0.9;
+
+// Create SVG Container
+const svgH = d3
+    .select("#dial-container-head")
+    .append("svg")
+    .attr("width", widthT)
+    .attr("height", heightT)
+    .append("g")
+    .attr("transform", `translate(${widthH / 2}, ${heightH / 2})`);
+
+// Draw Background Circle
+svgH.append("circle")
+    .attr("r", radiusH)
+    .attr("fill", "lightgray")
+    .attr("stroke", "black")
+    .attr("stroke-width", 2);
+
+// Add Tick Marks (for better visualization)
+const numTicksH = 36; // Tick marks every 10 degrees
+const tickLengthH = 10;
+for (let i = 0; i < numTicksH; i++) {
+    const angleH = (i / numTicksH) * 2 * Math.PI; // Convert to radians
+    const x1 = Math.cos(angleH) * (radiusH - tickLengthH);
+    const y1 = Math.sin(angleH) * (radiusH - tickLengthH);
+    const x2 = Math.cos(angleH) * radiusH;
+    const y2 = Math.sin(angleH) * radiusH;
+
+    svgH.append("line")
+        .attr("x1", x1)
+        .attr("y1", y1)
+        .attr("x2", x2)
+        .attr("y2", y2)
+        .attr("stroke", "black")
+        .attr("stroke-width", i % 3 === 0 ? 2 : 1); // Longer ticks every 30 degrees
+}
+
+// Create the Needle
+const needleH = svgH
+    .append("line")
+    .attr("x1", 0)
+    .attr("y1", 0)
+    .attr("x2", 0)
+    .attr("y2", -needleLengthH)
+    .attr("stroke", "red")
+    .attr("stroke-width", 3)
+    .attr("stroke-linecap", "round");
+
+// Add a Center Circle
+svgH.append("circle").attr("r", 5).attr("fill", "black");
+
+function updateHeadAngle(angle, id) {
+    // Update Needle
+    const angleRadians = (angle - 90) * (Math.PI / 180); // Convert degrees to radians and rotate to align with dial
+    needleH.transition()
         .duration(500) // Smooth transition
         .attr("transform", `rotate(${angle - 90})`);
 
