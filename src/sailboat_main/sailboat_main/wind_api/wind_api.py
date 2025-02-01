@@ -15,21 +15,18 @@ class WindAPI(Node):
         # self.timer = self.create_timer(3, self.publish_path)
         self.publish_path()
 
-    def find_path(self, top_left, bot_right):
+    def find_route(self, top_left, bot_right, src, dest):
         big_lats, big_longs, big_num_rows, big_num_cols = make_coords(top_left, bot_right)
         response_coords, wind_vectors = get_wind(big_lats, big_longs)
         lats, longs, num_rows, num_cols = make_coords(top_left, bot_right, 0.01)
-        wind_matrix = match_coords(zip(lats, longs), response_coords, wind_vectors)
-        wind_matrix = np.array(wind_matrix).reshape(num_rows, num_cols, 2)
-        final_coords = find_path(wind_matrix, num_rows, num_cols, [0, 0], [3, 0])
-        print()
-        print()
-        print(final_coords)
-        # final_coords = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
+        wind_matrix, coords_matrix = match_coords(lats, longs, response_coords, wind_vectors, num_rows, num_cols)
+        points = match_points(lats, longs, [src, dest], num_rows, num_cols)
+        final_coords = find_path(wind_matrix, coords_matrix, num_rows, num_cols, points[0], points[1])
+
         return final_coords
     
     def publish_path(self):
-        coords = self.find_path((0, 0), (.0008, .0008))
+        coords = self.find_route((0.0008, 0), (0, .0008), [0.0008, 0], [0, 0])
         wind_api_msg = Float64MultiArray()
         wind_api_msg.data = coords
         self.wind_api_pub.publish(wind_api_msg)
@@ -75,32 +72,6 @@ def get_wind(lats, longs):
 
     return response_coords, wind_vectors
 
-# def get_wind_direction(lats, longs):
-#     openmeteo = openmeteo_requests.Client()
-
-#     response_coords = []
-#     wind_vectors = []
-
-#     url = "https://api.open-meteo.com/v1/forecast"
-#     params = {
-#         "latitude": lats,
-#         "longitude": longs,
-#         "current": ["wind_speed_10m", "wind_direction_10m"],
-#         "cell_selection": "nearest"
-#     }
-#     responses = openmeteo.weather_api(url, params=params)
-
-#     for response in responses:
-#         current = response.Current()
-#         current_wind_speed_10m = current.Variables(0).Value()
-#         current_wind_direction_10m = current.Variables(1).Value()
-#         if (response.Latitude(), response.Longitude()) not in response_coords:
-#             wind_vectors.append(current_wind_direction_10m)
-#             response_coords.append((response.Latitude(), response.Longitude()))
-
-    return response_coords, wind_vectors
-
-
 def to_cartesian(latlongs, offset):
     radius = 6371
 
@@ -113,16 +84,37 @@ def to_cartesian(latlongs, offset):
 
     return list(zip(x_coords, y_coords))
 
-def match_coords(matrix_coords, response_coords, response_vectors):
+def match_coords(lats, longs, response_coords, response_vectors, num_rows, num_cols):
+    matrix_coords = zip(lats, longs)
+
     vectors = []
+    matrix_coords_list = []
     tree = cKDTree(response_coords)
 
     for matrix_coord in matrix_coords:
+        matrix_coords_list.append(matrix_coord)
         dist, i = tree.query(matrix_coord)
         vectors.append(response_vectors[i])
     
-    return vectors
-def find_path(wind_matrix, num_rows, num_cols, src, dest):
+    coords_matrix = np.array(matrix_coords_list).reshape(num_rows, num_cols, 2)
+    wind_matrix = np.array(vectors).reshape(num_rows, num_cols, 2)
+    
+    
+    return wind_matrix, coords_matrix
+
+def match_points(lats, longs, points, num_rows, num_cols):
+    new_points = []
+
+    tree = cKDTree(list(zip(lats, longs)))
+    for point in points:
+        dist, i = tree.query(point)
+        final_index = [i // num_rows, i % num_cols]
+        new_points.append(final_index)
+    
+    return new_points
+
+
+def find_path(wind_matrix, coords_matrix, num_rows, num_cols, src, dest):
     # Define the Cell class
     class Cell:
         def __init__(self):
@@ -140,8 +132,8 @@ def find_path(wind_matrix, num_rows, num_cols, src, dest):
     # Define the size of the grid
     ROW = num_rows
     COL = num_cols
-    print("number of rows: ",ROW)
-    print("number of columns: ",COL)
+    # print("number of rows: ",ROW)
+    # print("number of columns: ",COL)
 
 
     # Check if a cell is valid (within the grid)
@@ -183,12 +175,12 @@ def find_path(wind_matrix, num_rows, num_cols, src, dest):
         path.reverse()
 
         for i in path:
-            templat = i[0] * 180 / math.pi / 6378
-            templong = i[1] * 180 / math.pi / 6378 / math.cos(math.radians(templat))
+            # templat = i[0] * 180 / math.pi / 6378
+            # templong = i[1] * 180 / math.pi / 6378 / math.cos(math.radians(templat))
+            templat = coords_matrix[i[0]][i[1]][0]
+            templong = coords_matrix[i[0]][i[1]][1]
             path_coords.append(templat)
             path_coords.append(templong)
-            print(f"{templat},{templong}", end=" ")
-        print()
 
         for i in path:
             print("->", i, end=" ")
@@ -339,9 +331,9 @@ def find_path(wind_matrix, num_rows, num_cols, src, dest):
                         grid[new_row][new_col] = 1  # unblocked
                     else:
                         grid[new_row][new_col] = 0  # blocked
-        for i in range (0, num_rows):
-            print(grid[i])
-        print()
+        # for i in range (0, num_rows):
+        #     print(grid[i])
+        # print()
         return grid 
 
     # Driver Code
