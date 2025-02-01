@@ -7,6 +7,7 @@
     <title>Sailbot Status Dashboard</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 
 <body>
@@ -125,10 +126,15 @@
                     </div>
                 </div>
             </div>
+            <div id="sailboat-angle-dashboard">
+                <h3>Actual Sail Angle</h3>
+                <div id="dial-container"></div>
+                <p id="actual-sail-angle-value">Angle: 0°</p>
+            </div>            
         </div>
     </div>
     <script src="script.js"></script>
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=&callback=initMap">
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=key&callback=initMap">
     </script>
 </body>
 

@@ -243,6 +243,12 @@ function subscribeToTopics() {
     })
     actualSailAngleTopic.subscribe(function (message) {
         updateValue('actual-sail-angle-value', message.data);
+        updateSailboatAngle(message.data);
+    });
+    waypointService = new ROSLIB.Service({
+        ros: ros,
+        name: '/sailbot/mutate_waypoint_queue',
+        serviceType: 'sailboat_interface/srv/Waypoint'
     });
     waypointService = new ROSLIB.Service({
         ros: ros,
@@ -429,4 +435,74 @@ function conditionalRender() {
         rcVals.forEach(el => el.style.display = "flex");
     }
 }
+
+
+// // Code for dial Configuration
+const width = 200;
+const height = 200;
+const radius = Math.min(width, height) / 2;
+const needleLength = radius * 0.9;
+
+// Create SVG Container
+const svg = d3
+    .select("#dial-container")
+    .append("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .append("g")
+    .attr("transform", `translate(${width / 2}, ${height / 2})`);
+
+// Draw Background Circle
+svg.append("circle")
+    .attr("r", radius)
+    .attr("fill", "lightgray")
+    .attr("stroke", "black")
+    .attr("stroke-width", 2);
+
+// Add Tick Marks (for better visualization)
+const numTicks = 36; // Tick marks every 10 degrees
+const tickLength = 10;
+for (let i = 0; i < numTicks; i++) {
+    const angle = (i / numTicks) * 2 * Math.PI; // Convert to radians
+    const x1 = Math.cos(angle) * (radius - tickLength);
+    const y1 = Math.sin(angle) * (radius - tickLength);
+    const x2 = Math.cos(angle) * radius;
+    const y2 = Math.sin(angle) * radius;
+
+    svg.append("line")
+        .attr("x1", x1)
+        .attr("y1", y1)
+        .attr("x2", x2)
+        .attr("y2", y2)
+        .attr("stroke", "black")
+        .attr("stroke-width", i % 3 === 0 ? 2 : 1); // Longer ticks every 30 degrees
+}
+
+// Create the Needle
+const needle = svg
+    .append("line")
+    .attr("x1", 0)
+    .attr("y1", 0)
+    .attr("x2", 0)
+    .attr("y2", -needleLength)
+    .attr("stroke", "red")
+    .attr("stroke-width", 3)
+    .attr("stroke-linecap", "round");
+
+// Add a Center Circle
+svg.append("circle").attr("r", 5).attr("fill", "black");
+
+// Update Function for the Dial
+function updateSailboatAngle(angle) {
+    // Update Needle
+    const angleRadians = (angle - 90) * (Math.PI / 180); // Convert degrees to radians and rotate to align with dial
+    needle.transition()
+        .duration(500) // Smooth transition
+        .attr("transform", `rotate(${angle - 90})`);
+
+    console.log('Angle:' + angle);
+    // Update Text Display
+    d3.select("#actual-sail-angle-value").text(`Angle: ${angle.toFixed(3)}°`);
+}
+
 
