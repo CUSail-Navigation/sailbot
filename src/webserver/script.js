@@ -90,7 +90,7 @@ function parseGpsData(message) {
 
     // Optionally center the map on the sailboat
     map.setCenter(sailboatLocation);
-    map.setZoom(18);
+    map.setZoom(17);
 }
 
 
@@ -234,6 +234,7 @@ function subscribeToTopics() {
     })
     actualRudderAngleTopic.subscribe(function (message) {
         updateValue('actual-tail-angle-value', message.data);
+        updateTailAngle(message.data, "actual-tail-angle-dial");
     });
 
     const actualSailAngleTopic = new ROSLIB.Topic({
@@ -243,7 +244,7 @@ function subscribeToTopics() {
     })
     actualSailAngleTopic.subscribe(function (message) {
         updateValue('actual-sail-angle-value', message.data);
-        updateSailboatAngle(message.data);
+        updateSailAngle(message.data, "actual-sail-angle-dial");
     });
     waypointService = new ROSLIB.Service({
         ros: ros,
@@ -438,14 +439,14 @@ function conditionalRender() {
 
 
 // // Code for dial Configuration
-const width = 200;
-const height = 200;
+const width = 150;
+const height = 150;
 const radius = Math.min(width, height) / 2;
 const needleLength = radius * 0.9;
 
 // Create SVG Container
 const svg = d3
-    .select("#dial-container")
+    .select("#dial-container-sail")
     .append("svg")
     .attr("width", width)
     .attr("height", height)
@@ -493,16 +494,80 @@ const needle = svg
 svg.append("circle").attr("r", 5).attr("fill", "black");
 
 // Update Function for the Dial
-function updateSailboatAngle(angle) {
+function updateSailAngle(angle, id) {
     // Update Needle
     const angleRadians = (angle - 90) * (Math.PI / 180); // Convert degrees to radians and rotate to align with dial
     needle.transition()
         .duration(500) // Smooth transition
         .attr("transform", `rotate(${angle - 90})`);
 
-    console.log('Angle:' + angle);
     // Update Text Display
-    d3.select("#actual-sail-angle-value").text(`Angle: ${angle.toFixed(3)}°`);
+    document.getElementById(id).innerText = "Angle: " + angle;
 }
 
 
+// // Code for Tail dial Configuration
+const widthT = 150;
+const heightT = 150;
+const radiusT = Math.min(width, height) / 2;
+const needleLengthT = radius * 0.9;
+
+// Create SVG Container
+const svgT = d3
+    .select("#dial-container-tail")
+    .append("svg")
+    .attr("width", widthT)
+    .attr("height", heightT)
+    .append("g")
+    .attr("transform", `translate(${widthT / 2}, ${heightT / 2})`);
+
+// Draw Background Circle
+svgT.append("circle")
+    .attr("r", radiusT)
+    .attr("fill", "lightgray")
+    .attr("stroke", "black")
+    .attr("stroke-width", 2);
+
+// Add Tick Marks (for better visualization)
+const numTicksT = 36; // Tick marks every 10 degrees
+const tickLengthT = 10;
+for (let i = 0; i < numTicksT; i++) {
+    const angleT = (i / numTicksT) * 2 * Math.PI; // Convert to radians
+    const x1 = Math.cos(angleT) * (radiusT - tickLengthT);
+    const y1 = Math.sin(angleT) * (radiusT - tickLengthT);
+    const x2 = Math.cos(angleT) * radiusT;
+    const y2 = Math.sin(angleT) * radiusT;
+
+    svgT.append("line")
+        .attr("x1", x1)
+        .attr("y1", y1)
+        .attr("x2", x2)
+        .attr("y2", y2)
+        .attr("stroke", "black")
+        .attr("stroke-width", i % 3 === 0 ? 2 : 1); // Longer ticks every 30 degrees
+}
+
+// Create the Needle
+const needleT = svgT
+    .append("line")
+    .attr("x1", 0)
+    .attr("y1", 0)
+    .attr("x2", 0)
+    .attr("y2", -needleLengthT)
+    .attr("stroke", "red")
+    .attr("stroke-width", 3)
+    .attr("stroke-linecap", "round");
+
+// Add a Center Circle
+svgT.append("circle").attr("r", 5).attr("fill", "black");
+
+function updateTailAngle(angle, id) {
+    // Update Needle
+    const angleRadians = (angle - 90) * (Math.PI / 180); // Convert degrees to radians and rotate to align with dial
+    needleT.transition()
+        .duration(500) // Smooth transition
+        .attr("transform", `rotate(${angle - 90})`);
+
+    // Update Text Display
+    document.getElementById(id).innerText = "Angle: " + angle;
+}

@@ -149,3 +149,14 @@ button {
     text-decoration: none;
     display: block;
 }
+
+#sailboat-angle-dashboard {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+#dial {
+    text-align: center;
+    margin: 10px; 
+}
