@@ -138,7 +138,7 @@ RUN pip3 install -r /home/ros2_user/ros2_ws/requirements.txt
 
 # Install RosBridge and other WebDev Packages
 RUN sudo apt update \
-&& sudo apt install curl \ 
+&& sudo apt -y install curl \ 
 && sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo tee /usr/share/keyrings/ros-archive-keyring.gpg > /dev/null \ 
 && echo "deb [signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null \ 
 && sudo apt-get -y install ros-humble-rosbridge-server
