@@ -8,6 +8,7 @@ let waypoints = []; // Global array for storing waypoints
 const waypointMarkers = {}; // Global dictionary for waypoint markers
 let map; // Global variable for the map instance
 let sailboatMarker; // Global variable for the sailboat marker
+
 let sailPlanCoordinates; // Global variable for sailboat path coordinates
 let sailPath; // Global variable for the sailboat trail
 
@@ -319,6 +320,8 @@ function displayWaypoints() {
     waypoints.forEach((waypoint, index) => {
         const waypointElement = document.createElement('div');
         waypointElement.classList.add('waypoint-item');
+        waypointElement.setAttribute('draggable', true);
+        waypointElement.setAttribute('data-index', index);
 
         // Create the text for the waypoint
         const waypointText = document.createElement('span');
@@ -334,8 +337,63 @@ function displayWaypoints() {
         });
         waypointElement.appendChild(deleteButton);
 
+        waypointElement.addEventListener('dragstart', handleDragStart);
+        waypointElement.addEventListener('dragover', handleDragOver);
+        waypointElement.addEventListener('drop', handleDrop);
+        waypointElement.addEventListener('dragend', handleDragEnd);
+
         waypointListElement.appendChild(waypointElement);
     });
+}
+
+let draggedIndex = null;
+let draggedElement = null;
+
+function handleDragStart(event) {
+    draggedIndex = parseInt(event.target.getAttribute('data-index'));
+    draggedElement = event.target;
+    event.dataTransfer.effectAllowed = 'move';
+    event.target.classList.add('dragging');
+}
+function handleDragOver(event) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+}
+function handleDrop(event) {
+    event.preventDefault();
+    const targetElement = event.target.closest('.waypoint-item');
+    if (!targetElement) return;
+    const targetIndex = parseInt(targetElement.getAttribute('data-index'));
+
+    if (draggedIndex !== null && targetIndex !== null && draggedIndex !== targetIndex) {
+        const movedItem = waypoints[draggedIndex];
+        waypoints.splice(draggedIndex, 1);
+        waypoints.splice(targetIndex, 0, movedItem);
+        displayWaypoints();
+    }
+}
+function handleDragEnd(event) {
+    if (draggedElement) {
+        draggedElement.classList.remove('dragging');
+    }
+    draggedElement = null;
+    draggedIndex = null;
+    const waypointsString = waypoints.join(';');
+
+    const request = new ROSLIB.ServiceRequest({
+        command: "set",
+        argument: waypointsString
+    });
+
+    waypointService.callService(request, function (result) {
+        if (result.success) {
+            console.log(result.message);
+        } else {
+            console.error(result.message);
+        }
+    });
+
+    getWaypointQueue()
 }
 function deleteWaypoint(index) {
     // Remove the waypoint from the local array
@@ -440,10 +498,10 @@ function conditionalRender() {
 
 
 // // Code for dial Configuration
-const width = 150;
-const height = 150;
+const width = 90;
+const height = 90;
 const radius = Math.min(width, height) / 2;
-const needleLength = radius * 0.9;
+const needleLength = radius * 0.7;
 
 // Create SVG Container
 const svg = d3
@@ -508,10 +566,10 @@ function updateSailAngle(angle, id) {
 
 
 // // Code for Tail dial Configuration
-const widthT = 150;
-const heightT = 150;
+const widthT = 90;
+const heightT = 90;
 const radiusT = Math.min(width, height) / 2;
-const needleLengthT = radius * 0.9;
+const needleLengthT = radius * 0.7;
 
 // Create SVG Container
 const svgT = d3
@@ -575,10 +633,10 @@ function updateTailAngle(angle, id) {
 
 
 // // Code for Heading dial Configuration
-const widthH = 150;
-const heightH = 150;
+const widthH = 90;
+const heightH = 90;
 const radiusH = Math.min(width, height) / 2;
-const needleLengthH = radius * 0.9;
+const needleLengthH = radius * 0.7;
 
 // Create SVG Container
 const svgH = d3
