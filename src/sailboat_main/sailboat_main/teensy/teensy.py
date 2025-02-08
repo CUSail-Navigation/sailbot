@@ -50,25 +50,26 @@ class TeensyHardware:
             return 1
     
 
+
     def _parse_packet(self, packet):
         """
         Parse a packet from the Teensy.
         :param packet: Packet from the Teensy
         """
-        wind_angle = packet[0]
+        wind_angle = (packet[0] << 8) | packet[1]
 
-        # uint8_t to int8_t conversion
-        if packet[1] >= 128:
-            sail_angle = packet[1] - 256
-        else:
-            sail_angle = packet[1]
         # uint8_t to int8_t conversion
         if packet[2] >= 128:
-            rudder_angle = packet[2] - 256
+            sail_angle = packet[2] - 256
         else:
-            rudder_angle = packet[2]
+            sail_angle = packet[2]
+        # uint8_t to int8_t conversion
+        if packet[3] >= 128:
+            rudder_angle = packet[3] - 256
+        else:
+            rudder_angle = packet[3]
 
-        dropped_packets = packet[3]
+        dropped_packets = packet[4]
 
         return wind_angle, sail_angle, rudder_angle, dropped_packets
 
