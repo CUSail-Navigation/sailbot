@@ -8,8 +8,7 @@ let waypoints = []; // Global array for storing waypoints
 const waypointMarkers = {}; // Global dictionary for waypoint markers
 let map; // Global variable for the map instance
 let sailboatMarker; // Global variable for the sailboat marker
-
-let sailPlanCoordinates; // Global variable for sailboat path coordinates
+let sailPlanCoordinates = []; // Global variable for sailboat path coordinates
 let sailPath; // Global variable for the sailboat trail
 
 // Initialize the Google Map
@@ -22,7 +21,6 @@ function initMap() {
         zoom: 2, // Set an initial zoom level
     });
 
-    sailPlanCoordinates = [];
     sailPath = new google.maps.Polyline({
         path: sailPlanCoordinates,
         geodesic: true,
@@ -36,10 +34,18 @@ function initMap() {
 window.initMap = initMap;
 
 function updateTrail(latitude, longitude) {
-    sailPlanCoordinates.push({ lat: latitude, lng: longitude });
-    sailPath.setPath(sailPlanCoordinates);
-    sailPath.setMap(map);
-
+    const timestamp = Date.now();
+    sailPlanCoordinates.push({ lat: latitude, lng: longitude, timestamp });
+    
+    // Filter out points older than 60 seconds
+    const oneMinuteAgo = Date.now() - 60000;
+    sailPlanCoordinates = sailPlanCoordinates.filter(coord => coord.timestamp >= oneMinuteAgo);
+    
+    // Map the coordinates for the polyline (only lat & lng)
+    const currentPath = sailPlanCoordinates.map(coord => ({ lat: coord.lat, lng: coord.lng }));
+    
+    // Update the polyline with the filtered, current path
+    sailPath.setPath(currentPath);
 }
 
 function connectToROS() {
