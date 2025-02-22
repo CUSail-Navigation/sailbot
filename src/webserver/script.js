@@ -10,6 +10,8 @@ let map; // Global variable for the map instance
 let sailboatMarker; // Global variable for the sailboat marker
 let sailPlanCoordinates = []; // Global variable for sailboat path coordinates
 let sailPath; // Global variable for the sailboat trail
+let waypointPath; // Global variable for waypoint trail
+let waypointPlanCoordinates = []; // Global variable for waypoint path coordinates
 
 // Initialize the Google Map
 function initMap() {
@@ -29,7 +31,18 @@ function initMap() {
         strokeWeight: 2,
     });
 
+    waypointPath = new google.maps.Polyline({
+        path: waypointPlanCoordinates,
+        geodesic: true,
+        strokeColor: "#FF0000",
+        strokeOpacity: 1.0,
+        strokeWeight: 2,
+    });
+
+    waypointPath.setOptions({ strokeColor: "#911084" });
+
     sailPath.setMap(map);
+    waypointPath.setMap(map);
 };
 window.initMap = initMap;
 
@@ -97,7 +110,7 @@ function parseGpsData(message) {
 
     // Optionally center the map on the sailboat
     map.setCenter(sailboatLocation);
-    map.setZoom(17);
+    // map.setZoom(17);
 }
 
 
@@ -294,6 +307,9 @@ document.getElementById('submit-waypoint').addEventListener('click', function ()
         });
 
         waypointMarkers[waypoint] = marker;
+        waypointPlanCoordinates.push(latLng);
+
+        waypointPath.setPath(waypointPlanCoordinates);
 
         console.log(`Waypoint added: ${waypoint}`);
     } else {
