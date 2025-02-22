@@ -4,7 +4,7 @@ from rclpy.node import Node
 
 from sensor_msgs.msg import NavSatFix, Imu
 from geometry_msgs.msg import Quaternion
-from . import vectornav
+from . import vectornav_real
 from . import vectornav_fake
 
 class VectorNav(Node):
@@ -15,8 +15,8 @@ class VectorNav(Node):
         self.declare_parameter('timer_period', 0.5)
         self.timer_period = self.get_parameter('timer_period').value
 
-        self.declare_parameter('vectornav_port', '') # FIXME: Add a better default port
-        self.airmar_port = self.get_parameter('vectornav_port').value
+        self.declare_parameter('vectornav_port', '/dev/ttyUSB0') # FIXME: Add a better default port
+        self.vectornav_port = self.get_parameter('vectornav_port').value
 
         self.declare_parameter('use_fake_data', False)
         self.use_fake_data = self.get_parameter('use_fake_data').value
@@ -30,8 +30,8 @@ class VectorNav(Node):
             self.vectornav = vectornav_fake.FakeVectorNav()
             self.get_logger().info('Using fake data for Vectornav')
         else:
-            self.vectornav = vectornav.SailVectorNav(self.vectornav)
-            self.get_logger().info('Launching Airmar with real data')
+            self.vectornav = vectornav_real.SailVectorNav(self.vectornav_port)
+            self.get_logger().info('Launching Vectornav with real data')
 
     def getYaw(self):
         return self.vectornav.readVectorNavYaw()
@@ -66,12 +66,10 @@ class VectorNav(Node):
         quaternion.w = qw
         imu_msg.orientation = quaternion
 
-        imu_msg.angular_velocity.z = self.airmar.readAirMarROT()
         self.publisher_imu.publish(imu_msg)
 
         self.get_logger().info('Publishing GPS Data: ' + 'Lat: ' + str(nav_sat_msg.latitude) + ' Long: ' + str(nav_sat_msg.longitude))
-        self.get_logger().info(f'Publishing IMU Data: Orientation = ({qx}, {qy}, {qz}, {qw}), Angular Velocity (Z) = {imu_msg.angular_velocity.z}' )
-
+        self.get_logger().info(f'Publishing IMU Data: Orientation = ({qx}, {qy}, {qz}, {qw})')
 
     def euler_to_quaternion(self, yaw, pitch, roll):
         """
