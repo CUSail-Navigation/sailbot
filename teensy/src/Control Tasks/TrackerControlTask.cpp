@@ -20,8 +20,8 @@ void TrackerControlTask::execute()
             // actuate_servo(tracker_servo, angle_to_pwm(constants::servo::TRACKER_MIN_ANGLE));
         }
         {
-            actuate_servo(tracker_servo, read_servo(tracker_servo))
-            sfr::serial::buoy_angle = read_servo(tracker_servo)
+            actuate_servo(tracker_servo, read_servo(tracker_servo));
+            sfr::serial::buoy_angle = read_servo(tracker_servo);
         }
     }
 }
@@ -39,5 +39,5 @@ void TrackerControlTask::actuate_servo(Servo &servo, uint32_t pwm)
 
 uint8_t TrackerControlTask::read_servo(Servo &servo)
 {
-    return servo.read()
+    return servo.read();
 }

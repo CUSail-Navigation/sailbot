@@ -18,7 +18,7 @@ namespace sfr
         bool update_servos = false;
         int8_t buoy_displacement = 0;
         uint8_t dropped_packets = 0;
-        uint8_t buoy_angle = 0;
+        int8_t buoy_angle = 0;
 
         uint8_t buffer[2] = {0};
     }

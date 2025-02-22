@@ -12,8 +12,8 @@ public:
 
 private:
     uint32_t angle_to_pwm(uint8_t angle);
-    uint32_t actuate_servo(Servo &servo, uint32_t pwm);
-    uint8_t read_servo(Servo &servo)
+    void actuate_servo(Servo &servo, uint32_t pwm);
+    uint8_t read_servo(Servo &servo);
 
     Servo tracker_servo;
 };
