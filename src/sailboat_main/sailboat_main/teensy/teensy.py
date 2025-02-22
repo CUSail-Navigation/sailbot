@@ -79,6 +79,7 @@ class TeensyHardware:
 
         :param sail: Sail position (integer)
         :param tail: Tail position (integer)
+        :param buoy_displacement: Buoy displacement (integer)
         """
         try:
             # check bounds

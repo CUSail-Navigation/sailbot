@@ -9,15 +9,13 @@ void TrackerControlTask::execute()
 {
     if (sfr::serial::update_servos)
     {
-        if ( sfr::serial::buoy_displacement > 0)
+        if (sfr::serial::buoy_displacement > 0)
         {
             actuate_servo(tracker_servo, read_servo(tracker_servo) + 10);
-            // actuate_servo(tracker_servo, angle_to_pwm(constants::servo::TRACKER_MAX_ANGLE));
         }
         else if (sfr::serial::buoy_displacement < 0)
         {
             actuate_servo(tracker_servo, read_servo(tracker_servo) - 10);
-            // actuate_servo(tracker_servo, angle_to_pwm(constants::servo::TRACKER_MIN_ANGLE));
         }
         {
             actuate_servo(tracker_servo, read_servo(tracker_servo));
@@ -25,7 +23,6 @@ void TrackerControlTask::execute()
         }
     }
 }
-
 
 uint32_t TrackerControlTask::angle_to_pwm(uint8_t angle)
 {

@@ -29,5 +29,4 @@ void SerialControlTask::execute()
         send_telemetry = false;
     }
     current_time = millis();
-
 }
