@@ -2,6 +2,7 @@ import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Point
 from buoy_detection import BuoyDetectorCV
+from std_msgs.msg import Int32
 import cv2
 
 class BuoyDetectorNode(Node):
@@ -22,7 +23,7 @@ class BuoyDetectorNode(Node):
 
         self.detector = BuoyDetectorCV(hsv_lower, hsv_upper, detection_threshold)
 
-        self.position_publisher = self.create_publisher(Point, '/buoy_position', 10)
+        self.position_publisher = self.create_publisher(Int32, '/buoy_position', 10)
 
         # OpenCV video capture
         self.cap = cv2.VideoCapture(self.video_source)
@@ -35,19 +36,22 @@ class BuoyDetectorNode(Node):
         self.get_logger().info('Buoy Detector Node Initialized')
 
     def process_frame(self):
+
         """Process a single frame and publish the buoy position."""
         ret, frame = self.cap.read()
         if not ret:
             self.get_logger().error('Failed to read frame from video source')
             return
 
-        buoy_center, _ = self.detector.process_frame(frame)
+        direction, _ = self.detector.process_frame(frame)
 
-        if buoy_center:
-            point_msg = Point()
-            point_msg.x, point_msg.y, point_msg.z = buoy_center[0], buoy_center[1], 0.0
-            self.position_publisher.publish(point_msg)
-            self.get_logger().info(f'Detected buoy at: {buoy_center}')
+        if direction is not None:
+            self.position_publisher.publish(direction)
+            self.get_logger().info(f'Detected buoy at: {direction}')
+            # point_msg = Point()
+            # point_msg.x, point_msg.y, point_msg.z = buoy_center[0], buoy_center[1], 0.0
+            # self.position_publisher.publish(point_msg)
+            # self.get_logger().info(f'Detected buoy at: {buoy_center}')
 
     def update_detector_parameters(self):
         """Update the CV detector parameters dynamically."""

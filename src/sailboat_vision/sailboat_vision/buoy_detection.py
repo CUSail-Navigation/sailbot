@@ -7,6 +7,8 @@ class BuoyDetectorCV:
         self.hsv_lower = np.array(hsv_lower if hsv_lower else [0, 120, 180])
         self.hsv_upper = np.array(hsv_upper if hsv_upper else [10, 160, 255])
         self.detection_threshold = detection_threshold
+        CENTER = 0 # TODO: Actually find the center and margin of error
+        MARGIN = 100
 
     def update_parameters(self, hsv_lower=None, hsv_upper=None, detection_threshold=None):
         """Update parameters dynamically."""
@@ -51,6 +53,13 @@ class BuoyDetectorCV:
             largest_contour = max(contours, key=cv2.contourArea)
             if cv2.contourArea(largest_contour) > self.detection_threshold:
                 x, y, w, h = cv2.boundingRect(largest_contour)
-                buoy_center = (x + w // 2, y + h // 2)
-                return buoy_center, frame 
+                buoy_center = x + w // 2
+                direction = 0
+                if buoy_center > self.CENTER + self.MARGIN:
+                    direction = 1
+                elif buoy_center < self.CENTER - self.MARGIN:
+                    direction = -1
+                return direction, frame
+                # buoy_center = (x + w // 2, y + h // 2)
+                # return buoy_center, frame 
         return None, frame
