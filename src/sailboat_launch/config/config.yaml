@@ -12,3 +12,8 @@ sailbot: #Namespace
       ros__parameters:
          teensy_port: "/dev/ttyS8"
          simulated: false
+
+   vector:
+      ros__parameters:
+         vector_port: "/dev/ttyUSB0"
+         simulated: false
