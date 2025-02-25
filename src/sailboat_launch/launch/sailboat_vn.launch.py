@@ -53,13 +53,24 @@ def generate_launch_description():
       parameters=[config]
    )
 
-   waypoint_service_cmd = Node(
-      package='sailbot_events',
-      executable='waypoint_service',
-      name='waypoint_service',
-      namespace='sailbot',
-      parameters=[config]
-   )
+   # waypoint_service_cmd = Node(
+   #    package='sailbot_events',
+   #    executable='waypoint_service',
+   #    name='waypoint_service',
+   #    namespace='sailbot',
+   #    parameters=[config]
+   # )
+
+   rosbridge_node = Node(
+        package='rosbridge_server',
+        executable='rosbridge_websocket',
+        name='rosbridge_websocket',
+        output='screen',
+        parameters=[{
+            'port': 9090  # This is the default WebSocket port for rosbridge
+        }]
+    )
+   
    ld = LaunchDescription()
 
    # Sensors
