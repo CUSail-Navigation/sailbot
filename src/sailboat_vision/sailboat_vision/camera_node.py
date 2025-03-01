@@ -1,3 +1,4 @@
+import math
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Point
@@ -14,6 +15,11 @@ class BuoyDetectorNode(Node):
         self.declare_parameter('hsv_upper', [10, 160, 255])
         self.declare_parameter('detection_threshold', 100)
         self.declare_parameter('timer_period', 0.1)  # Timer period for frame processing
+        
+        
+        self.CENTER = 300 # TODO: Actually find the center and margin of error
+        self.MARGIN = 30
+        self.angle = 0
 
         self.video_source = self.get_parameter('video_source').value
         hsv_lower = self.get_parameter('hsv_lower').value
@@ -23,6 +29,7 @@ class BuoyDetectorNode(Node):
 
         self.detector = BuoyDetectorCV(hsv_lower, hsv_upper, detection_threshold)
 
+        self.displacement_publisher = self.create_publisher(Int32, '/buoy_displacement', 10)
         self.position_publisher = self.create_publisher(Int32, '/buoy_position', 10)
 
         # OpenCV video capture
@@ -32,6 +39,12 @@ class BuoyDetectorNode(Node):
             raise RuntimeError(f'Cannot open video source {self.video_source}')
 
         self.timer = self.create_timer(self.timer_period, self.process_frame)
+
+        self.subscription = self.create_subscription(
+            Int32,
+            'buoy_angle',
+            self.buoy_angle_callback,
+            10)
 
         self.get_logger().info('Buoy Detector Node Initialized')
 
@@ -43,15 +56,27 @@ class BuoyDetectorNode(Node):
             self.get_logger().error('Failed to read frame from video source')
             return
 
-        direction, _ = self.detector.process_frame(frame)
+        buoy_center, _ = self.detector.process_frame(frame)
 
-        if direction is not None:
-            self.position_publisher.publish(direction)
-            self.get_logger().info(f'Detected buoy at: {direction}')
-            # point_msg = Point()
-            # point_msg.x, point_msg.y, point_msg.z = buoy_center[0], buoy_center[1], 0.0
-            # self.position_publisher.publish(point_msg)
-            # self.get_logger().info(f'Detected buoy at: {buoy_center}')
+        displacement = 0
+        if not buoy_center:
+            return
+        elif buoy_center[0] > self.CENTER + self.MARGIN:
+            displacement = 1
+        elif buoy_center[0] < self.CENTER - self.MARGIN:
+            displacement = -1
+        if displacement:
+            self.displacement_publisher.publish(displacement)
+            self.get_logger().info(f'Detected buoy displacement: {displacement}')
+        else:
+            point_msg = Point()
+            point_msg.x, point_msg.y = buoy_center[0], buoy_center[1]
+            point_msg.z = abs(point_msg.x - self.CENTER) / math. atan(self.angle)
+            self.position_publisher.publish(point_msg)
+            self.get_logger().info(f'Detected buoy at: ({point_msg.x, point_msg.y, point_msg.z})')
+    
+    def buoy_angle_callback(self, msg):
+        self.angle = abs(90 - msg.data)
 
     def update_detector_parameters(self):
         """Update the CV detector parameters dynamically."""
