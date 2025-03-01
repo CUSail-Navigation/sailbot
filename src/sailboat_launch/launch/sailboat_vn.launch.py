@@ -79,7 +79,9 @@ def generate_launch_description():
    ld.add_action(main_algo_cmd)
    ld.add_action(trim_sail_cmd)
    #ld.add_action(event_driver_cmd)
-   ld.add_action(waypoint_service_cmd)
+   #ld.add_action(waypoint_service_cmd)
    ld.add_action(mux_cmd)
    # ld.add_action(rosbridge_node)
+   ld.add_action(rosbridge_node)
+
    return ld
