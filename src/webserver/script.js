@@ -29,8 +29,8 @@ function initMap() {
 
     google.maps.event.addListener(map, "mousemove", function (event) {
         document.getElementById("mouse-pos").innerText =
-            `Mouse Latitude: ${event.latLng.lat().toFixed(2)}
-            Mouse Longitude: ${event.latLng.lng().toFixed(2)}`;
+            `Mouse Latitude: ${event.latLng.lat().toFixed(3)}
+            Mouse Longitude: ${event.latLng.lng().toFixed(3)}`;
     });
 
 
