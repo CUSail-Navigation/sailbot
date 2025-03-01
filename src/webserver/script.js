@@ -23,6 +23,14 @@ function initMap() {
         zoom: 2, // Set an initial zoom level
     });
 
+    google.maps.event.addListener(map, "mousemove", function(event) {
+        document.getElementById("mouse-pos").innerText = 
+            `Mouse Latitude: ${event.latLng.lat().toFixed(2)}
+            Mouse Longitude: ${event.latLng.lng().toFixed(2)}`;
+    });
+
+    
+
     sailPath = new google.maps.Polyline({
         path: sailPlanCoordinates,
         geodesic: true,
