@@ -44,11 +44,29 @@ body {
 }
 
 .table-container {
+    width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
+.waypoint-buoy-container {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    max-width: 400px;
+}
+
+.waypoint-buoy-table {
+    min-width: 160px;
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
 
 .waypoint-list {
     width: 200px;
@@ -81,23 +99,28 @@ h1 {
 
 .input-group {
     display: flex;
-    align-items: center;
+    align-items: right;
     gap: 10px;
-    max-width: 620px;
+    max-width: 10px;
 }
 
 input[type="number"] {
     padding: 5px;
     border: 1px solid #ccc;
     border-radius: 5px;
-    width: 100px;
-    text-align: right;
+    width: 80px;
+    text-align: left;
 }
 
 .status-row {
     display: flex;
     justify-content: space-between;
 
+}
+
+.status-row-input {
+    display: flex;
+    margin-bottom: 10px;
 }
 
 .status-row.second {
