@@ -70,6 +70,8 @@ class VectorNav(Node):
 
         self.get_logger().info('Publishing GPS Data: ' + 'Lat: ' + str(nav_sat_msg.latitude) + ' Long: ' + str(nav_sat_msg.longitude))
         self.get_logger().info(f'Publishing IMU Data: Orientation = ({qx}, {qy}, {qz}, {qw})')
+        self.get_logger().info(f'Publishing IMU Data: YPR = ({yaw}, {pitch}, {roll})')
+
 
     def euler_to_quaternion(self, yaw, pitch, roll):
         """

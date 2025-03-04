@@ -31,10 +31,11 @@ class TeensyHardware:
 
             # if we see a packet start byte, set flags, clear buffer
             if incoming_byte == self.START_BYTE.to_bytes(1, 'big'):
+                print("DETECTED START PACKET")
                 self.packet_started = True
                 self.buffer = []
             # if we see a packet end byte, process the buffer data
-            elif incoming_byte == self.END_BYTE.to_bytes(1, 'big') and len(self.buffer) == PACKET_LENGTH:
+            elif incoming_byte == self.END_BYTE.to_bytes(1, 'big') and len(self.buffer) == self.PACKET_LENGTH:
                 self.packet_started = False
                 data["wind_angle"], \
                 data["sail_angle"], \
@@ -46,6 +47,7 @@ class TeensyHardware:
                 return 0
             # if we have previously seen a packet start byte, add data to our buffer
             elif self.packet_started:
+                print("ADDED BYTE TO BUFFER")
                 self.buffer.append(int.from_bytes(incoming_byte, 'big'))
         else:
             return 1
