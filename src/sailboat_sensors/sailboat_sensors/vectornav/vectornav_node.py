@@ -2,8 +2,8 @@ import numpy as np
 import rclpy
 from rclpy.node import Node
 
-from sensor_msgs.msg import NavSatFix, Imu
-from geometry_msgs.msg import Quaternion
+from geometry_msgs import Vector3
+from sensor_msgs.msg import NavSatFix
 from . import vectornav_real
 from . import vectornav_fake
 
@@ -52,43 +52,19 @@ class VectorNav(Node):
         nav_sat_msg.position_covariance_type = 0
         self.publisher_gps.publish(nav_sat_msg)
 
-        imu_msg = Imu()
+        imu_msg = Vector3()
         yaw = self.getYaw()
         pitch = self.getPitch()
         roll = self.getRoll()
 
-
-        quaternion = Quaternion()
-        qx, qy, qz, qw = self.euler_to_quaternion(yaw, pitch, roll)
-        quaternion.x = qx
-        quaternion.y = qy
-        quaternion.z = qz
-        quaternion.w = qw
-        imu_msg.orientation = quaternion
+        imu_msg.z= yaw
+        imu_msg.y = pitch
+        imu_msg.x = roll
 
         self.publisher_imu.publish(imu_msg)
 
         self.get_logger().info('Publishing GPS Data: ' + 'Lat: ' + str(nav_sat_msg.latitude) + ' Long: ' + str(nav_sat_msg.longitude))
-        self.get_logger().info(f'Publishing IMU Data: Orientation = ({qx}, {qy}, {qz}, {qw})')
-
-    def euler_to_quaternion(self, yaw, pitch, roll):
-        """
-        Convert Euler angles to quaternion.
-
-        Parameters:
-        yaw (float): The yaw angle in radians.
-        pitch (float): The pitch angle in radians.
-        roll (float): The roll angle in radians.
-
-        Returns:
-        list: A list containing the quaternion [qx, qy, qz, qw].
-        """
-        qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
-        qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
-        qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
-        qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
-
-        return [qx, qy, qz, qw]
+        self.get_logger().info(f'Publishing IMU Data (Yaw, Pitch, Roll) = ({imu_msg[0]}, {imu_msg[1]}, {imu_msg[2]})')
 
 def main(args=None):
     rclpy.init(args=args)
