@@ -57,14 +57,14 @@ class VectorNav(Node):
         pitch = self.getPitch()
         roll = self.getRoll()
 
-        imu_msg.z= yaw
+        imu_msg.z = yaw
         imu_msg.y = pitch
         imu_msg.x = roll
 
         self.publisher_imu.publish(imu_msg)
 
         self.get_logger().info('Publishing GPS Data: ' + 'Lat: ' + str(nav_sat_msg.latitude) + ' Long: ' + str(nav_sat_msg.longitude))
-        self.get_logger().info(f'Publishing IMU Data (Yaw, Pitch, Roll) = ({imu_msg[0]}, {imu_msg[1]}, {imu_msg[2]})')
+        self.get_logger().info(f'Publishing IMU Data (Yaw, Pitch, Roll) = ({imu_msg.z}, {imu_msg.y}, {imu_msg.x})')
 
 def main(args=None):
     rclpy.init(args=args)
