@@ -44,12 +44,12 @@ export function initializeScrollBar(rootElementId) {
 function updateScrollbarRange() {
   const historyLength = dataHistory.timestamps.length;
   if (historyLength === 0) return;
-  
+
   const scrollbar = document.getElementById("time-scrollbar");
   if (scrollbar) {
     // Set max to the current history length
     scrollbar.max = historyLength - 1;
-    
+
     // If we're viewing live data, keep the scrollbar at 0
     if (currentViewIndex === 0) {
       scrollbar.value = 0;
@@ -77,7 +77,6 @@ function handleScrollbarChange(event) {
  */
 function updateScrollbarDisplay() {
   const historyStatus = document.getElementById("history-status");
-
 
   if (currentViewIndex === 0) {
     historyStatus.textContent = "Live Data";

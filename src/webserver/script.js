@@ -1,6 +1,10 @@
-// Import the ScrollBar initialization function 
+// Import the ScrollBar initialization function
 // Change the path to import from components folder
-import { initializeScrollBar, recordHistoricalData, isViewingLiveData } from './components/scrollbar.js';
+import {
+  initializeScrollBar,
+  recordHistoricalData,
+  isViewingLiveData,
+} from "./components/scrollbar.js";
 
 let ros;
 let controlModeTopic;
@@ -12,13 +16,9 @@ const waypointMarkers = {}; // Global dictionary for waypoint markers
 let map; // Global variable for the map instance
 let sailboatMarker; // Global variable for the sailboat marker
 
-<<<<<<< HEAD
-let sailPlanCoordinates; // Global variable for sailboat path coordinates
-=======
 let buoys = []
 const buoyMarkers = {};
 let sailPlanCoordinates = []; // Global variable for sailboat path coordinates
->>>>>>> origin/main
 let sailPath; // Global variable for the sailboat trail
 let formattedHeading;
 let waypointPath; // Global variable for waypoint trail
@@ -27,58 +27,51 @@ let waypointPlanCoordinates = []; // Global variable for waypoint path coordinat
 // Add global variables to track current sensor data
 let currentSensorData = {};
 let currentPosition = null;
-let currentControlMode = '';
+let currentControlMode = "";
 
 // Single window.onload function
 window.onload = function () {
-    connectToROS();
-    
-    // Initialize the scrollbar with the root element ID
-    initializeScrollBar('scrollbar-root');
-    
-    // Set up a timer to record historical data every second
-    setInterval(captureDataSnapshot, 1000);
+  connectToROS();
+
+  // Initialize the scrollbar with the root element ID
+  initializeScrollBar("scrollbar-root");
+
+  // Set up a timer to record historical data every second
+  setInterval(captureDataSnapshot, 1000);
 };
 
 /**
  * Capture a snapshot of the current sailboat state
  */
 function captureDataSnapshot() {
-    // Only record data if we're viewing live data
-    if (!isViewingLiveData()) return;
-    
-    // Create a snapshot of all current sensor values
-    const sensorSnapshot = {...currentSensorData};
-    
-    // Package the data for the history record
-    const dataPackage = {
-        position: currentPosition,
-        controlMode: currentControlMode,
-        sensorData: sensorSnapshot
-    };
-    
-    // Record the data
-    recordHistoricalData(dataPackage);
+  // Only record data if we're viewing live data
+  if (!isViewingLiveData()) return;
+
+  // Create a snapshot of all current sensor values
+  const sensorSnapshot = { ...currentSensorData };
+
+  // Package the data for the history record
+  const dataPackage = {
+    position: currentPosition,
+    controlMode: currentControlMode,
+    sensorData: sensorSnapshot,
+  };
+
+  // Record the data
+  recordHistoricalData(dataPackage);
 }
 
 // Initialize the Google Map
 function initMap() {
-    const defaultLocation = { lat: 0, lng: 0 }; // Default center
+  const defaultLocation = { lat: 0, lng: 0 }; // Default center
 
-    // Create a new map instance
-    map = new google.maps.Map(document.getElementById("map"), {
-        center: defaultLocation, // Center the map at the default location
-        zoom: 2, // Set an initial zoom level
-    });
+  // Create a new map instance
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: defaultLocation, // Center the map at the default location
+    zoom: 2, // Set an initial zoom level
+  });
 
-    google.maps.event.addListener(map, "mousemove", function (event) {
-        document.getElementById("mouse-pos").innerText =
-            `Mouse Latitude: ${event.latLng.lat().toFixed(3)}
-            Mouse Longitude: ${event.latLng.lng().toFixed(3)}`;
-    });
-
-
-
+    sailPlanCoordinates = [];
     sailPath = new google.maps.Polyline({
         path: sailPlanCoordinates,
         geodesic: true,
@@ -87,18 +80,7 @@ function initMap() {
         strokeWeight: 2,
     });
 
-    waypointPath = new google.maps.Polyline({
-        path: waypointPlanCoordinates,
-        geodesic: true,
-        strokeColor: "#FF0000",
-        strokeOpacity: 1.0,
-        strokeWeight: 2,
-    });
-
-    waypointPath.setOptions({ strokeColor: "#911084" });
-
     sailPath.setMap(map);
-<<<<<<< HEAD
     
     // Make map accessible to the scrollbar.js module
     window.map = map;
@@ -109,50 +91,26 @@ function updateTrail(latitude, longitude) {
     sailPlanCoordinates.push({ lat: latitude, lng: longitude });
     sailPath.setPath(sailPlanCoordinates);
     sailPath.setMap(map);
-=======
-    waypointPath.setMap(map);
-};
-window.initMap = initMap;
-
-function updateTrail(latitude, longitude) {
-    const timestamp = Date.now();
-    sailPlanCoordinates.push({ lat: latitude, lng: longitude, timestamp });
-
-    // Filter out points older than 60 seconds
-    const oneMinuteAgo = Date.now() - 60000;
-    sailPlanCoordinates = sailPlanCoordinates.filter(coord => coord.timestamp >= oneMinuteAgo);
-
-    // Map the coordinates for the polyline (only lat & lng)
-    const currentPath = sailPlanCoordinates.map(coord => ({ lat: coord.lat, lng: coord.lng }));
-
-    // Update the polyline with the filtered, current path
-    sailPath.setPath(currentPath);
->>>>>>> origin/main
 }
 
-
-function connectToROS(url) {
+function connectToROS() {
+    const rosbridgeAddress = "ws://localhost:9090";
     ros = new ROSLIB.Ros({
-        url: url
+        url: rosbridgeAddress
     });
-
     ros.on('connection', function () {
-        console.log('Connected to rosbridge server at:', url);
+        console.log('Connected to rosbridge server.');
         subscribeToTopics();
     });
-
     ros.on('error', function (error) {
         console.error('Error connecting to rosbridge server:', error);
     });
-
     ros.on('close', function () {
         console.log('Connection to rosbridge server closed.');
     });
 }
 
-<<<<<<< HEAD
 // Modify the parseGpsData function to store current position
-=======
 // Add event listener for the button
 document.getElementById('connect-to-ros').addEventListener('click', function () {
     const rosbridgeAddress = document.getElementById('ros-url').value;
@@ -163,31 +121,30 @@ document.getElementById('connect-to-ros').addEventListener('click', function () 
     }
 });
 
->>>>>>> origin/main
 function parseGpsData(message) {
-    const latitude = message.latitude;
-    const longitude = message.longitude;
+  const latitude = message.latitude;
+  const longitude = message.longitude;
 
-    // Format the latitude and longitude to your desired precision
-    const formattedLatitude = latitude.toFixed(6);
-    const formattedLongitude = longitude.toFixed(6);
+  // Format the latitude and longitude to your desired precision
+  const formattedLatitude = latitude.toFixed(6);
+  const formattedLongitude = longitude.toFixed(6);
 
-    // Only update the UI if we're viewing live data
-    if (isViewingLiveData()) {
-        // Update the DOM elements
-        document.getElementById('latitude-value').innerText = formattedLatitude;
-        document.getElementById('longitude-value').innerText = formattedLongitude;
-    }
-    
-    // Store the current GPS data for historical records
-    currentSensorData['latitude-value'] = formattedLatitude;
-    currentSensorData['longitude-value'] = formattedLongitude;
-    
-    // Store current position for map
-    currentPosition = { lat: latitude, lng: longitude };
+  // Only update the UI if we're viewing live data
+  if (isViewingLiveData()) {
+    // Update the DOM elements
+    document.getElementById("latitude-value").innerText = formattedLatitude;
+    document.getElementById("longitude-value").innerText = formattedLongitude;
+  }
 
-    // Add or update the sailboat marker on the map
-    const sailboatLocation = { lat: latitude, lng: longitude };
+  // Store the current GPS data for historical records
+  currentSensorData["latitude-value"] = formattedLatitude;
+  currentSensorData["longitude-value"] = formattedLongitude;
+
+  // Store current position for map
+  currentPosition = { lat: latitude, lng: longitude };
+
+  // Add or update the sailboat marker on the map
+  const sailboatLocation = { lat: latitude, lng: longitude };
 
     if (!sailboatMarker) {
         // Create a new marker if it doesn't exist
@@ -197,7 +154,7 @@ function parseGpsData(message) {
             title: "Sailboat Location",
             icon: {
                 url: "boat.png", // Custom marker icon (optional)
-            }
+            },
         });
         
         // Make marker accessible to the scrollbar.js module
@@ -215,18 +172,17 @@ function parseGpsData(message) {
 
 // Modify parseImuData to store data for history
 function parseImuData(message) {
-    parseQuaternionData(message.orientation);
-    parseAngularVelocityData(message.angular_velocity);
+  parseQuaternionData(message.orientation);
+  parseAngularVelocityData(message.angular_velocity);
 }
 
 // Modify parseQuaternionData to store data for history
 function parseQuaternionData(message) {
-    const quaternionX = message.x;
-    const quaternionY = message.y;
-    const quaternionZ = message.z;
-    const quaternionW = message.w;
+  const quaternionX = message.x;
+  const quaternionY = message.y;
+  const quaternionZ = message.z;
+  const quaternionW = message.w;
 
-<<<<<<< HEAD
     const heading = quaternionToHeading(quaternionX, quaternionY, quaternionZ, quaternionW);
     const formattedHeading = heading.toFixed(6);
     
@@ -239,35 +195,20 @@ function parseQuaternionData(message) {
     // Store the current heading data for historical records
     currentSensorData['heading-value'] = formattedHeading;
     currentSensorData['headingAngle'] = formattedHeading;
-=======
-    heading = quaternionToHeading(quaternionX, quaternionY, quaternionZ, quaternionW)
-
-    formattedHeading = heading.toFixed(6);
-
-    document.getElementById('heading-value').innerText = formattedHeading;
-    updateHeadAngle(formattedHeading, 'heading-value-dial')
-
-    if (sailboatMarker) {
-        rotateMarkerIcon("boat.png", heading, function (rotatedImageUrl) {
-            sailboatMarker.setIcon({
-                url: rotatedImageUrl
-            });
-        });
-    }
->>>>>>> origin/main
 }
 
 // Modify parseAngularVelocityData to store data for history
 function parseAngularVelocityData(message) {
-    const angularVelocityZ = message.z.toFixed(6);
-    
-    // Only update the UI if we're viewing live data
-    if (isViewingLiveData()) {
-        document.getElementById('angular-velocity-z-value').innerText = angularVelocityZ;
-    }
-    
-    // Store the current angular velocity data for historical records
-    currentSensorData['angular-velocity-z-value'] = angularVelocityZ;
+  const angularVelocityZ = message.z.toFixed(6);
+
+  // Only update the UI if we're viewing live data
+  if (isViewingLiveData()) {
+    document.getElementById("angular-velocity-z-value").innerText =
+      angularVelocityZ;
+  }
+
+  // Store the current angular velocity data for historical records
+  currentSensorData["angular-velocity-z-value"] = angularVelocityZ;
 }
 
 /**
@@ -279,161 +220,161 @@ function parseAngularVelocityData(message) {
  * @returns {number} The heading angle in degrees.
  */
 function quaternionToHeading(x, y, z, w) {
-    // Compute the heading angle (yaw) from the quaternion
-    const siny_cosp = 2 * (w * z + x * y);
-    const cosy_cosp = 1 - 2 * (y * y + z * z);
-    const headingRadians = Math.atan2(siny_cosp, cosy_cosp);
+  // Compute the heading angle (yaw) from the quaternion
+  const siny_cosp = 2 * (w * z + x * y);
+  const cosy_cosp = 1 - 2 * (y * y + z * z);
+  const headingRadians = Math.atan2(siny_cosp, cosy_cosp);
 
-    // Convert the heading from radians to degrees
-    const headingDegrees = headingRadians * (180 / Math.PI);
+  // Convert the heading from radians to degrees
+  const headingDegrees = headingRadians * (180 / Math.PI);
 
-    // Normalize to the range [0, 360)
-    return (headingDegrees + 360) % 360;
+  // Normalize to the range [0, 360)
+  return (headingDegrees + 360) % 360;
 }
 
 let waypointService;
 
 // Modify subscribeToTopics to update the currentSensorData object
 function subscribeToTopics() {
-    // Helper function to update DOM element with topic data
-    function updateValue(elementId, value) {
-        // Only update the UI if we're viewing live data
-        if (isViewingLiveData()) {
-            document.getElementById(elementId).innerText = value;
-        }
-        
-        // Always update the currentSensorData object
-        currentSensorData[elementId] = value;
+  // Helper function to update DOM element with topic data
+  function updateValue(elementId, value) {
+    // Only update the UI if we're viewing live data
+    if (isViewingLiveData()) {
+      document.getElementById(elementId).innerText = value;
     }
-    
-    // Subscribe to /sailbot/control_mode
-    controlModeTopic = new ROSLIB.Topic({
-        ros: ros,
-        name: '/sailbot/control_mode',
-        messageType: 'std_msgs/String'
-    });
-    controlModeTopic.subscribe(function (message) {
-        currentControlMode = message.data;
-        updateValue('control-mode-value', message.data);
-        conditionalRender();
-    });
-    
-    // Subscribe to /sailbot/algo_rudder
-    const algoRudderTopic = new ROSLIB.Topic({
-        ros: ros,
-        name: '/sailbot/algo_rudder',
-        messageType: 'std_msgs/Int32'
-    });
-    algoRudderTopic.subscribe(function (message) {
-        updateValue('algo-rudder-value', message.data);
-    });
-    
-    // Subscribe to /sailbot/algo_sail
-    const algoSailTopic = new ROSLIB.Topic({
-        ros: ros,
-        name: '/sailbot/algo_sail',
-        messageType: 'std_msgs/Int32'
-    });
-    algoSailTopic.subscribe(function (message) {
-        updateValue('algo-sail-value', message.data);
-    });
-    
-    // Subscribe to /sailbot/radio_rudder
-    const radioRudderTopic = new ROSLIB.Topic({
-        ros: ros,
-        name: '/sailbot/radio_rudder',
-        messageType: 'std_msgs/Int32'
-    });
-    radioRudderTopic.subscribe(function (message) {
-        updateValue('radio-rudder-value', message.data);
-    });
-    
-    // Subscribe to /sailbot/radio_sail
-    const radioSailTopic = new ROSLIB.Topic({
-        ros: ros,
-        name: '/sailbot/radio_sail',
-        messageType: 'std_msgs/Int32'
-    });
-    radioSailTopic.subscribe(function (message) {
-        updateValue('radio-sail-value', message.data);
-    });
-    
-    // Subscribe to /sailbot/rudder_angle
-    const rudderAngleTopic = new ROSLIB.Topic({
-        ros: ros,
-        name: '/sailbot/rudder_angle',
-        messageType: 'std_msgs/Int32'
-    });
-    rudderAngleTopic.subscribe(function (message) {
-        updateValue('rudder-angle-value', message.data);
-    });
-    
-    // Subscribe to /sailbot/sail
-    const sailTopic = new ROSLIB.Topic({
-        ros: ros,
-        name: '/sailbot/sail',
-        messageType: 'std_msgs/Int32'
-    });
-    sailTopic.subscribe(function (message) {
-        updateValue('sail-value', message.data);
-    });
-    
-    const gpsTopic = new ROSLIB.Topic({
-        ros: ros,
-        name: '/gps',
-        messageType: 'sensor_msgs/NavSatFix'
-    });
-    gpsTopic.subscribe(parseGpsData);
 
-    const imuTopic = new ROSLIB.Topic({
-        ros: ros,
-        name: '/imu',
-        messageType: 'sensor_msgs/msg/Imu'
-    });
-    imuTopic.subscribe(parseImuData);
+    // Always update the currentSensorData object
+    currentSensorData[elementId] = value;
+  }
 
-    const actualRudderAngleTopic = new ROSLIB.Topic({
-        ros: ros,
-        name: '/sailbot/actual_rudder_angle',
-        messageType: 'std_msgs/msg/Int32'
-    });
-    actualRudderAngleTopic.subscribe(function (message) {
-        // Store the data
-        currentSensorData['actual-tail-angle-value'] = message.data;
-        currentSensorData['actualTailAngle'] = message.data;
-        
-        // Only update the UI if we're viewing live data
-        if (isViewingLiveData()) {
-            document.getElementById('actual-tail-angle-value').innerText = message.data;
-            updateTailAngle(message.data, "actual-tail-angle-dial");
-        }
-    });
+  // Subscribe to /sailbot/control_mode
+  controlModeTopic = new ROSLIB.Topic({
+    ros: ros,
+    name: "/sailbot/control_mode",
+    messageType: "std_msgs/String",
+  });
+  controlModeTopic.subscribe(function (message) {
+    currentControlMode = message.data;
+    updateValue("control-mode-value", message.data);
+    conditionalRender();
+  });
 
-    const actualSailAngleTopic = new ROSLIB.Topic({
-        ros: ros,
-        name: '/sailbot/actual_sail_angle',
-        messageType: 'std_msgs/msg/Int32'
-    });
-    actualSailAngleTopic.subscribe(function (message) {
-        // Store the data
-        currentSensorData['actual-sail-angle-value'] = message.data;
-        currentSensorData['actualSailAngle'] = message.data;
-        
-        // Only update the UI if we're viewing live data
-        if (isViewingLiveData()) {
-            document.getElementById('actual-sail-angle-value').innerText = message.data;
-            updateSailAngle(message.data, "actual-sail-angle-dial");
-        }
-    });
-    
-    waypointService = new ROSLIB.Service({
-        ros: ros,
-        name: '/sailbot/mutate_waypoint_queue',
-        serviceType: 'sailboat_interface/srv/Waypoint'
-    });
+  // Subscribe to /sailbot/algo_rudder
+  const algoRudderTopic = new ROSLIB.Topic({
+    ros: ros,
+    name: "/sailbot/algo_rudder",
+    messageType: "std_msgs/Int32",
+  });
+  algoRudderTopic.subscribe(function (message) {
+    updateValue("algo-rudder-value", message.data);
+  });
+
+  // Subscribe to /sailbot/algo_sail
+  const algoSailTopic = new ROSLIB.Topic({
+    ros: ros,
+    name: "/sailbot/algo_sail",
+    messageType: "std_msgs/Int32",
+  });
+  algoSailTopic.subscribe(function (message) {
+    updateValue("algo-sail-value", message.data);
+  });
+
+  // Subscribe to /sailbot/radio_rudder
+  const radioRudderTopic = new ROSLIB.Topic({
+    ros: ros,
+    name: "/sailbot/radio_rudder",
+    messageType: "std_msgs/Int32",
+  });
+  radioRudderTopic.subscribe(function (message) {
+    updateValue("radio-rudder-value", message.data);
+  });
+
+  // Subscribe to /sailbot/radio_sail
+  const radioSailTopic = new ROSLIB.Topic({
+    ros: ros,
+    name: "/sailbot/radio_sail",
+    messageType: "std_msgs/Int32",
+  });
+  radioSailTopic.subscribe(function (message) {
+    updateValue("radio-sail-value", message.data);
+  });
+
+  // Subscribe to /sailbot/rudder_angle
+  const rudderAngleTopic = new ROSLIB.Topic({
+    ros: ros,
+    name: "/sailbot/rudder_angle",
+    messageType: "std_msgs/Int32",
+  });
+  rudderAngleTopic.subscribe(function (message) {
+    updateValue("rudder-angle-value", message.data);
+  });
+
+  // Subscribe to /sailbot/sail
+  const sailTopic = new ROSLIB.Topic({
+    ros: ros,
+    name: "/sailbot/sail",
+    messageType: "std_msgs/Int32",
+  });
+  sailTopic.subscribe(function (message) {
+    updateValue("sail-value", message.data);
+  });
+
+  const gpsTopic = new ROSLIB.Topic({
+    ros: ros,
+    name: "/gps",
+    messageType: "sensor_msgs/NavSatFix",
+  });
+  gpsTopic.subscribe(parseGpsData);
+
+  const imuTopic = new ROSLIB.Topic({
+    ros: ros,
+    name: "/imu",
+    messageType: "sensor_msgs/msg/Imu",
+  });
+  imuTopic.subscribe(parseImuData);
+
+  const actualRudderAngleTopic = new ROSLIB.Topic({
+    ros: ros,
+    name: "/sailbot/actual_rudder_angle",
+    messageType: "std_msgs/msg/Int32",
+  });
+  actualRudderAngleTopic.subscribe(function (message) {
+    // Store the data
+    currentSensorData["actual-tail-angle-value"] = message.data;
+    currentSensorData["actualTailAngle"] = message.data;
+
+    // Only update the UI if we're viewing live data
+    if (isViewingLiveData()) {
+      document.getElementById("actual-tail-angle-value").innerText =
+        message.data;
+      updateTailAngle(message.data, "actual-tail-angle-dial");
+    }
+  });
+
+  const actualSailAngleTopic = new ROSLIB.Topic({
+    ros: ros,
+    name: "/sailbot/actual_sail_angle",
+    messageType: "std_msgs/msg/Int32",
+  });
+  actualSailAngleTopic.subscribe(function (message) {
+    // Store the data
+    currentSensorData["actual-sail-angle-value"] = message.data;
+    currentSensorData["actualSailAngle"] = message.data;
+
+    // Only update the UI if we're viewing live data
+    if (isViewingLiveData()) {
+      document.getElementById("actual-sail-angle-value").innerText =
+        message.data;
+      updateSailAngle(message.data, "actual-sail-angle-dial");
+    }
+  });
+
+  waypointService = new ROSLIB.Service({
+    ros: ros,
+    name: "/sailbot/mutate_waypoint_queue",
+    serviceType: "sailboat_interface/srv/Waypoint",
+  });
 }
-<<<<<<< HEAD
-=======
 // Connect to ROS when the page loads
 window.onload = function () {
     connectToROS();
@@ -472,103 +413,95 @@ function rotateMarkerIcon(src, heading, callback, size) {
 document.getElementById('submit-waypoint').addEventListener('click', function () {
     const latitude = document.getElementById('waypoint-latitude').value;
     const longitude = document.getElementById('waypoint-longitude').value;
->>>>>>> origin/main
 
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('submit-waypoint').addEventListener('click', function () {
-        const latitude = document.getElementById('latitude').value;
-        const longitude = document.getElementById('longitude').value;
+document.addEventListener("DOMContentLoaded", function () {
+  document
+    .getElementById("submit-waypoint")
+    .addEventListener("click", function () {
+      const latitude = document.getElementById("latitude").value;
+      const longitude = document.getElementById("longitude").value;
 
-        if (latitude && longitude) {
-            // Create a waypoint string for storage
-            const waypoint = `${latitude},${longitude}`;
-            waypoints.push(waypoint);
-            addWaypointToQueue(waypoint); // Send the waypoint to ROS
-            displayWaypoints(); // Update the waypoint list in the UI
+      if (latitude && longitude) {
+        // Create a waypoint string for storage
+        const waypoint = `${latitude},${longitude}`;
+        waypoints.push(waypoint);
+        addWaypointToQueue(waypoint); // Send the waypoint to ROS
+        displayWaypoints(); // Update the waypoint list in the UI
 
-            // Parse latitude and longitude to create a LatLng object
-            const latLng = {
-                lat: parseFloat(latitude),
-                lng: parseFloat(longitude),
-            };
+        // Parse latitude and longitude to create a LatLng object
+        const latLng = {
+          lat: parseFloat(latitude),
+          lng: parseFloat(longitude),
+        };
 
-<<<<<<< HEAD
             // Add a marker for the new waypoint on the map
             const marker = new google.maps.Marker({
                 position: latLng,
                 map: map,
                 title: `Waypoint (${latitude},${longitude})`,
             });
-=======
+
         waypointMarkers[waypoint] = marker;
-        waypointPlanCoordinates.push(latLng);
 
-        waypointPath.setPath(waypointPlanCoordinates);
->>>>>>> origin/main
-
-            waypointMarkers[waypoint] = marker;
-
-            console.log(`Waypoint added: ${waypoint}`);
-        } else {
-            // Alert the user if inputs are missing
-            alert('Please enter both latitude and longitude.');
-        }
+        console.log(`Waypoint added: ${waypoint}`);
+      } else {
+        // Alert the user if inputs are missing
+        alert("Please enter both latitude and longitude.");
+      }
     });
 });
 
 function addWaypointToQueue(waypoint) {
-    const waypointsString = waypoints.join(';');
+  const waypointsString = waypoints.join(";");
 
-    const request = new ROSLIB.ServiceRequest({
-        command: "set",
-        argument: waypointsString
-    });
+  const request = new ROSLIB.ServiceRequest({
+    command: "set",
+    argument: waypointsString,
+  });
 
-    waypointService.callService(request, function (result) {
-        if (result.success) {
-            console.log(result.message);
-        } else {
-            console.error(result.message);
-        }
-    });
+  waypointService.callService(request, function (result) {
+    if (result.success) {
+      console.log(result.message);
+    } else {
+      console.error(result.message);
+    }
+  });
 
-    getWaypointQueue();
+  getWaypointQueue();
 }
 function displayWaypoints() {
-    const waypointListElement = document.getElementById('waypoint-list');
-    waypointListElement.innerHTML = ''; // Clear existing list
+  const waypointListElement = document.getElementById("waypoint-list");
+  waypointListElement.innerHTML = ""; // Clear existing list
 
-    waypoints.forEach((waypoint, index) => {
-        const waypointElement = document.createElement('div');
-        waypointElement.classList.add('waypoint-item');
-        waypointElement.setAttribute('draggable', true);
-        waypointElement.setAttribute('data-index', index);
+  waypoints.forEach((waypoint, index) => {
+    const waypointElement = document.createElement("div");
+    waypointElement.classList.add("waypoint-item");
+    waypointElement.setAttribute("draggable", true);
+    waypointElement.setAttribute("data-index", index);
 
-        // Create the text for the waypoint
-        const waypointText = document.createElement('span');
-        waypointText.textContent = waypoint;
-        waypointElement.appendChild(waypointText);
+    // Create the text for the waypoint
+    const waypointText = document.createElement("span");
+    waypointText.textContent = waypoint;
+    waypointElement.appendChild(waypointText);
 
-        // Create the delete button
-        const deleteButton = document.createElement('button');
-        deleteButton.textContent = 'Delete';
-        deleteButton.classList.add('delete-button');
-        deleteButton.addEventListener('click', () => {
-            deleteWaypoint(index);
-        });
-        waypointElement.appendChild(deleteButton);
-
-        waypointElement.addEventListener('dragstart', handleDragStart);
-        waypointElement.addEventListener('dragover', handleDragOver);
-        waypointElement.addEventListener('drop', handleDrop);
-        waypointElement.addEventListener('dragend', handleDragEnd);
-
-        waypointListElement.appendChild(waypointElement);
+    // Create the delete button
+    const deleteButton = document.createElement("button");
+    deleteButton.textContent = "Delete";
+    deleteButton.classList.add("delete-button");
+    deleteButton.addEventListener("click", () => {
+      deleteWaypoint(index);
     });
+    waypointElement.appendChild(deleteButton);
+
+    waypointElement.addEventListener("dragstart", handleDragStart);
+    waypointElement.addEventListener("dragover", handleDragOver);
+    waypointElement.addEventListener("drop", handleDrop);
+    waypointElement.addEventListener("dragend", handleDragEnd);
+
+    waypointListElement.appendChild(waypointElement);
+  });
 }
 
-<<<<<<< HEAD
-=======
 document.getElementById('submit-buoy').addEventListener('click', function () {
     const latitude = document.getElementById('buoy-latitude').value;
     const longitude = document.getElementById('buoy-longitude').value;
@@ -608,165 +541,161 @@ document.getElementById('submit-buoy').addEventListener('click', function () {
     }
 });
 
->>>>>>> origin/main
 let draggedIndex = null;
 let draggedElement = null;
 
 function handleDragStart(event) {
-    draggedIndex = parseInt(event.target.getAttribute('data-index'));
-    draggedElement = event.target;
-    event.dataTransfer.effectAllowed = 'move';
-    event.target.classList.add('dragging');
+  draggedIndex = parseInt(event.target.getAttribute("data-index"));
+  draggedElement = event.target;
+  event.dataTransfer.effectAllowed = "move";
+  event.target.classList.add("dragging");
 }
 function handleDragOver(event) {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
+  event.preventDefault();
+  event.dataTransfer.dropEffect = "move";
 }
 function handleDrop(event) {
-    event.preventDefault();
-    const targetElement = event.target.closest('.waypoint-item');
-    if (!targetElement) return;
-    const targetIndex = parseInt(targetElement.getAttribute('data-index'));
+  event.preventDefault();
+  const targetElement = event.target.closest(".waypoint-item");
+  if (!targetElement) return;
+  const targetIndex = parseInt(targetElement.getAttribute("data-index"));
 
-    if (draggedIndex !== null && targetIndex !== null && draggedIndex !== targetIndex) {
-        const movedItem = waypoints[draggedIndex];
-        waypoints.splice(draggedIndex, 1);
-        waypoints.splice(targetIndex, 0, movedItem);
-        displayWaypoints();
-    }
+  if (
+    draggedIndex !== null &&
+    targetIndex !== null &&
+    draggedIndex !== targetIndex
+  ) {
+    const movedItem = waypoints[draggedIndex];
+    waypoints.splice(draggedIndex, 1);
+    waypoints.splice(targetIndex, 0, movedItem);
+    displayWaypoints();
+  }
 }
 function handleDragEnd(event) {
-    if (draggedElement) {
-        draggedElement.classList.remove('dragging');
+  if (draggedElement) {
+    draggedElement.classList.remove("dragging");
+  }
+  draggedElement = null;
+  draggedIndex = null;
+  const waypointsString = waypoints.join(";");
+
+  const request = new ROSLIB.ServiceRequest({
+    command: "set",
+    argument: waypointsString,
+  });
+
+  waypointService.callService(request, function (result) {
+    if (result.success) {
+      console.log(result.message);
+    } else {
+      console.error(result.message);
     }
-    draggedElement = null;
-    draggedIndex = null;
-    const waypointsString = waypoints.join(';');
+  });
 
-    const request = new ROSLIB.ServiceRequest({
-        command: "set",
-        argument: waypointsString
-    });
-
-    waypointService.callService(request, function (result) {
-        if (result.success) {
-            console.log(result.message);
-        } else {
-            console.error(result.message);
-        }
-    });
-
-<<<<<<< HEAD
     getWaypointQueue();
-=======
-    getWaypointQueue()
->>>>>>> origin/main
 }
 function deleteWaypoint(index) {
     // Remove the waypoint from the local array
     const waypoint = waypoints[index];
-    console.log(`Deleting waypoint: ${waypoint}`);
 
-    // Check if the marker exists
+    // Remove the marker from the map
     if (waypointMarkers[waypoint]) {
-        console.log(`Removing marker from map: ${waypoint}`);
-        waypointMarkers[waypoint].setMap(null); // Remove from map
-        delete waypointMarkers[waypoint]; // Remove from object
-    } else {
-        console.warn(`Marker not found for: ${waypoint}`);
+        waypointMarkers[waypoint].setMap(null); // Removes the marker from the map
+        delete waypointMarkers[waypoint]; // Remove the marker from the object
     }
 
-    // Remove the waypoint from the array
-    waypoints.splice(index, 1);
+  // Remove the waypoint from the array
+  waypoints.splice(index, 1);
 
-    let request;
+  let request;
 
-    if (waypoints.length === 0) {
-        request = new ROSLIB.ServiceRequest({
-            command: "pop",
-            argument: ""
-        });
-    }
-    else {
-        const waypointsString = waypoints.length > 0 ? waypoints.join(';') : '';
-
-        request = new ROSLIB.ServiceRequest({
-            command: "set",
-            argument: waypointsString
-        });
-    }
-
-    waypointService.callService(request, function (result) {
-        if (result.success) {
-            console.log(result.message);
-        } else {
-            console.error(result.message);
-        }
+  if (waypoints.length === 0) {
+    request = new ROSLIB.ServiceRequest({
+      command: "pop",
+      argument: "",
     });
+  } else {
+    const waypointsString = waypoints.length > 0 ? waypoints.join(";") : "";
 
-    // Update the display
-    getWaypointQueue();
-    displayWaypoints();
+    request = new ROSLIB.ServiceRequest({
+      command: "set",
+      argument: waypointsString,
+    });
+  }
+
+  waypointService.callService(request, function (result) {
+    if (result.success) {
+      console.log(result.message);
+    } else {
+      console.error(result.message);
+    }
+  });
+
+  // Update the display
+  getWaypointQueue();
+  displayWaypoints();
 }
 function getWaypointQueue() {
-    const getRequest = new ROSLIB.ServiceRequest({
-        command: "get",
-        argument: ""
-    });
+  const getRequest = new ROSLIB.ServiceRequest({
+    command: "get",
+    argument: "",
+  });
 
-    waypointService.callService(getRequest, function (getResult) {
-        if (getResult.success) {
-            console.log("Current ROS waypoint queue:", getResult.message);
-        } else {
-            console.error("Failed to fetch waypoint queue:", getResult.message);
-        }
-    });
+  waypointService.callService(getRequest, function (getResult) {
+    if (getResult.success) {
+      console.log("Current ROS waypoint queue:", getResult.message);
+    } else {
+      console.error("Failed to fetch waypoint queue:", getResult.message);
+    }
+  });
 }
 // Function to toggle dropdown visibility
 function toggleDropdown() {
-    const dropdownContent = document.getElementById("dropdown-content");
-    dropdownContent.style.display = dropdownContent.style.display === "block" ? "none" : "block";
+  const dropdownContent = document.getElementById("dropdown-content");
+  dropdownContent.style.display =
+    dropdownContent.style.display === "block" ? "none" : "block";
 }
 
 // Function to update the dropdown button text based on selection
 function selectMode(mode) {
-    const modeButton = document.getElementById("mode-button");
-    modeButton.innerText = mode; // Update button text
-    toggleDropdown(); // Close the dropdown
+  const modeButton = document.getElementById("mode-button");
+  modeButton.innerText = mode; // Update button text
+  toggleDropdown(); // Close the dropdown
 
-    // Publish the selected mode to the /control_mode topic
-    const message = new ROSLIB.Message({ data: mode.toLowerCase() });
-    controlModeTopic.publish(message);
-    console.log(`Published control mode: ${mode.toLowerCase()}`);
+  // Publish the selected mode to the /control_mode topic
+  const message = new ROSLIB.Message({ data: mode.toLowerCase() });
+  controlModeTopic.publish(message);
+  console.log(`Published control mode: ${mode.toLowerCase()}`);
 }
 
 // Close dropdown if clicking outside of it
 window.onclick = function (event) {
-    if (!event.target.matches('.dropdown-button')) {
-        const dropdowns = document.getElementsByClassName("dropdown-content");
-        for (let i = 0; i < dropdowns.length; i++) {
-            const openDropdown = dropdowns[i];
-            if (openDropdown.style.display === "block") {
-                openDropdown.style.display = "none";
-            }
-        }
+  if (!event.target.matches(".dropdown-button")) {
+    const dropdowns = document.getElementsByClassName("dropdown-content");
+    for (let i = 0; i < dropdowns.length; i++) {
+      const openDropdown = dropdowns[i];
+      if (openDropdown.style.display === "block") {
+        openDropdown.style.display = "none";
+      }
     }
+  }
 };
 
 function conditionalRender() {
-    let controlModeVal = document.getElementById("control-mode-value").innerText.trim();
-    let algoVals = document.querySelectorAll(".algo-mode");
-    let rcVals = document.querySelectorAll(".rc-mode");
-    if (controlModeVal == "algorithm") {
-        algoVals.forEach(el => el.style.display = "flex");
-        rcVals.forEach(el => el.style.display = "none");
-    }
-    if (controlModeVal == "radio control") {
-        algoVals.forEach(el => el.style.display = "none");
-        rcVals.forEach(el => el.style.display = "flex");
-    }
+  let controlModeVal = document
+    .getElementById("control-mode-value")
+    .innerText.trim();
+  let algoVals = document.querySelectorAll(".algo-mode");
+  let rcVals = document.querySelectorAll(".rc-mode");
+  if (controlModeVal == "algorithm") {
+    algoVals.forEach((el) => (el.style.display = "flex"));
+    rcVals.forEach((el) => (el.style.display = "none"));
+  }
+  if (controlModeVal == "radio control") {
+    algoVals.forEach((el) => (el.style.display = "none"));
+    rcVals.forEach((el) => (el.style.display = "flex"));
+  }
 }
-
 
 // // Code for dial Configuration
 const width = 90;
@@ -776,65 +705,67 @@ const needleLength = radius * 0.7;
 
 // Create SVG Container
 const svg = d3
-    .select("#dial-container-sail")
-    .append("svg")
-    .attr("width", width)
-    .attr("height", height)
-    .append("g")
-    .attr("transform", `translate(${width / 2}, ${height / 2})`);
+  .select("#dial-container-sail")
+  .append("svg")
+  .attr("width", width)
+  .attr("height", height)
+  .append("g")
+  .attr("transform", `translate(${width / 2}, ${height / 2})`);
 
 // Draw Background Circle
-svg.append("circle")
-    .attr("r", radius)
-    .attr("fill", "lightgray")
-    .attr("stroke", "black")
-    .attr("stroke-width", 2);
+svg
+  .append("circle")
+  .attr("r", radius)
+  .attr("fill", "lightgray")
+  .attr("stroke", "black")
+  .attr("stroke-width", 2);
 
 // Add Tick Marks (for better visualization)
 const numTicks = 36; // Tick marks every 10 degrees
 const tickLength = 10;
 for (let i = 0; i < numTicks; i++) {
-    const angle = (i / numTicks) * 2 * Math.PI; // Convert to radians
-    const x1 = Math.cos(angle) * (radius - tickLength);
-    const y1 = Math.sin(angle) * (radius - tickLength);
-    const x2 = Math.cos(angle) * radius;
-    const y2 = Math.sin(angle) * radius;
+  const angle = (i / numTicks) * 2 * Math.PI; // Convert to radians
+  const x1 = Math.cos(angle) * (radius - tickLength);
+  const y1 = Math.sin(angle) * (radius - tickLength);
+  const x2 = Math.cos(angle) * radius;
+  const y2 = Math.sin(angle) * radius;
 
-    svg.append("line")
-        .attr("x1", x1)
-        .attr("y1", y1)
-        .attr("x2", x2)
-        .attr("y2", y2)
-        .attr("stroke", "black")
-        .attr("stroke-width", i % 3 === 0 ? 2 : 1); // Longer ticks every 30 degrees
+  svg
+    .append("line")
+    .attr("x1", x1)
+    .attr("y1", y1)
+    .attr("x2", x2)
+    .attr("y2", y2)
+    .attr("stroke", "black")
+    .attr("stroke-width", i % 3 === 0 ? 2 : 1); // Longer ticks every 30 degrees
 }
 
 // Create the Needle
 const needle = svg
-    .append("line")
-    .attr("x1", 0)
-    .attr("y1", 0)
-    .attr("x2", 0)
-    .attr("y2", -needleLength)
-    .attr("stroke", "red")
-    .attr("stroke-width", 3)
-    .attr("stroke-linecap", "round");
+  .append("line")
+  .attr("x1", 0)
+  .attr("y1", 0)
+  .attr("x2", 0)
+  .attr("y2", -needleLength)
+  .attr("stroke", "red")
+  .attr("stroke-width", 3)
+  .attr("stroke-linecap", "round");
 
 // Add a Center Circle
 svg.append("circle").attr("r", 5).attr("fill", "black");
 
 // Update Function for the Dial
 function updateSailAngle(angle, id) {
-    // Update Needle
-    const angleRadians = (angle - 90) * (Math.PI / 180); // Convert degrees to radians and rotate to align with dial
-    needle.transition()
-        .duration(500) // Smooth transition
-        .attr("transform", `rotate(${angle - 90})`);
+  // Update Needle
+  const angleRadians = (angle - 90) * (Math.PI / 180); // Convert degrees to radians and rotate to align with dial
+  needle
+    .transition()
+    .duration(500) // Smooth transition
+    .attr("transform", `rotate(${angle - 90})`);
 
-    // Update Text Display
-    document.getElementById(id).innerText = "Angle: " + angle;
+  // Update Text Display
+  document.getElementById(id).innerText = "Angle: " + angle;
 }
-
 
 // // Code for Tail dial Configuration
 const widthT = 90;
@@ -844,64 +775,66 @@ const needleLengthT = radius * 0.7;
 
 // Create SVG Container
 const svgT = d3
-    .select("#dial-container-tail")
-    .append("svg")
-    .attr("width", widthT)
-    .attr("height", heightT)
-    .append("g")
-    .attr("transform", `translate(${widthT / 2}, ${heightT / 2})`);
+  .select("#dial-container-tail")
+  .append("svg")
+  .attr("width", widthT)
+  .attr("height", heightT)
+  .append("g")
+  .attr("transform", `translate(${widthT / 2}, ${heightT / 2})`);
 
 // Draw Background Circle
-svgT.append("circle")
-    .attr("r", radiusT)
-    .attr("fill", "lightgray")
-    .attr("stroke", "black")
-    .attr("stroke-width", 2);
+svgT
+  .append("circle")
+  .attr("r", radiusT)
+  .attr("fill", "lightgray")
+  .attr("stroke", "black")
+  .attr("stroke-width", 2);
 
 // Add Tick Marks (for better visualization)
 const numTicksT = 36; // Tick marks every 10 degrees
 const tickLengthT = 10;
 for (let i = 0; i < numTicksT; i++) {
-    const angleT = (i / numTicksT) * 2 * Math.PI; // Convert to radians
-    const x1 = Math.cos(angleT) * (radiusT - tickLengthT);
-    const y1 = Math.sin(angleT) * (radiusT - tickLengthT);
-    const x2 = Math.cos(angleT) * radiusT;
-    const y2 = Math.sin(angleT) * radiusT;
+  const angleT = (i / numTicksT) * 2 * Math.PI; // Convert to radians
+  const x1 = Math.cos(angleT) * (radiusT - tickLengthT);
+  const y1 = Math.sin(angleT) * (radiusT - tickLengthT);
+  const x2 = Math.cos(angleT) * radiusT;
+  const y2 = Math.sin(angleT) * radiusT;
 
-    svgT.append("line")
-        .attr("x1", x1)
-        .attr("y1", y1)
-        .attr("x2", x2)
-        .attr("y2", y2)
-        .attr("stroke", "black")
-        .attr("stroke-width", i % 3 === 0 ? 2 : 1); // Longer ticks every 30 degrees
+  svgT
+    .append("line")
+    .attr("x1", x1)
+    .attr("y1", y1)
+    .attr("x2", x2)
+    .attr("y2", y2)
+    .attr("stroke", "black")
+    .attr("stroke-width", i % 3 === 0 ? 2 : 1); // Longer ticks every 30 degrees
 }
 
 // Create the Needle
 const needleT = svgT
-    .append("line")
-    .attr("x1", 0)
-    .attr("y1", 0)
-    .attr("x2", 0)
-    .attr("y2", -needleLengthT)
-    .attr("stroke", "red")
-    .attr("stroke-width", 3)
-    .attr("stroke-linecap", "round");
+  .append("line")
+  .attr("x1", 0)
+  .attr("y1", 0)
+  .attr("x2", 0)
+  .attr("y2", -needleLengthT)
+  .attr("stroke", "red")
+  .attr("stroke-width", 3)
+  .attr("stroke-linecap", "round");
 
 // Add a Center Circle
 svgT.append("circle").attr("r", 5).attr("fill", "black");
 
 function updateTailAngle(angle, id) {
-    // Update Needle
-    const angleRadians = (angle - 90) * (Math.PI / 180); // Convert degrees to radians and rotate to align with dial
-    needleT.transition()
-        .duration(500) // Smooth transition
-        .attr("transform", `rotate(${angle - 90})`);
+  // Update Needle
+  const angleRadians = (angle - 90) * (Math.PI / 180); // Convert degrees to radians and rotate to align with dial
+  needleT
+    .transition()
+    .duration(500) // Smooth transition
+    .attr("transform", `rotate(${angle - 90})`);
 
-    // Update Text Display
-    document.getElementById(id).innerText = "Angle: " + angle;
+  // Update Text Display
+  document.getElementById(id).innerText = "Angle: " + angle;
 }
-
 
 // // Code for Heading dial Configuration
 const widthH = 90;
@@ -911,62 +844,65 @@ const needleLengthH = radius * 0.7;
 
 // Create SVG Container
 const svgH = d3
-    .select("#dial-container-head")
-    .append("svg")
-    .attr("width", widthT)
-    .attr("height", heightT)
-    .append("g")
-    .attr("transform", `translate(${widthH / 2}, ${heightH / 2})`);
+  .select("#dial-container-head")
+  .append("svg")
+  .attr("width", widthT)
+  .attr("height", heightT)
+  .append("g")
+  .attr("transform", `translate(${widthH / 2}, ${heightH / 2})`);
 
 // Draw Background Circle
-svgH.append("circle")
-    .attr("r", radiusH)
-    .attr("fill", "lightgray")
-    .attr("stroke", "black")
-    .attr("stroke-width", 2);
+svgH
+  .append("circle")
+  .attr("r", radiusH)
+  .attr("fill", "lightgray")
+  .attr("stroke", "black")
+  .attr("stroke-width", 2);
 
 // Add Tick Marks (for better visualization)
 const numTicksH = 36; // Tick marks every 10 degrees
 const tickLengthH = 10;
 for (let i = 0; i < numTicksH; i++) {
-    const angleH = (i / numTicksH) * 2 * Math.PI; // Convert to radians
-    const x1 = Math.cos(angleH) * (radiusH - tickLengthH);
-    const y1 = Math.sin(angleH) * (radiusH - tickLengthH);
-    const x2 = Math.cos(angleH) * radiusH;
-    const y2 = Math.sin(angleH) * radiusH;
+  const angleH = (i / numTicksH) * 2 * Math.PI; // Convert to radians
+  const x1 = Math.cos(angleH) * (radiusH - tickLengthH);
+  const y1 = Math.sin(angleH) * (radiusH - tickLengthH);
+  const x2 = Math.cos(angleH) * radiusH;
+  const y2 = Math.sin(angleH) * radiusH;
 
-    svgH.append("line")
-        .attr("x1", x1)
-        .attr("y1", y1)
-        .attr("x2", x2)
-        .attr("y2", y2)
-        .attr("stroke", "black")
-        .attr("stroke-width", i % 3 === 0 ? 2 : 1); // Longer ticks every 30 degrees
+  svgH
+    .append("line")
+    .attr("x1", x1)
+    .attr("y1", y1)
+    .attr("x2", x2)
+    .attr("y2", y2)
+    .attr("stroke", "black")
+    .attr("stroke-width", i % 3 === 0 ? 2 : 1); // Longer ticks every 30 degrees
 }
 
 // Create the Needle
 const needleH = svgH
-    .append("line")
-    .attr("x1", 0)
-    .attr("y1", 0)
-    .attr("x2", 0)
-    .attr("y2", -needleLengthH)
-    .attr("stroke", "red")
-    .attr("stroke-width", 3)
-    .attr("stroke-linecap", "round");
+  .append("line")
+  .attr("x1", 0)
+  .attr("y1", 0)
+  .attr("x2", 0)
+  .attr("y2", -needleLengthH)
+  .attr("stroke", "red")
+  .attr("stroke-width", 3)
+  .attr("stroke-linecap", "round");
 
 // Add a Center Circle
 svgH.append("circle").attr("r", 5).attr("fill", "black");
 
 function updateHeadAngle(angle, id) {
-    // Update Needle
-    const angleRadians = (angle - 90) * (Math.PI / 180); // Convert degrees to radians and rotate to align with dial
-    needleH.transition()
-        .duration(500) // Smooth transition
-        .attr("transform", `rotate(${angle - 90})`);
+  // Update Needle
+  const angleRadians = (angle - 90) * (Math.PI / 180); // Convert degrees to radians and rotate to align with dial
+  needleH
+    .transition()
+    .duration(500) // Smooth transition
+    .attr("transform", `rotate(${angle - 90})`);
 
-    // Update Text Display
-    document.getElementById(id).innerText = "Angle: " + angle;
+  // Update Text Display
+  document.getElementById(id).innerText = "Angle: " + angle;
 }
 
 // Make the update functions globally accessible for the scrollbar.js module
