@@ -11,23 +11,16 @@ class TrimSail(Node):
 
     def __init__(self):
         super().__init__('trim_sail')
-        # self.subscription = self.create_subscription(
-        #     Imu,
-        #     '/imu',
-        #     self.imu_callback,
-        #     10)
-        # self.subscription  # prevent unused variable warning
         
         #Subscription for wind direction
         self.subscription = self.create_subscription(
             Int32,
-            '/wind',
+            'wind',
             self.wind_callback,
-            10)
-        self.subscription  # prevent unused variable warning
+            10)    
 
         # Publisher for sail angle
-        self.publisher_ = self.create_publisher(Int32, 'algo_sail', 10)
+        self.publisher_sail = self.create_publisher(Int32, 'algo_sail', 10)
 
     def wind_callback(self, msg):
         """
@@ -40,7 +33,7 @@ class TrimSail(Node):
         msg = Int32()
         msg.data = sail_angle
 
-        self.publisher_.publish(msg)
+        self.publisher_sail.publish(msg)
         self.get_logger().info('Sail Angle: "%s"' % sail_angle)
 
     def setSail(self, windDir):

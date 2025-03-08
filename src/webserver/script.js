@@ -12,8 +12,17 @@ const waypointMarkers = {}; // Global dictionary for waypoint markers
 let map; // Global variable for the map instance
 let sailboatMarker; // Global variable for the sailboat marker
 
+<<<<<<< HEAD
 let sailPlanCoordinates; // Global variable for sailboat path coordinates
+=======
+let buoys = []
+const buoyMarkers = {};
+let sailPlanCoordinates = []; // Global variable for sailboat path coordinates
+>>>>>>> origin/main
 let sailPath; // Global variable for the sailboat trail
+let formattedHeading;
+let waypointPath; // Global variable for waypoint trail
+let waypointPlanCoordinates = []; // Global variable for waypoint path coordinates
 
 // Add global variables to track current sensor data
 let currentSensorData = {};
@@ -62,7 +71,14 @@ function initMap() {
         zoom: 2, // Set an initial zoom level
     });
 
-    sailPlanCoordinates = [];
+    google.maps.event.addListener(map, "mousemove", function (event) {
+        document.getElementById("mouse-pos").innerText =
+            `Mouse Latitude: ${event.latLng.lat().toFixed(3)}
+            Mouse Longitude: ${event.latLng.lng().toFixed(3)}`;
+    });
+
+
+
     sailPath = new google.maps.Polyline({
         path: sailPlanCoordinates,
         geodesic: true,
@@ -71,7 +87,18 @@ function initMap() {
         strokeWeight: 2,
     });
 
+    waypointPath = new google.maps.Polyline({
+        path: waypointPlanCoordinates,
+        geodesic: true,
+        strokeColor: "#FF0000",
+        strokeOpacity: 1.0,
+        strokeWeight: 2,
+    });
+
+    waypointPath.setOptions({ strokeColor: "#911084" });
+
     sailPath.setMap(map);
+<<<<<<< HEAD
     
     // Make map accessible to the scrollbar.js module
     window.map = map;
@@ -82,26 +109,61 @@ function updateTrail(latitude, longitude) {
     sailPlanCoordinates.push({ lat: latitude, lng: longitude });
     sailPath.setPath(sailPlanCoordinates);
     sailPath.setMap(map);
+=======
+    waypointPath.setMap(map);
+};
+window.initMap = initMap;
+
+function updateTrail(latitude, longitude) {
+    const timestamp = Date.now();
+    sailPlanCoordinates.push({ lat: latitude, lng: longitude, timestamp });
+
+    // Filter out points older than 60 seconds
+    const oneMinuteAgo = Date.now() - 60000;
+    sailPlanCoordinates = sailPlanCoordinates.filter(coord => coord.timestamp >= oneMinuteAgo);
+
+    // Map the coordinates for the polyline (only lat & lng)
+    const currentPath = sailPlanCoordinates.map(coord => ({ lat: coord.lat, lng: coord.lng }));
+
+    // Update the polyline with the filtered, current path
+    sailPath.setPath(currentPath);
+>>>>>>> origin/main
 }
 
-function connectToROS() {
-    const rosbridgeAddress = "ws://localhost:9090";
+
+function connectToROS(url) {
     ros = new ROSLIB.Ros({
-        url: rosbridgeAddress
+        url: url
     });
+
     ros.on('connection', function () {
-        console.log('Connected to rosbridge server.');
+        console.log('Connected to rosbridge server at:', url);
         subscribeToTopics();
     });
+
     ros.on('error', function (error) {
         console.error('Error connecting to rosbridge server:', error);
     });
+
     ros.on('close', function () {
         console.log('Connection to rosbridge server closed.');
     });
 }
 
+<<<<<<< HEAD
 // Modify the parseGpsData function to store current position
+=======
+// Add event listener for the button
+document.getElementById('connect-to-ros').addEventListener('click', function () {
+    const rosbridgeAddress = document.getElementById('ros-url').value;
+    if (rosbridgeAddress) {
+        connectToROS(rosbridgeAddress);
+    } else {
+        console.error('Please enter a valid ROS URL.');
+    }
+});
+
+>>>>>>> origin/main
 function parseGpsData(message) {
     const latitude = message.latitude;
     const longitude = message.longitude;
@@ -135,7 +197,7 @@ function parseGpsData(message) {
             title: "Sailboat Location",
             icon: {
                 url: "boat.png", // Custom marker icon (optional)
-            },
+            }
         });
         
         // Make marker accessible to the scrollbar.js module
@@ -164,6 +226,7 @@ function parseQuaternionData(message) {
     const quaternionZ = message.z;
     const quaternionW = message.w;
 
+<<<<<<< HEAD
     const heading = quaternionToHeading(quaternionX, quaternionY, quaternionZ, quaternionW);
     const formattedHeading = heading.toFixed(6);
     
@@ -176,6 +239,22 @@ function parseQuaternionData(message) {
     // Store the current heading data for historical records
     currentSensorData['heading-value'] = formattedHeading;
     currentSensorData['headingAngle'] = formattedHeading;
+=======
+    heading = quaternionToHeading(quaternionX, quaternionY, quaternionZ, quaternionW)
+
+    formattedHeading = heading.toFixed(6);
+
+    document.getElementById('heading-value').innerText = formattedHeading;
+    updateHeadAngle(formattedHeading, 'heading-value-dial')
+
+    if (sailboatMarker) {
+        rotateMarkerIcon("boat.png", heading, function (rotatedImageUrl) {
+            sailboatMarker.setIcon({
+                url: rotatedImageUrl
+            });
+        });
+    }
+>>>>>>> origin/main
 }
 
 // Modify parseAngularVelocityData to store data for history
@@ -353,6 +432,47 @@ function subscribeToTopics() {
         serviceType: 'sailboat_interface/srv/Waypoint'
     });
 }
+<<<<<<< HEAD
+=======
+// Connect to ROS when the page loads
+window.onload = function () {
+    connectToROS();
+};
+function rotateMarkerIcon(src, heading, callback, size) {
+    const image = new Image();
+    image.src = src;
+    image.onload = function () {
+        // Use provided size, or fallback to the image’s natural dimensions.
+        const width = size || image.naturalWidth;
+        const height = size || image.naturalHeight;
+        const diagonal = Math.sqrt(width * width + height * height);
+
+        // Create a canvas with the determined dimensions
+        const canvas = document.createElement("canvas");
+        canvas.width = diagonal;
+        canvas.height = diagonal;
+
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, width, height);
+
+        // Translate to center and rotate (adjust by -90 degrees if needed)
+        ctx.translate(diagonal / 2, diagonal / 2);
+        ctx.rotate((heading - 90) * (Math.PI / 180));
+
+        // Draw the image centered
+        ctx.drawImage(image, -width / 2, -height / 2, width, height);
+
+        // Return the rotated image as a data URL
+        callback(canvas.toDataURL());
+    };
+    image.onerror = function (err) {
+        console.error("Error loading image:", err);
+    };
+}
+document.getElementById('submit-waypoint').addEventListener('click', function () {
+    const latitude = document.getElementById('waypoint-latitude').value;
+    const longitude = document.getElementById('waypoint-longitude').value;
+>>>>>>> origin/main
 
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('submit-waypoint').addEventListener('click', function () {
@@ -372,12 +492,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 lng: parseFloat(longitude),
             };
 
+<<<<<<< HEAD
             // Add a marker for the new waypoint on the map
             const marker = new google.maps.Marker({
                 position: latLng,
                 map: map,
                 title: `Waypoint (${latitude},${longitude})`,
             });
+=======
+        waypointMarkers[waypoint] = marker;
+        waypointPlanCoordinates.push(latLng);
+
+        waypointPath.setPath(waypointPlanCoordinates);
+>>>>>>> origin/main
 
             waypointMarkers[waypoint] = marker;
 
@@ -440,6 +567,48 @@ function displayWaypoints() {
     });
 }
 
+<<<<<<< HEAD
+=======
+document.getElementById('submit-buoy').addEventListener('click', function () {
+    const latitude = document.getElementById('buoy-latitude').value;
+    const longitude = document.getElementById('buoy-longitude').value;
+
+    if (latitude && longitude) {
+        // Create a waypoint string for storage
+        const buoy = `${latitude},${longitude}`;
+        buoys.push(buoy)
+
+        // Parse latitude and longitude to create a LatLng object
+        const latLng = {
+            lat: parseFloat(latitude),
+            lng: parseFloat(longitude),
+        };
+
+        // Add a marker for the new waypoint on the map
+        const marker = new google.maps.Marker({
+            position: latLng,
+            map: map,
+            title: `Buoy (${latitude},${longitude})`,
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE, // Shape of the marker (e.g., CIRCLE, FORWARD_CLOSED_ARROW, etc.)
+                scale: 8, // Size of the marker
+                fillColor: "#FFA500", // Marker color (e.g., red)
+                fillOpacity: 1,
+                strokeWeight: 1,
+                strokeColor: "#FFFFFF" // Optional: border color
+            }
+        });
+
+        buoyMarkers[buoy] = marker;
+
+        console.log(`Buoy added: ${buoy}`);
+    } else {
+        // Alert the user if inputs are missing
+        alert('Please enter both latitude and longitude.');
+    }
+});
+
+>>>>>>> origin/main
 let draggedIndex = null;
 let draggedElement = null;
 
@@ -487,16 +656,24 @@ function handleDragEnd(event) {
         }
     });
 
+<<<<<<< HEAD
     getWaypointQueue();
+=======
+    getWaypointQueue()
+>>>>>>> origin/main
 }
 function deleteWaypoint(index) {
     // Remove the waypoint from the local array
     const waypoint = waypoints[index];
+    console.log(`Deleting waypoint: ${waypoint}`);
 
-    // Remove the marker from the map
+    // Check if the marker exists
     if (waypointMarkers[waypoint]) {
-        waypointMarkers[waypoint].setMap(null); // Removes the marker from the map
-        delete waypointMarkers[waypoint]; // Remove the marker from the object
+        console.log(`Removing marker from map: ${waypoint}`);
+        waypointMarkers[waypoint].setMap(null); // Remove from map
+        delete waypointMarkers[waypoint]; // Remove from object
+    } else {
+        console.warn(`Marker not found for: ${waypoint}`);
     }
 
     // Remove the waypoint from the array
