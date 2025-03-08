@@ -43,6 +43,7 @@ def generate_launch_description():
       parameters=[config]
    )
 
+
    main_algo_cmd  = Node(
       package='sailboat_main',
       executable='main_algo',
