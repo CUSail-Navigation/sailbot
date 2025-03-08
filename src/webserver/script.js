@@ -292,6 +292,16 @@ function subscribeToTopics() {
         updateTailAngle(message.data, "actual-tail-angle-dial");
     });
 
+    // Subscribe to /sailbot/wind
+    const windAngleTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: '/sailbot/wind',
+        messageType: 'std_msgs/Int32'
+    });
+    windAngleTopic.subscribe(function (message) {
+        updateValue('wind-angle-value', message.data);
+    });
+
     const actualSailAngleTopic = new ROSLIB.Topic({
         ros: ros,
         name: '/sailbot/actual_sail_angle',
@@ -620,7 +630,7 @@ function conditionalRender() {
         algoVals.forEach(el => el.style.display = "flex");
         rcVals.forEach(el => el.style.display = "none");
     }
-    if (controlModeVal == "radio control") {
+    if (controlModeVal == "radio") {
         algoVals.forEach(el => el.style.display = "none");
         rcVals.forEach(el => el.style.display = "flex");
     }
