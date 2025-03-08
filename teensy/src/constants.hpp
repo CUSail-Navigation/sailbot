@@ -5,12 +5,13 @@ namespace constants
 {
     namespace anemometer
     {
+
         constexpr uint8_t ANEMOMETER_PIN = 14;
     }
     namespace servo
     {
-        constexpr uint8_t SAIL_PIN = 4;
-        constexpr uint8_t RUDDER_PIN = 3;
+        constexpr uint8_t SAIL_PIN = 3;
+        constexpr uint8_t RUDDER_PIN = 4;
 
         constexpr uint8_t SAIL_MIN_ANGLE = 0;
         constexpr uint8_t SAIL_MAX_ANGLE = 90;
