@@ -10,12 +10,17 @@ class BuoyDetectorNode(Node):
     def __init__(self):
         super().__init__('buoy_detector_node')
 
-        self.declare_parameter('video_source', 0)
+        # --network="host"
+        # ffmpeg -f avfoundation -list_devices true -i ""
+        # ffmpeg -f avfoundation -video_device_index 3 -framerate 30 -i "3" -f mpegts udp://localhost:8080
+        # self.declare_parameter('video_source', "udp://localhost:8080?overrun_nonfatal=1fifo_size=50000000")
+        # self.declare_parameter('timer_period', 0.03)
+
+        self.declare_parameter('video_source', 4)
         self.declare_parameter('hsv_lower', [0, 120, 180])
         self.declare_parameter('hsv_upper', [10, 160, 255])
         self.declare_parameter('detection_threshold', 100)
         self.declare_parameter('timer_period', 0.1)  # Timer period for frame processing
-        
         
         self.CENTER = 300 # TODO: Actually find the center and margin of error
         self.MARGIN = 30
@@ -30,7 +35,7 @@ class BuoyDetectorNode(Node):
         self.detector = BuoyDetectorCV(hsv_lower, hsv_upper, detection_threshold)
 
         self.displacement_publisher = self.create_publisher(Int32, '/buoy_displacement', 10)
-        self.position_publisher = self.create_publisher(Int32, '/buoy_position', 10)
+        self.position_publisher = self.create_publisher(Point, '/buoy_position', 10)
 
         # OpenCV video capture
         self.cap = cv2.VideoCapture(self.video_source)
@@ -57,21 +62,26 @@ class BuoyDetectorNode(Node):
             return
 
         buoy_center, _ = self.detector.process_frame(frame)
+        cv2.imwrite("frame.jpg", frame)
+        self.get_logger().info(f'Saved frame')
 
         displacement = 0
         if not buoy_center:
+            self.get_logger().info(f'No buoy detected')
             return
         elif buoy_center[0] > self.CENTER + self.MARGIN:
             displacement = 1
         elif buoy_center[0] < self.CENTER - self.MARGIN:
             displacement = -1
         if displacement:
-            self.displacement_publisher.publish(displacement)
+            displacement_msg = Int32()
+            displacement_msg.data = displacement
+            self.displacement_publisher.publish(displacement_msg)
             self.get_logger().info(f'Detected buoy displacement: {displacement}')
         else:
             point_msg = Point()
-            point_msg.x, point_msg.y = buoy_center[0], buoy_center[1]
-            point_msg.z = abs(point_msg.x - self.CENTER) / math. atan(self.angle)
+            point_msg.x, point_msg.y, = map(float, buoy_center)
+            point_msg.z = 0.0 # TODO: Make this real based on self.angle
             self.position_publisher.publish(point_msg)
             self.get_logger().info(f'Detected buoy at: ({point_msg.x, point_msg.y, point_msg.z})')
     
