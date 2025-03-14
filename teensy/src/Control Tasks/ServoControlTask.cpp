@@ -1,4 +1,5 @@
 #include "ServoControlTask.hpp"
+#include <math.h>
 
 ServoControlTask::ServoControlTask()
 {
@@ -14,18 +15,18 @@ void ServoControlTask::execute()
     // check if we have new serial data to update servos
     if (sfr::serial::update_servos)
     {
-        uint8_t sail_angle = sfr::serial::buffer[0];
+        // uint8_t sail_angle = sfr::serial::buffer[0];
         uint8_t rudder_angle = sfr::serial::buffer[1];
 
         // update sfr values based on incoming serial data if checks pass
-        if (sail_angle >= constants::servo::SAIL_MIN_ANGLE && sail_angle <= constants::servo::SAIL_MAX_ANGLE)
-        {
-            sfr::servo::sail_angle = sail_angle;
-            sfr::servo::sail_pwm = sail_to_pwm(sail_angle);
+        // if (sail_angle >= constants::servo::SAIL_MIN_ANGLE && sail_angle <= constants::servo::SAIL_MAX_ANGLE)
+        // {
+        //     sfr::servo::sail_angle = sail_angle;
+        //     sfr::servo::sail_pwm = sail_to_pwm(sail_angle);
 
-            // actuate sail servo
-            actuate_servo(sail_servo, sfr::servo::sail_pwm);
-        }
+        //     // actuate sail servo
+        //     actuate_servo(sail_servo, sfr::servo::sail_pwm);
+        // }
 
         if (rudder_angle >= constants::servo::RUDDER_MIN_ANGLE && rudder_angle <= constants::servo::RUDDER_MAX_ANGLE)
         {
@@ -37,6 +38,13 @@ void ServoControlTask::execute()
         }
         sfr::serial::update_servos = false; // reset flag for next update
     }
+
+    uint8_t sail_angle = trim_sail();
+    sfr::servo::sail_angle = sail_angle;
+    sfr::servo::sail_pwm = sail_to_pwm(sail_angle);
+    // actuate sail servo
+    actuate_servo(sail_servo, sfr::servo::sail_pwm);
+    Serial.println(sfr::anemometer::wind_angle); //print for testing
 }
 
 // uint32_t ServoControlTask::angle_to_pwm(uint8_t angle)
@@ -44,6 +52,24 @@ void ServoControlTask::execute()
 //     // FIXME: this is hardcoded for our specific scenario
 //     return angle * 2;
 // }
+
+uint8_t ServoControlTask::trim_sail()
+{
+    uint16_t wind_angle = sfr::anemometer::wind_angle;
+
+    if ((wind_angle <= 0 && wind_angle < 10) || (wind_angle > 350 && wind_angle < 360))
+    {
+        return 0;
+    }
+    else if ((wind_angle > 210 && wind_angle <= 350) || (wind_angle >= 10 && wind_angle < 150))
+    {
+        return (round(((7.0 / 15.0) * wind_angle - 80) / 5.0) * 5) - 90;
+    }
+    else
+    {
+        return 90;
+    }
+}
 
 uint32_t ServoControlTask::tail_to_pwm(uint8_t angle)
 {
