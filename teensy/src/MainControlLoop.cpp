@@ -17,8 +17,8 @@ MainControlLoop::MainControlLoop()
 
 void MainControlLoop::execute()
 {
-    //anemometer_monitor.execute();
+    anemometer_monitor.execute();
     serial_monitor.execute();
     servo_control_task.execute();
-    serial_control_task.execute();
+    //serial_control_task.execute();
 }

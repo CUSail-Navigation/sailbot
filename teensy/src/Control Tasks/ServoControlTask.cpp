@@ -44,31 +44,42 @@ void ServoControlTask::execute()
     sfr::servo::sail_pwm = sail_to_pwm(sail_angle);
     // actuate sail servo
     actuate_servo(sail_servo, sfr::servo::sail_pwm);
-    Serial.println(sfr::anemometer::wind_angle); //print for testing
+   // Serial.println(sfr::anemometer::wind_angle); //print for testing
 }
-
-// uint32_t ServoControlTask::angle_to_pwm(uint8_t angle)
-// {
-//     // FIXME: this is hardcoded for our specific scenario
-//     return angle * 2;
-// }
 
 uint8_t ServoControlTask::trim_sail()
 {
-    uint16_t wind_angle = sfr::anemometer::wind_angle;
+    uint16_t normal_wind_angle = sfr::anemometer::wind_angle;
+    normal_wind_angle = 180 - abs(normal_wind_angle - 180); //Normalized wind angle to 0 - 180 always because we only care about one side
+    // Serial.println(normal_wind_angle); //print for testing
 
-    if ((wind_angle <= 0 && wind_angle < 10) || (wind_angle > 350 && wind_angle < 360))
-    {
-        return 0;
-    }
-    else if ((wind_angle > 210 && wind_angle <= 350) || (wind_angle >= 10 && wind_angle < 150))
-    {
-        return (round(((7.0 / 15.0) * wind_angle - 80) / 5.0) * 5) - 90;
-    }
-    else
-    {
+  // Serial.println(normal_wind_angle); //print for testing
+   if ((normal_wind_angle <= 0 && normal_wind_angle <= 10))
+   {
+       return 0;
+   }
+   else if (normal_wind_angle >= 150)
+   {
         return 90;
-    }
+       //return (round(((7.0 / 15.0) * normal_wind_angle - 80) / 5.0) * 5) - 90;
+   }
+   else
+   {
+        return map(normal_wind_angle, 10, 150, 0, 90);
+   }
+
+    // if ((normal_wind_angle <= 0 && normal_wind_angle < 10) || (normal_wind_angle > 350 && normal_wind_angle < 360))
+    // {
+    //     return 0;
+    // }
+    // else if ((normal_wind_angle > 210 && normal_wind_angle <= 350) || (normal_wind_angle >= 10 && normal_wind_angle < 150))
+    // {
+    //     return (round(((7.0 / 15.0) * normal_wind_angle - 80) / 5.0) * 5) - 90;
+    // }
+    // else
+    // {
+    //     return 90;
+    // }
 }
 
 uint32_t ServoControlTask::tail_to_pwm(uint8_t angle)
