@@ -5,7 +5,7 @@ namespace constants
 {
     namespace anemometer
     {
-        constexpr uint8_t ANEMOMETER_PIN = 0; // FIXME: change to correct pin number
+        constexpr uint8_t ANEMOMETER_PIN = 14; // FIXME: change to correct pin number
     }
     namespace servo
     {
@@ -28,5 +28,9 @@ namespace constants
         constexpr uint8_t RX_END_FLAG = 0xEE;
 
         constexpr uint32_t BAUD_RATE = 9600;
+    }
+    namespace led
+    {
+        constexpr uint8_t LED_PIN = 13;
     }
 }

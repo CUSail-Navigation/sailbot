@@ -17,7 +17,6 @@ void SerialControlTask::execute()
     {
         uint8_t data[] = {
             constants::serial::TX_START_FLAG,
-            sfr::anemometer::wind_angle,
             sfr::servo::sail_angle,
             sfr::servo::rudder_angle,
             sfr::serial::dropped_packets,

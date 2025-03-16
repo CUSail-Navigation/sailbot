@@ -4,6 +4,7 @@
 #include "Monitors/SerialMonitor.hpp"
 #include "Control Tasks/ServoControlTask.hpp"
 #include "Control Tasks/SerialControlTask.hpp"
+#include "Control Tasks/LedControlTask.hpp"
 
 #include "sfr.hpp"
 
@@ -18,4 +19,5 @@ protected:
     SerialMonitor serial_monitor;
     ServoControlTask servo_control_task;
     SerialControlTask serial_control_task;
+    LedControlTask led_control_task;
 };

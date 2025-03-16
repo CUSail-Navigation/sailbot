@@ -4,12 +4,14 @@ SerialMonitor::SerialMonitor()
     : buffer_index(0),
       packet_started(false)
 {
+    
 }
 
 void SerialMonitor::execute()
 {
     while (Serial.available())
     {
+        //add boolean
         uint8_t incoming_byte = Serial.read();
         // only set flags if packet start byte is correct
         if (incoming_byte == constants::serial::RX_START_FLAG)

@@ -2,8 +2,8 @@
 
 ServoControlTask::ServoControlTask()
 {
-    sail_servo.attach(constants::servo::SAIL_PIN);
-    rudder_servo.attach(constants::servo::RUDDER_PIN);
+    //sail_servo.attach(constants::servo::SAIL_PIN);
+    //rudder_servo.attach(constants::servo::RUDDER_PIN);
 }
 
 void ServoControlTask::execute()
