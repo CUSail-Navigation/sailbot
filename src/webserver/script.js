@@ -321,6 +321,14 @@ function subscribeToTopics() {
         name: '/sailbot/mutate_waypoint_queue',
         serviceType: 'sailboat_interface/srv/Waypoint'
     });
+    const droppedPacketsTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: '/sailbot/dropped_packets',
+        messageType: 'std_msgs/Int32'
+    });
+    droppedPacketsTopic.subscribe(function (message) {
+        updateValue('dropped-packets-value', message.data);
+    });
 }
 // Connect to ROS when the page loads
 window.onload = function () {
