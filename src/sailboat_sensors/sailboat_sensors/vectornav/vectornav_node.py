@@ -15,7 +15,7 @@ class VectorNav(Node):
         self.declare_parameter('timer_period', 0.5)
         self.timer_period = self.get_parameter('timer_period').value
 
-        self.declare_parameter('vectornav_port', '/dev/ttyUSB0') # FIXME: Add a better default port
+        self.declare_parameter('vectornav_port', '/dev/serial/by-id/usb-FTDI_USB-RS232-WE_AV0LF3XT-if00-port0') # FIXME: Add a better default port
         self.vectornav_port = self.get_parameter('vectornav_port').value
 
         self.declare_parameter('use_fake_data', False)
