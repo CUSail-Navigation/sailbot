@@ -74,8 +74,5 @@ class FakeVectorNav:
             time.sleep(1)
 
 
-# Example usage
-if __name__ == '__main__':
-    fake_vectornav = FakeVectorNav()
-    fake_vectornav.simulate(10)
+
 
