@@ -11,12 +11,12 @@ public:
     void execute();
 
 private:
-    // uint32_t angle_to_pwm(uint8_t angle);
     uint32_t sail_to_pwm(uint8_t angle);
-    uint32_t tail_to_pwm(uint8_t angle);
+    uint32_t rudder_to_pwm(uint8_t angle);
+
+    uint8_t trim_sail();
     
     void actuate_servo(Servo &servo, uint32_t pwm);
-    uint8_t trim_sail();
     
     Servo sail_servo;
     Servo rudder_servo;
