@@ -64,32 +64,7 @@ class VectorNav(Node):
         self.publisher_imu.publish(imu_msg)
 
         self.get_logger().info('Publishing GPS Data: ' + 'Lat: ' + str(nav_sat_msg.latitude) + ' Long: ' + str(nav_sat_msg.longitude))
-<<<<<<< HEAD
-        self.get_logger().info(f'Publishing IMU Data: Orientation = ({qx}, {qy}, {qz}, {qw})')
-        self.get_logger().info(f'Publishing IMU Data: YPR = ({yaw}, {pitch}, {roll})')
-
-
-    def euler_to_quaternion(self, yaw, pitch, roll):
-        """
-        Convert Euler angles to quaternion.
-
-        Parameters:
-        yaw (float): The yaw angle in radians.
-        pitch (float): The pitch angle in radians.
-        roll (float): The roll angle in radians.
-
-        Returns:
-        list: A list containing the quaternion [qx, qy, qz, qw].
-        """
-        qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
-        qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
-        qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
-        qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
-
-        return [qx, qy, qz, qw]
-=======
         self.get_logger().info(f'Publishing IMU Data (Yaw, Pitch, Roll) = ({imu_msg.z}, {imu_msg.y}, {imu_msg.x})')
->>>>>>> 6c18adab71f0eee88ec192fc708af7d64c4df1ac
 
 def main(args=None):
     rclpy.init(args=args)
