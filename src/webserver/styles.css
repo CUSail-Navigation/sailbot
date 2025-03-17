@@ -14,10 +14,11 @@ body {
     flex: 1;
     display: flex;
     padding: 20px;
+    max-height: 874px;
 }
 
 .right-column {
-    max-width: 700px;
+    max-width: 400px;
     padding: 20px;
 }
 
@@ -34,7 +35,7 @@ body {
 
 .map-content {
     flex: 1;
-    height: 100%;
+    height: 74%;
 }
 
 #map {
@@ -43,14 +44,32 @@ body {
 }
 
 .table-container {
+    width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
+.waypoint-buoy-container {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    max-width: 400px;
+}
+
+.waypoint-buoy-table {
+    min-width: 160px;
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
 
 .waypoint-list {
-    width: 125px;
+    width: 200px;
     top: 20px;
     right: 20px;
     padding: 10px;
@@ -80,23 +99,29 @@ h1 {
 
 .input-group {
     display: flex;
-    align-items: center;
+    align-items: right;
     gap: 10px;
-    max-width: 620px;
+    /* max-width: 20px; */
+    width: 70%;
 }
 
 input[type="number"] {
     padding: 5px;
     border: 1px solid #ccc;
     border-radius: 5px;
-    width: 100px;
-    text-align: right;
+    width: 80px;
+    text-align: left;
 }
 
 .status-row {
     display: flex;
     justify-content: space-between;
 
+}
+
+.status-row-input {
+    display: flex;
+    margin-bottom: 10px;
 }
 
 .status-row.second {
@@ -129,7 +154,6 @@ button {
     background-color: #007bff;
     color: white;
     padding: 10px;
-    font-size: 16px;
     border: none;
     cursor: pointer;
 }
@@ -141,6 +165,10 @@ button {
     min-width: 160px;
     box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
     z-index: 1;
+}
+
+.dropdown-content a:hover {
+    background-color: #f0f0f0;
 }
 
 .dropdown-content a {
@@ -158,5 +186,27 @@ button {
 
 .dial {
     text-align: center;
-    margin: 10px; 
+    margin: 0 20px;
+}
+
+.waypoint-item {
+    display: flex;
+    justify-content: space-between;
+    border-radius: 10px;
+}
+
+.waypoint-item:hover {
+    background-color: #f0f0f0;
+}
+
+.delete-button {
+    background-color: #B41414;
+    margin-bottom: 5px;
+}
+
+#mouse-pos {
+    padding: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    width: 200px;
 }
