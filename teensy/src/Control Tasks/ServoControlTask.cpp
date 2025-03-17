@@ -56,7 +56,6 @@ void ServoControlTask::execute()
     sfr::servo::sail_pwm = sail_to_pwm(sail_angle);
     // actuate sail servo
     actuate_servo(sail_servo, sfr::servo::sail_pwm);
-   // Serial.println(sfr::anemometer::wind_angle); //print for testing
 }
 
 uint8_t ServoControlTask::trim_sail()
