@@ -47,7 +47,6 @@ class TeensyHardware:
                 return 0
             # if we have previously seen a packet start byte, add data to our buffer
             elif self.packet_started:
-                print("ADDED BYTE TO BUFFER")
                 self.buffer.append(int.from_bytes(incoming_byte, 'big'))
         else:
             return 1
