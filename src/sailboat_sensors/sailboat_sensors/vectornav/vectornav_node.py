@@ -2,7 +2,7 @@ import numpy as np
 import rclpy
 from rclpy.node import Node
 
-from geometry_msgs import Vector3
+from geometry_msgs.msg import Vector3
 from sensor_msgs.msg import NavSatFix
 from . import vectornav_real
 from . import vectornav_fake
@@ -22,7 +22,7 @@ class VectorNav(Node):
         self.use_fake_data = self.get_parameter('use_fake_data').value
 
         self.publisher_gps = self.create_publisher(NavSatFix, '/gps', 10)
-        self.publisher_imu = self.create_publisher(Imu, '/imu', 10)
+        self.publisher_imu = self.create_publisher(Vector3, '/imu', 10)
 
         self.timer = self.create_timer(self.timer_period, self.gps_callback)
 
