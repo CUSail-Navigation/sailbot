@@ -292,6 +292,16 @@ function subscribeToTopics() {
         updateTailAngle(message.data, "actual-tail-angle-dial");
     });
 
+    // Subscribe to /sailbot/wind
+    const windAngleTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: '/sailbot/wind',
+        messageType: 'std_msgs/Int32'
+    });
+    windAngleTopic.subscribe(function (message) {
+        updateValue('wind-angle-value', message.data);
+    });
+
     const actualSailAngleTopic = new ROSLIB.Topic({
         ros: ros,
         name: '/sailbot/actual_sail_angle',
@@ -310,6 +320,14 @@ function subscribeToTopics() {
         ros: ros,
         name: '/sailbot/mutate_waypoint_queue',
         serviceType: 'sailboat_interface/srv/Waypoint'
+    });
+    const droppedPacketsTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: '/sailbot/dropped_packets',
+        messageType: 'std_msgs/Int32'
+    });
+    droppedPacketsTopic.subscribe(function (message) {
+        updateValue('dropped-packets-value', message.data);
     });
 }
 // Connect to ROS when the page loads
@@ -620,7 +638,7 @@ function conditionalRender() {
         algoVals.forEach(el => el.style.display = "flex");
         rcVals.forEach(el => el.style.display = "none");
     }
-    if (controlModeVal == "radio control") {
+    if (controlModeVal == "radio") {
         algoVals.forEach(el => el.style.display = "none");
         rcVals.forEach(el => el.style.display = "flex");
     }
