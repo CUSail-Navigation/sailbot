@@ -51,7 +51,7 @@ class Teensy(Node):
         self.wind_angle_pub = self.create_publisher(Int32, 'wind', 10)
         self.actual_sail_angle_pub = self.create_publisher(Int32, 'actual_sail_angle', 10)
         self.actual_rudder_angle_pub = self.create_publisher(Int32, 'actual_rudder_angle', 10)
-        self.actual_buoy_displacement_pub = self.create_publisher(Int32, 'actual_buoy_displacement', 10)
+        self.buoy_angle = self.create_publisher(Int32, 'buoy_angle', 10)
         self.dropped_packets_pub = self.create_publisher(Int32, 'dropped_packets', 10)
 
         # callback to read teensy data
@@ -97,9 +97,9 @@ class Teensy(Node):
             rudder_angle_msg.data = data["rudder_angle"]
             self.actual_rudder_angle_pub.publish(rudder_angle_msg)
 
-            buoy_displacement_msg = Int32()
-            buoy_displacement_msg.data = data["buoy_displacement"]
-            self.actual_buoy_displacement_pub.publish(buoy_displacement_msg)
+            buoy_angle_msg = Int32()
+            buoy_angle_msg.data = data["buoy_angle"]
+            self.buoy_angle_pub.publish(buoy_angle_msg)
 
             dropped_packets_msg = Int32()
             dropped_packets_msg.data = data["dropped_packets"]
