@@ -141,16 +141,12 @@ function parseGpsData(message) {
 
 
 function parseImuData(message) {
-    parseQuaternionData(message);
+    parseHeading(message);
     // parseAngularVelocityData(message);
 }
 
-function parseQuaternionData(message) {
-    vectorX = message.x;
-    vectorY = message.y;
-    vectorZ = message.z;
-
-    heading = vectorZ;
+function parseHeading(message) {
+    heading = message.z;
 
     formattedHeading = heading.toFixed(6);
 
@@ -166,6 +162,7 @@ function parseQuaternionData(message) {
     }
 }
 
+// Not in use after changing quaternion to vector3 type
 // function parseAngularVelocityData(message) {
 //     angularVelocityZ = message.z;
 
