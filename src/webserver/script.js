@@ -141,17 +141,16 @@ function parseGpsData(message) {
 
 
 function parseImuData(message) {
-    parseQuaternionData(message.orientation);
-    parseAngularVelocityData(message.angular_velocity);
+    parseQuaternionData(message);
+    // parseAngularVelocityData(message);
 }
 
 function parseQuaternionData(message) {
-    quaternionX = message.x;
-    quaternionY = message.y;
-    quaternionZ = message.z;
-    quaternionW = message.w
+    vectorX = message.x;
+    vectorY = message.y;
+    vectorZ = message.z;
 
-    heading = quaternionToHeading(quaternionX, quaternionY, quaternionZ, quaternionW)
+    heading = vectorZ;
 
     formattedHeading = heading.toFixed(6);
 
@@ -167,13 +166,13 @@ function parseQuaternionData(message) {
     }
 }
 
-function parseAngularVelocityData(message) {
-    angularVelocityZ = message.z;
+// function parseAngularVelocityData(message) {
+//     angularVelocityZ = message.z;
 
-    angularVelocityZ = angularVelocityZ.toFixed(6);
+//     angularVelocityZ = angularVelocityZ.toFixed(6);
 
-    document.getElementById('angular-velocity-z-value').innerText = angularVelocityZ
-}
+//     document.getElementById('angular-velocity-z-value').innerText = angularVelocityZ
+// }
 
 /**
  * Converts a quaternion to a heading angle in degrees.
@@ -278,7 +277,7 @@ function subscribeToTopics() {
     const imuTopic = new ROSLIB.Topic({
         ros: ros,
         name: '/imu',
-        messageType: 'sensor_msgs/msg/Imu'
+        messageType: 'geometry_msgs/msg/Vector3'
     });
     imuTopic.subscribe(parseImuData);
 
