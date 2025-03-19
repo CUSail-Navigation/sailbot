@@ -549,6 +549,10 @@ function deleteWaypoint(index) {
         console.warn(`Marker not found for: ${waypoint}`);
     }
 
+    // Remove waypoint trail for removed waypoint
+    waypointPlanCoordinates.splice(index, 1);
+    waypointPath.setPath(waypointPlanCoordinates);
+
     // Remove the waypoint from the array
     waypoints.splice(index, 1);
 
