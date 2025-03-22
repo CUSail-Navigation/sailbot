@@ -97,6 +97,7 @@ function connectToROS(url) {
 document.getElementById('connect-to-ros').addEventListener('click', function () {
     const rosbridgeAddress = document.getElementById('ros-url').value;
     if (rosbridgeAddress) {
+        console.log(rosbridgeAddress);
         connectToROS(rosbridgeAddress);
     } else {
         console.error('Please enter a valid ROS URL.');
@@ -198,6 +199,7 @@ function quaternionToHeading(x, y, z, w) {
 }
 
 let waypointService;
+let BASE_BASE_THROTTLE_RATE = 1000;
 
 function subscribeToTopics() {
     // Helper function to update DOM element with topic data
@@ -208,7 +210,8 @@ function subscribeToTopics() {
     const algoRudderTopic = new ROSLIB.Topic({
         ros: ros,
         name: '/sailbot/algo_rudder',
-        messageType: 'std_msgs/Int32'
+        messageType: 'std_msgs/Int32',
+        throttle_rate: BASE_THROTTLE_RATE,
     });
     algoRudderTopic.subscribe(function (message) {
         updateValue('algo-rudder-value', message.data);
@@ -217,7 +220,8 @@ function subscribeToTopics() {
     const algoSailTopic = new ROSLIB.Topic({
         ros: ros,
         name: '/sailbot/algo_sail',
-        messageType: 'std_msgs/Int32'
+        messageType: 'std_msgs/Int32',
+        throttle_rate: BASE_THROTTLE_RATE,
     });
     algoSailTopic.subscribe(function (message) {
         updateValue('algo-sail-value', message.data);
@@ -226,7 +230,8 @@ function subscribeToTopics() {
     controlModeTopic = new ROSLIB.Topic({
         ros: ros,
         name: '/sailbot/control_mode',
-        messageType: 'std_msgs/String'
+        messageType: 'std_msgs/String',
+        throttle_rate: BASE_THROTTLE_RATE,
     });
     controlModeTopic.subscribe(function (message) {
         updateValue('control-mode-value', message.data);
@@ -236,7 +241,8 @@ function subscribeToTopics() {
     const radioRudderTopic = new ROSLIB.Topic({
         ros: ros,
         name: '/sailbot/radio_rudder',
-        messageType: 'std_msgs/Int32'
+        messageType: 'std_msgs/Int32',
+        throttle_rate: BASE_THROTTLE_RATE,
     });
     radioRudderTopic.subscribe(function (message) {
         updateValue('radio-rudder-value', message.data);
@@ -245,7 +251,8 @@ function subscribeToTopics() {
     const radioSailTopic = new ROSLIB.Topic({
         ros: ros,
         name: '/sailbot/radio_sail',
-        messageType: 'std_msgs/Int32'
+        messageType: 'std_msgs/Int32',
+        throttle_rate: BASE_THROTTLE_RATE,
     });
     radioSailTopic.subscribe(function (message) {
         updateValue('radio-sail-value', message.data);
@@ -254,7 +261,8 @@ function subscribeToTopics() {
     const rudderAngleTopic = new ROSLIB.Topic({
         ros: ros,
         name: '/sailbot/rudder_angle',
-        messageType: 'std_msgs/Int32'
+        messageType: 'std_msgs/Int32',
+        throttle_rate: BASE_THROTTLE_RATE,
     });
     rudderAngleTopic.subscribe(function (message) {
         updateValue('rudder-angle-value', message.data);
@@ -263,7 +271,8 @@ function subscribeToTopics() {
     const sailTopic = new ROSLIB.Topic({
         ros: ros,
         name: '/sailbot/sail',
-        messageType: 'std_msgs/Int32'
+        messageType: 'std_msgs/Int32',
+        throttle_rate: BASE_THROTTLE_RATE,
     });
     sailTopic.subscribe(function (message) {
         updateValue('sail-value', message.data);
@@ -271,21 +280,24 @@ function subscribeToTopics() {
     const gpsTopic = new ROSLIB.Topic({
         ros: ros,
         name: '/gps',
-        messageType: 'sensor_msgs/NavSatFix'
+        messageType: 'sensor_msgs/NavSatFix',
+        throttle_rate: BASE_THROTTLE_RATE,
     });
     gpsTopic.subscribe(parseGpsData);
 
     const imuTopic = new ROSLIB.Topic({
         ros: ros,
         name: '/imu',
-        messageType: 'sensor_msgs/msg/Imu'
+        messageType: 'sensor_msgs/msg/Imu',
+        throttle_rate: BASE_THROTTLE_RATE,
     });
     imuTopic.subscribe(parseImuData);
 
     const actualRudderAngleTopic = new ROSLIB.Topic({
         ros: ros,
         name: '/sailbot/actual_rudder_angle',
-        messageType: 'std_msgs/msg/Int32'
+        messageType: 'std_msgs/msg/Int32',
+        throttle_rate: BASE_THROTTLE_RATE,
     })
     actualRudderAngleTopic.subscribe(function (message) {
         updateValue('actual-tail-angle-value', message.data);
@@ -296,7 +308,8 @@ function subscribeToTopics() {
     const windAngleTopic = new ROSLIB.Topic({
         ros: ros,
         name: '/sailbot/wind',
-        messageType: 'std_msgs/Int32'
+        messageType: 'std_msgs/Int32',
+        throttle_rate: BASE_THROTTLE_RATE,
     });
     windAngleTopic.subscribe(function (message) {
         updateValue('wind-angle-value', message.data);
@@ -305,7 +318,8 @@ function subscribeToTopics() {
     const actualSailAngleTopic = new ROSLIB.Topic({
         ros: ros,
         name: '/sailbot/actual_sail_angle',
-        messageType: 'std_msgs/msg/Int32'
+        messageType: 'std_msgs/msg/Int32',
+        throttle_rate: BASE_THROTTLE_RATE,
     })
     actualSailAngleTopic.subscribe(function (message) {
         updateValue('actual-sail-angle-value', message.data);
