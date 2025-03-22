@@ -5,7 +5,9 @@ from rclpy.node import Node
 from rclpy.service import Service
 
 import utm
-from sensor_msgs.msg import NavSatFix, Imu
+from sensor_msgs.msg import NavSatFix
+from geometry_msgs.msg import Vector3
+
 from geometry_msgs.msg import Point
 from std_msgs.msg import Bool, Int32
 from rclpy.task import Future
@@ -42,7 +44,7 @@ class MainAlgo(Node):
 
         #Subscription for heading direction
         self.subscription_heading_dir = self.create_subscription(
-            Imu,
+            Vector3,
             '/imu',
             self.heading_dir_callback,
             10)
@@ -141,9 +143,11 @@ class MainAlgo(Node):
         """
         Use the imu data to assign value to self.heading_dir
         """
-        data = msg.orientation
-        roll_x, roll_y, roll_z = euler_from_quaternion(data.x, data.y, data.z, data.w)
-        self.heading_dir = np.degrees(roll_x)
+        # data = msg.orientation
+        # roll_x, roll_y, roll_z = euler_from_quaternion(data.x, data.y, data.z, data.w)
+        # self.heading_dir = np.degrees(roll_x)
+        data = msg.z
+        self.heading_dir = data
 
     # def curr_dest_callback(self, msg):
     #     """

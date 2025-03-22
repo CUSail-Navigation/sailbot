@@ -42,7 +42,7 @@ class TeensyHardware:
                 data["rudder_angle"], \
                 data["dropped_packets"] = self._parse_packet(self.buffer)
 
-                # clear buffer
+                # clear bufferread_telemetry
                 self.serial.reset_input_buffer()
                 return 0
             # if we have previously seen a packet start byte, add data to our buffer
