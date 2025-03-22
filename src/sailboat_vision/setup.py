@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'buoy_detection = sailboat_vision.buoy_detection.camera_node:main'
+            'buoy_detection = sailboat_vision.camera_node:main'
         ],
     },
 )

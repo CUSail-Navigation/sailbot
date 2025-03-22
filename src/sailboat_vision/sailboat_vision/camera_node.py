@@ -6,7 +6,7 @@ from rclpy.node import Node
 from geometry_msgs.msg import Point
 from std_msgs.msg import Int32
 
-from buoy_detection import BuoyDetectorCV
+from sailboat_vision.buoy_detection import BuoyDetectorCV
 
 class BuoyDetectorNode(Node):
     def __init__(self):
@@ -17,7 +17,6 @@ class BuoyDetectorNode(Node):
         self.declare_parameter('detection_threshold', 100)
         self.declare_parameter('timer_period', 0.1)  # Timer period for frame processing
         
-        self.video_source = self.get_parameter('video_source').value
         hsv_lower = self.get_parameter('hsv_lower').value
         hsv_upper = self.get_parameter('hsv_upper').value
         detection_threshold = self.get_parameter('detection_threshold').value
@@ -82,7 +81,7 @@ class BuoyDetectorNode(Node):
             self.get_logger().info(f'Detected buoy displacement: {displacement}')
             return
 
-        depth = depth_image[buoy_center[0], buoy_center[1]]
+        depth = depth_image[buoy_center[0], buoy_center[1]] / 1000
         point_msg = Point()
         point_msg.x = self.CENTER + (depth * math.sin(self.angle))
         point_msg.y = float(buoy_center[1])
