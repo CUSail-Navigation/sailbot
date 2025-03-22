@@ -142,17 +142,12 @@ function parseGpsData(message) {
 
 
 function parseImuData(message) {
-    parseQuaternionData(message.orientation);
-    parseAngularVelocityData(message.angular_velocity);
+    parseHeading(message);
+    // parseAngularVelocityData(message);
 }
 
-function parseQuaternionData(message) {
-    quaternionX = message.x;
-    quaternionY = message.y;
-    quaternionZ = message.z;
-    quaternionW = message.w
-
-    heading = quaternionToHeading(quaternionX, quaternionY, quaternionZ, quaternionW)
+function parseHeading(message) {
+    heading = message.z;
 
     formattedHeading = heading.toFixed(6);
 
@@ -168,13 +163,14 @@ function parseQuaternionData(message) {
     }
 }
 
-function parseAngularVelocityData(message) {
-    angularVelocityZ = message.z;
+// Not in use after changing quaternion to vector3 type
+// function parseAngularVelocityData(message) {
+//     angularVelocityZ = message.z;
 
-    angularVelocityZ = angularVelocityZ.toFixed(6);
+//     angularVelocityZ = angularVelocityZ.toFixed(6);
 
-    document.getElementById('angular-velocity-z-value').innerText = angularVelocityZ
-}
+//     document.getElementById('angular-velocity-z-value').innerText = angularVelocityZ
+// }
 
 /**
  * Converts a quaternion to a heading angle in degrees.
@@ -288,8 +284,8 @@ function subscribeToTopics() {
     const imuTopic = new ROSLIB.Topic({
         ros: ros,
         name: '/imu',
-        messageType: 'sensor_msgs/msg/Imu',
         throttle_rate: BASE_THROTTLE_RATE,
+        messageType: 'geometry_msgs/msg/Vector3'
     });
     imuTopic.subscribe(parseImuData);
 
@@ -566,6 +562,10 @@ function deleteWaypoint(index) {
     } else {
         console.warn(`Marker not found for: ${waypoint}`);
     }
+
+    // Remove waypoint trail for removed waypoint
+    waypointPlanCoordinates.splice(index, 1);
+    waypointPath.setPath(waypointPlanCoordinates);
 
     // Remove the waypoint from the array
     waypoints.splice(index, 1);
