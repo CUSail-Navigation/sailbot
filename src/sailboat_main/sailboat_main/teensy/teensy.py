@@ -38,6 +38,7 @@ class TeensyHardware:
                 data["wind_angle"], \
                 data["sail_angle"], \
                 data["rudder_angle"], \
+                data["buoy_angle"], \
                 data["dropped_packets"] = self._parse_packet(self.buffer)
 
                 # clear buffer
@@ -68,9 +69,16 @@ class TeensyHardware:
         else:
             rudder_angle = packet[2]
 
-        dropped_packets = packet[3]
 
-        return wind_angle, sail_angle, rudder_angle, dropped_packets
+        if packet[3] >= 128:
+            buoy_angle = packet[3] - 256
+        else:
+            buoy_angle = packet[3]
+
+        dropped_packets = packet[4]
+
+        return wind_angle, sail_angle, rudder_angle, buoy_angle, dropped_packets
+
 
 
     def send_command(self, sail, rudder, buoy_displacement):
