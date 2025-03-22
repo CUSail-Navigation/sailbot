@@ -30,11 +30,11 @@ class BuoyDetectorNode(Node):
         self.pipeline.start(config)
         self.align = rs.align(rs.stream.color)
 
+        self.detector = BuoyDetectorCV(hsv_lower, hsv_upper, detection_threshold)
+        
         self.CENTER = 320
         self.MARGIN = 30 # TODO: Find best value for margin of error
         self.angle = 90
-
-        self.detector = BuoyDetectorCV(hsv_lower, hsv_upper, detection_threshold)
 
         self.displacement_publisher = self.create_publisher(Int32, '/buoy_displacement', 10)
         self.position_publisher = self.create_publisher(Point, '/buoy_position', 10)
@@ -69,24 +69,26 @@ class BuoyDetectorNode(Node):
             self.get_logger().info(f'No buoy detected')
             return
         
+        displacement = 0
         if buoy_center[0] > self.CENTER + self.MARGIN:
             displacement = 1
         elif buoy_center[0] < self.CENTER - self.MARGIN:
             displacement = -1
-        else:
-            depth = depth_image[buoy_center[0], buoy_center[1]]
-            point_msg = Point()
-            point_msg.x = self.CENTER + (depth * math.sin(self.angle))
-            point_msg.y = float(buoy_center[1])
-            point_msg.z = depth * math.cos(self.angle)
-            self.position_publisher.publish(point_msg)
-            self.get_logger().info(f'Detected buoy at: ({point_msg.x, point_msg.y, point_msg.z})')
+        
+        if displacement:
+            displacement_msg = Int32()
+            displacement_msg.data = displacement
+            self.displacement_publisher.publish(displacement_msg)
+            self.get_logger().info(f'Detected buoy displacement: {displacement}')
             return
 
-        displacement_msg = Int32()
-        displacement_msg.data = displacement
-        self.displacement_publisher.publish(displacement_msg)
-        self.get_logger().info(f'Detected buoy displacement: {displacement}')
+        depth = depth_image[buoy_center[0], buoy_center[1]]
+        point_msg = Point()
+        point_msg.x = self.CENTER + (depth * math.sin(self.angle))
+        point_msg.y = float(buoy_center[1])
+        point_msg.z = depth * math.cos(self.angle)
+        self.position_publisher.publish(point_msg)
+        self.get_logger().info(f'Detected buoy at: ({point_msg.x, point_msg.y, point_msg.z})')
     
     def buoy_angle_callback(self, msg):
         self.angle = msg.data - 90
