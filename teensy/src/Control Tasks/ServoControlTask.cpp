@@ -53,7 +53,6 @@ uint32_t ServoControlTask::tail_to_pwm(uint8_t angle)
 uint32_t ServoControlTask::sail_to_pwm(uint8_t angle)
 {
     return map(angle, 0, 90, 1050, 1200);
-    //return 1050;
 }
 
 void ServoControlTask::actuate_servo(Servo &servo, uint32_t pwm)
