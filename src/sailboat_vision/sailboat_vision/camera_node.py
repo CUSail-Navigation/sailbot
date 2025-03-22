@@ -33,7 +33,7 @@ class BuoyDetectorNode(Node):
         
         self.CENTER = 320
         self.MARGIN = 30 # TODO: Find best value for margin of error
-        self.angle = 90
+        self.angle = 0
 
         self.displacement_publisher = self.create_publisher(Int32, '/buoy_displacement', 10)
         self.position_publisher = self.create_publisher(Point, '/buoy_position', 10)
@@ -83,14 +83,14 @@ class BuoyDetectorNode(Node):
 
         depth = depth_image[buoy_center[0], buoy_center[1]] / 1000
         point_msg = Point()
-        point_msg.x = self.CENTER + (depth * math.sin(self.angle))
+        point_msg.x = (depth * math.sin(self.angle))
         point_msg.y = float(buoy_center[1])
         point_msg.z = depth * math.cos(self.angle)
         self.position_publisher.publish(point_msg)
         self.get_logger().info(f'Detected buoy at: ({point_msg.x, point_msg.y, point_msg.z})')
     
     def buoy_angle_callback(self, msg):
-        self.angle = msg.data - 90
+        self.angle = math.radians(msg.data - 90)
 
     def update_detector_parameters(self):
         """Update the CV detector parameters dynamically."""
