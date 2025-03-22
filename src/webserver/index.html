@@ -21,6 +21,9 @@
                     <span class="status-label">Waypoints:</span>
                     <span class="status-value" id="waypoint-list"></span>
                 </div>
+                <div class="mouse-position">
+                    <div id="mouse-pos">Mouse position</div>
+                </div>
             </div>
         </div>
         <div class="right-column">
@@ -90,24 +93,58 @@
                 </div>
             </div>
             <div class="table-container">
-                <h1>Waypoint Input</h1>
+                <h1>Connect to ROS</h1>
                 <div class="table">
-                    <div class="status-row second">
+                    <div class="status-row">
+                        <span class="status-label">ROS URL:</span>
+                        <div class="input-group">
+                            <input type="url" id="ros-url" name="ros-url" inputmode="url" placeholder="Enter ROS URL"
+                                required>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button type="button" id="connect-to-ros">Submit</button>
+                    </div>
+                </div>
+                <h1>Waypoint & Buoy Input</h1>
+            </div>
+            <div class="waypoint-buoy-container">
+                <div class="waypoint-buoy-table">
+                    <div class="status-row-input second">
                         <span class="status-label">Latitude:</span>
                         <div class="input-group">
-                            <input type="number" id="latitude" name="latitude" inputmode="decimal"
+                            <input type="number" id="waypoint-latitude" name="latitude" inputmode="decimal"
                                 placeholder="Enter latitude" required>
                         </div>
                     </div>
-                    <div class="status-row second">
+                    <div class="status-row-input second">
                         <span class="status-label">Longitude:</span>
                         <div class="input-group">
-                            <input type="number" id="longitude" name="longitude" inputmode="decimal"
+                            <input type="number" id="waypoint-longitude" name="longitude" inputmode="decimal"
                                 placeholder="Enter longitude" required>
                         </div>
                     </div>
                     <div class="button-group">
                         <button type="button" id="submit-waypoint">Submit Waypoint</button>
+                    </div>
+                </div>
+                <div class="waypoint-buoy-table">
+                    <div class="status-row-input second">
+                        <span class="status-label">Latitude:</span>
+                        <div class="input-group">
+                            <input type="number" id="buoy-latitude" name="latitude" inputmode="decimal"
+                                placeholder="Enter latitude" required>
+                        </div>
+                    </div>
+                    <div class="status-row-input second">
+                        <span class="status-label">Longitude:</span>
+                        <div class="input-group">
+                            <input type="number" id="buoy-longitude" name="longitude" inputmode="decimal"
+                                placeholder="Enter longitude" required>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button type="button" id="submit-buoy">Submit Buoy</button>
                     </div>
                 </div>
             </div>
@@ -121,7 +158,7 @@
                         <button class="dropdown-button" id="mode-button" onclick="toggleDropdown()">Select Mode</button>
                         <div id="dropdown-content" class="dropdown-content">
                             <a href="#" onclick="selectMode('Algorithm')">Algorithm</a>
-                            <a href="#" onclick="selectMode('Radio Control')">Radio</a>
+                            <a href="#" onclick="selectMode('Radio')">Radio</a>
                         </div>
                     </div>
                 </div>
@@ -142,7 +179,7 @@
                     <div id="dial-container-head"></div>
                     <p id="heading-value-dial">Heading Angle: N/A°</p>
                 </div>
-            </div>            
+            </div>
         </div>
     </div>
     <script src="script.js"></script>

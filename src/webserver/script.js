@@ -8,8 +8,14 @@ let waypoints = []; // Global array for storing waypoints
 const waypointMarkers = {}; // Global dictionary for waypoint markers
 let map; // Global variable for the map instance
 let sailboatMarker; // Global variable for the sailboat marker
-let sailPlanCoordinates; // Global variable for sailboat path coordinates
+
+let buoys = []
+const buoyMarkers = {};
+let sailPlanCoordinates = []; // Global variable for sailboat path coordinates
 let sailPath; // Global variable for the sailboat trail
+let formattedHeading;
+let waypointPath; // Global variable for waypoint trail
+let waypointPlanCoordinates = []; // Global variable for waypoint path coordinates
 
 // Initialize the Google Map
 function initMap() {
@@ -21,7 +27,14 @@ function initMap() {
         zoom: 2, // Set an initial zoom level
     });
 
-    sailPlanCoordinates = [];
+    google.maps.event.addListener(map, "mousemove", function (event) {
+        document.getElementById("mouse-pos").innerText =
+            `Mouse Latitude: ${event.latLng.lat().toFixed(3)}
+            Mouse Longitude: ${event.latLng.lng().toFixed(3)}`;
+    });
+
+
+
     sailPath = new google.maps.Polyline({
         path: sailPlanCoordinates,
         geodesic: true,
@@ -30,33 +43,66 @@ function initMap() {
         strokeWeight: 2,
     });
 
+    waypointPath = new google.maps.Polyline({
+        path: waypointPlanCoordinates,
+        geodesic: true,
+        strokeColor: "#FF0000",
+        strokeOpacity: 1.0,
+        strokeWeight: 2,
+    });
+
+    waypointPath.setOptions({ strokeColor: "#911084" });
+
     sailPath.setMap(map);
+    waypointPath.setMap(map);
 };
 window.initMap = initMap;
 
 function updateTrail(latitude, longitude) {
-    sailPlanCoordinates.push({ lat: latitude, lng: longitude });
-    sailPath.setPath(sailPlanCoordinates);
-    sailPath.setMap(map);
+    const timestamp = Date.now();
+    sailPlanCoordinates.push({ lat: latitude, lng: longitude, timestamp });
 
+    // Filter out points older than 60 seconds
+    const oneMinuteAgo = Date.now() - 60000;
+    sailPlanCoordinates = sailPlanCoordinates.filter(coord => coord.timestamp >= oneMinuteAgo);
+
+    // Map the coordinates for the polyline (only lat & lng)
+    const currentPath = sailPlanCoordinates.map(coord => ({ lat: coord.lat, lng: coord.lng }));
+
+    // Update the polyline with the filtered, current path
+    sailPath.setPath(currentPath);
 }
 
-function connectToROS() {
-    const rosbridgeAddress = "ws://localhost:9090";
+
+function connectToROS(url) {
     ros = new ROSLIB.Ros({
-        url: rosbridgeAddress
+        url: url
     });
+
     ros.on('connection', function () {
-        console.log('Connected to rosbridge server.');
+        console.log('Connected to rosbridge server at:', url);
         subscribeToTopics();
     });
+
     ros.on('error', function (error) {
         console.error('Error connecting to rosbridge server:', error);
     });
+
     ros.on('close', function () {
         console.log('Connection to rosbridge server closed.');
     });
 }
+
+// Add event listener for the button
+document.getElementById('connect-to-ros').addEventListener('click', function () {
+    const rosbridgeAddress = document.getElementById('ros-url').value;
+    if (rosbridgeAddress) {
+        connectToROS(rosbridgeAddress);
+    } else {
+        console.error('Please enter a valid ROS URL.');
+    }
+});
+
 function parseGpsData(message) {
     const latitude = message.latitude;
     const longitude = message.longitude;
@@ -80,7 +126,7 @@ function parseGpsData(message) {
             title: "Sailboat Location",
             icon: {
                 url: "boat.png", // Custom marker icon (optional)
-            },
+            }
         });
     } else {
         // Update the marker's position
@@ -111,6 +157,14 @@ function parseQuaternionData(message) {
 
     document.getElementById('heading-value').innerText = formattedHeading;
     updateHeadAngle(formattedHeading, 'heading-value-dial')
+
+    if (sailboatMarker) {
+        rotateMarkerIcon("boat.png", heading, function (rotatedImageUrl) {
+            sailboatMarker.setIcon({
+                url: rotatedImageUrl
+            });
+        });
+    }
 }
 
 function parseAngularVelocityData(message) {
@@ -238,6 +292,16 @@ function subscribeToTopics() {
         updateTailAngle(message.data, "actual-tail-angle-dial");
     });
 
+    // Subscribe to /sailbot/wind
+    const windAngleTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: '/sailbot/wind',
+        messageType: 'std_msgs/Int32'
+    });
+    windAngleTopic.subscribe(function (message) {
+        updateValue('wind-angle-value', message.data);
+    });
+
     const actualSailAngleTopic = new ROSLIB.Topic({
         ros: ros,
         name: '/sailbot/actual_sail_angle',
@@ -257,14 +321,53 @@ function subscribeToTopics() {
         name: '/sailbot/mutate_waypoint_queue',
         serviceType: 'sailboat_interface/srv/Waypoint'
     });
+    const droppedPacketsTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: '/sailbot/dropped_packets',
+        messageType: 'std_msgs/Int32'
+    });
+    droppedPacketsTopic.subscribe(function (message) {
+        updateValue('dropped-packets-value', message.data);
+    });
 }
 // Connect to ROS when the page loads
 window.onload = function () {
     connectToROS();
 };
+function rotateMarkerIcon(src, heading, callback, size) {
+    const image = new Image();
+    image.src = src;
+    image.onload = function () {
+        // Use provided size, or fallback to the image’s natural dimensions.
+        const width = size || image.naturalWidth;
+        const height = size || image.naturalHeight;
+        const diagonal = Math.sqrt(width * width + height * height);
+
+        // Create a canvas with the determined dimensions
+        const canvas = document.createElement("canvas");
+        canvas.width = diagonal;
+        canvas.height = diagonal;
+
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, width, height);
+
+        // Translate to center and rotate (adjust by -90 degrees if needed)
+        ctx.translate(diagonal / 2, diagonal / 2);
+        ctx.rotate((heading - 90) * (Math.PI / 180));
+
+        // Draw the image centered
+        ctx.drawImage(image, -width / 2, -height / 2, width, height);
+
+        // Return the rotated image as a data URL
+        callback(canvas.toDataURL());
+    };
+    image.onerror = function (err) {
+        console.error("Error loading image:", err);
+    };
+}
 document.getElementById('submit-waypoint').addEventListener('click', function () {
-    const latitude = document.getElementById('latitude').value;
-    const longitude = document.getElementById('longitude').value;
+    const latitude = document.getElementById('waypoint-latitude').value;
+    const longitude = document.getElementById('waypoint-longitude').value;
 
     if (latitude && longitude) {
         // Create a waypoint string for storage
@@ -287,6 +390,9 @@ document.getElementById('submit-waypoint').addEventListener('click', function ()
         });
 
         waypointMarkers[waypoint] = marker;
+        waypointPlanCoordinates.push(latLng);
+
+        waypointPath.setPath(waypointPlanCoordinates);
 
         console.log(`Waypoint added: ${waypoint}`);
     } else {
@@ -319,6 +425,8 @@ function displayWaypoints() {
     waypoints.forEach((waypoint, index) => {
         const waypointElement = document.createElement('div');
         waypointElement.classList.add('waypoint-item');
+        waypointElement.setAttribute('draggable', true);
+        waypointElement.setAttribute('data-index', index);
 
         // Create the text for the waypoint
         const waypointText = document.createElement('span');
@@ -334,17 +442,115 @@ function displayWaypoints() {
         });
         waypointElement.appendChild(deleteButton);
 
+        waypointElement.addEventListener('dragstart', handleDragStart);
+        waypointElement.addEventListener('dragover', handleDragOver);
+        waypointElement.addEventListener('drop', handleDrop);
+        waypointElement.addEventListener('dragend', handleDragEnd);
+
         waypointListElement.appendChild(waypointElement);
     });
+}
+
+document.getElementById('submit-buoy').addEventListener('click', function () {
+    const latitude = document.getElementById('buoy-latitude').value;
+    const longitude = document.getElementById('buoy-longitude').value;
+
+    if (latitude && longitude) {
+        // Create a waypoint string for storage
+        const buoy = `${latitude},${longitude}`;
+        buoys.push(buoy)
+
+        // Parse latitude and longitude to create a LatLng object
+        const latLng = {
+            lat: parseFloat(latitude),
+            lng: parseFloat(longitude),
+        };
+
+        // Add a marker for the new waypoint on the map
+        const marker = new google.maps.Marker({
+            position: latLng,
+            map: map,
+            title: `Buoy (${latitude},${longitude})`,
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE, // Shape of the marker (e.g., CIRCLE, FORWARD_CLOSED_ARROW, etc.)
+                scale: 8, // Size of the marker
+                fillColor: "#FFA500", // Marker color (e.g., red)
+                fillOpacity: 1,
+                strokeWeight: 1,
+                strokeColor: "#FFFFFF" // Optional: border color
+            }
+        });
+
+        buoyMarkers[buoy] = marker;
+
+        console.log(`Buoy added: ${buoy}`);
+    } else {
+        // Alert the user if inputs are missing
+        alert('Please enter both latitude and longitude.');
+    }
+});
+
+let draggedIndex = null;
+let draggedElement = null;
+
+function handleDragStart(event) {
+    draggedIndex = parseInt(event.target.getAttribute('data-index'));
+    draggedElement = event.target;
+    event.dataTransfer.effectAllowed = 'move';
+    event.target.classList.add('dragging');
+}
+function handleDragOver(event) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+}
+function handleDrop(event) {
+    event.preventDefault();
+    const targetElement = event.target.closest('.waypoint-item');
+    if (!targetElement) return;
+    const targetIndex = parseInt(targetElement.getAttribute('data-index'));
+
+    if (draggedIndex !== null && targetIndex !== null && draggedIndex !== targetIndex) {
+        const movedItem = waypoints[draggedIndex];
+        waypoints.splice(draggedIndex, 1);
+        waypoints.splice(targetIndex, 0, movedItem);
+        displayWaypoints();
+    }
+}
+function handleDragEnd(event) {
+    if (draggedElement) {
+        draggedElement.classList.remove('dragging');
+    }
+    draggedElement = null;
+    draggedIndex = null;
+    const waypointsString = waypoints.join(';');
+
+    const request = new ROSLIB.ServiceRequest({
+        command: "set",
+        argument: waypointsString
+    });
+
+    waypointService.callService(request, function (result) {
+        if (result.success) {
+            console.log(result.message);
+        } else {
+            console.error(result.message);
+        }
+    });
+
+    getWaypointQueue()
 }
 function deleteWaypoint(index) {
     // Remove the waypoint from the local array
     const waypoint = waypoints[index];
+    console.log(`Deleting waypoint: ${waypoint}`);
 
-    // Remove the marker from the map
+    // Check if the marker exists
     if (waypointMarkers[waypoint]) {
-        waypointMarkers[waypoint].setMap(null); // Removes the marker from the map
-        delete waypointMarkers[waypoint]; // Remove the marker from the object
+        console.log(`Removing marker from map: ${waypoint}`);
+        waypointMarkers[waypoint].setMap(null); // Remove from map
+        delete waypointMarkers[waypoint]; // Remove from object
+    } else {
+        console.warn(`Marker not found for: ${waypoint}`);
     }
 
     // Remove the waypoint from the array
@@ -432,7 +638,7 @@ function conditionalRender() {
         algoVals.forEach(el => el.style.display = "flex");
         rcVals.forEach(el => el.style.display = "none");
     }
-    if (controlModeVal == "radio control") {
+    if (controlModeVal == "radio") {
         algoVals.forEach(el => el.style.display = "none");
         rcVals.forEach(el => el.style.display = "flex");
     }
@@ -440,10 +646,10 @@ function conditionalRender() {
 
 
 // // Code for dial Configuration
-const width = 150;
-const height = 150;
+const width = 90;
+const height = 90;
 const radius = Math.min(width, height) / 2;
-const needleLength = radius * 0.9;
+const needleLength = radius * 0.7;
 
 // Create SVG Container
 const svg = d3
@@ -508,10 +714,10 @@ function updateSailAngle(angle, id) {
 
 
 // // Code for Tail dial Configuration
-const widthT = 150;
-const heightT = 150;
+const widthT = 90;
+const heightT = 90;
 const radiusT = Math.min(width, height) / 2;
-const needleLengthT = radius * 0.9;
+const needleLengthT = radius * 0.7;
 
 // Create SVG Container
 const svgT = d3
@@ -575,10 +781,10 @@ function updateTailAngle(angle, id) {
 
 
 // // Code for Heading dial Configuration
-const widthH = 150;
-const heightH = 150;
+const widthH = 90;
+const heightH = 90;
 const radiusH = Math.min(width, height) / 2;
-const needleLengthH = radius * 0.9;
+const needleLengthH = radius * 0.7;
 
 // Create SVG Container
 const svgH = d3
