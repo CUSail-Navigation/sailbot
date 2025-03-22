@@ -199,7 +199,7 @@ function quaternionToHeading(x, y, z, w) {
 }
 
 let waypointService;
-let BASE_BASE_THROTTLE_RATE = 1000;
+let BASE_THROTTLE_RATE = 1000;
 
 function subscribeToTopics() {
     // Helper function to update DOM element with topic data
