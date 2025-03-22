@@ -12,36 +12,36 @@ class FakeVectorNav:
 
         self.latitude = 42.876379
         self.longitude = -77.007822
-        self.heading = np.random.uniform(0, 360)
-        self.pitch = np.random.uniform(-90, 90)
-        self.roll = np.random.uniform(0, 360)
-
+        # self.heading = np.random.uniform(0, 360)
+        # self.pitch = np.random.uniform(-90, 90)
+        # self.roll = np.random.uniform(0, 360)
+        self.heading = 0
+        self.pitch = 0
+        self.roll = 0
+        
     def readVectorNavYaw(self):
         # Simulate heading change
-        self.heading += self.rate_of_turn
         if self.heading >= 360:
             self.heading -= 360
         elif self.heading < 0:
             self.heading += 360
-        return self.heading
+        return float(self.heading)
 
     def readVectorNavPitch(self):
         # Simulate heading change
-        self.heading += self.rate_of_turn
         if self.heading >= 360:
             self.heading -= 360
         elif self.heading < 0:
             self.heading += 360
-        return self.heading
+        return float(self.heading)
     
     def readVectorNavRoll(self):
         # Simulate heading change
-        self.heading += self.rate_of_turn
         if self.heading >= 360:
             self.heading -= 360
         elif self.heading < 0:
             self.heading += 360
-        return self.heading
+        return float(self.heading)
     
     def readVectorNavLatitude(self):
         # Simulate slight latitude changes over time

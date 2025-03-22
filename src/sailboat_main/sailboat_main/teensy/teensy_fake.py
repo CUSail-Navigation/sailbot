@@ -23,12 +23,19 @@ class TeensyFake:
         Return simulated packet data
         :param packet: Teensy packet
         """
-        data["wind_angle"] = self._generate_random_wind()
+        # data["wind_angle"] = self._generate_random_wind()
+        data["wind_angle"] = self._generate_downwind()
         data["sail_angle"] = self.last_sail
         data["rudder_angle"] = self.last_rudder
         data["dropped_packets"] = self.dropped_packets
 
         return random.randint(0,1)
+
+    def _generate_downwind(self):
+        """
+
+        """
+        return 0
 
     def _generate_random_wind(self):
         """

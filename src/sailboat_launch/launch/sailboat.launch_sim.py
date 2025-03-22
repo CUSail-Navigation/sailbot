@@ -13,8 +13,8 @@ def generate_launch_description():
       )
    gps_cmd = Node(
       package='sailboat_sensors',
-      executable='airmar',
-      name='airmar',
+      executable='vectornav',
+      name='vectornav',
       namespace='sailbot',
       parameters=[config]
    )
