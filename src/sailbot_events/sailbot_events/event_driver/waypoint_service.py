@@ -17,7 +17,7 @@ class WaypointService(Node):
         self.service = self.create_service(Waypoint, 'mutate_waypoint_queue', self.waypoint_service_callback)
 
         # Get initial waypoints from config
-        self.declare_parameter('waypoints', ["0, 0"])  # Dummy initial
+        self.declare_parameter('waypoints', ["42.876003, -77.009598"])  # Dummy initial
         waypoints_param = self.get_parameter('waypoints').get_parameter_value().string_array_value
 
         self.waypoints = self.parse_waypoints_param(waypoints_param)

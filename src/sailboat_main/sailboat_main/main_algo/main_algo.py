@@ -106,7 +106,7 @@ class MainAlgo(Node):
                     self.get_logger().info(f'New waypoint received: {next_waypoint}')
 
                     # Convert latitude and longitude to UTM coordinates
-                    utm_coords = utm.from_latlon(next_waypoint[1], next_waypoint[0])
+                    utm_coords = utm.from_latlon(next_waypoint[0], next_waypoint[1])
                     self.curr_dest.x = utm_coords[0]
                     self.curr_dest.y = utm_coords[1]
                 else:
@@ -121,7 +121,7 @@ class MainAlgo(Node):
         """
         Use the NavSatFix data to assign value to self.curr_loc
         """
-        utm_coords = utm.from_latlon(msg.longitude, msg.latitude)
+        utm_coords = utm.from_latlon(msg.latitude, msg.longitude)
         utm_x, utm_y = utm_coords[0], utm_coords[1]
         self.curr_loc = Point()
         self.curr_loc.x = utm_x
@@ -190,10 +190,12 @@ class MainAlgo(Node):
         x_distance = final.x - self.curr_loc.x
         y_distance = final.y - self.curr_loc.y
 
+        # arctan2 knows the correct quadrant
         target_bearing = np.arctan2(y_distance, x_distance) * 180 / np.pi
         self.get_logger().info(f'Target Bearing: {target_bearing}')
 
         diff = np.mod(self.heading_dir - target_bearing + 180, 360) - 180
+        # diff = np.mod(target_bearing - self.heading_dir, 360)
         self.get_logger().info(f'Heading Difference: {diff}')
 
         rudder_angle = (diff / 180.0) * 25
