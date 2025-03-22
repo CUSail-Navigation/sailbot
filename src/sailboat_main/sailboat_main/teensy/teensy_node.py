@@ -45,13 +45,13 @@ class Teensy(Node):
         # keep track of our desired sail and rudder angles
         self.desired_sail = 0
         self.desired_rudder = 0
-        self.desired_buoy_displacement = 0
+        self.buoy_displacement = 0
 
         # telemetry data publishers
         self.wind_angle_pub = self.create_publisher(Int32, 'wind', 10)
         self.actual_sail_angle_pub = self.create_publisher(Int32, 'actual_sail_angle', 10)
         self.actual_rudder_angle_pub = self.create_publisher(Int32, 'actual_rudder_angle', 10)
-        self.buoy_angle = self.create_publisher(Int32, 'buoy_angle', 10)
+        self.buoy_angle_pub = self.create_publisher(Int32, 'buoy_angle', 10)
         self.dropped_packets_pub = self.create_publisher(Int32, 'dropped_packets', 10)
 
         # callback to read teensy data
@@ -108,6 +108,7 @@ class Teensy(Node):
             self.get_logger().info(f"{'Wind angle:':<20} {wind_angle_msg.data}")
             self.get_logger().info(f"{'Actual sail angle:':<20} {sail_angle_msg.data}")
             self.get_logger().info(f"{'Actual tail angle:':<20} {rudder_angle_msg.data}")
+            self.get_logger().info(f"{'Buoy angle:':<20} {buoy_angle_msg.data}")
             self.get_logger().info(f"{'Dropped packets:':<20} {dropped_packets_msg.data}")
         else:
             self.get_logger().info("No telemetry received")
@@ -118,9 +119,9 @@ class Teensy(Node):
         previously set rudder.
         """
         self.desired_sail = msg.data
-        self.get_logger().info(f"Sail position callback-sent to Teensy sail:{self.desired_sail}, rudder: {self.desired_rudder} buoy position: {self.desired_buoy_displacement}")
+        self.get_logger().info(f"Sail position callback-sent to Teensy sail:{self.desired_sail}, rudder: {self.desired_rudder} buoy position: {self.buoy_displacement}")
 
-        if self.teensy.send_command(self.desired_sail, self.desired_rudder, self.desired_buoy_displacement) == 0:
+        if self.teensy.send_command(self.desired_sail, self.desired_rudder, self.buoy_displacement) == 0:
             self.get_logger().info(f"Message sent to servo")
         else:
             self.get_logger().warn(f"Message failed to send to servo")
@@ -131,9 +132,9 @@ class Teensy(Node):
         and the previously set sail.
         """
         self.desired_rudder = msg.data
-        self.get_logger().info(f"Rudder position callback-sent to Teensy sail:{self.desired_sail}, rudder: {self.desired_rudder} buoy position: {self.desired_buoy_displacement}")
+        self.get_logger().info(f"Rudder position callback-sent to Teensy sail:{self.desired_sail}, rudder: {self.desired_rudder} buoy position: {self.buoy_displacement}")
 
-        if self.teensy.send_command(self.desired_sail, self.desired_rudder, self.desired_buoy_displacement) == 0:
+        if self.teensy.send_command(self.desired_sail, self.desired_rudder, self.buoy_displacement) == 0:
             self.get_logger().info(f"Message sent to servo")
         else:
             self.get_logger().warn(f"Message failed to send to servo")
@@ -143,10 +144,10 @@ class Teensy(Node):
         Callback function for the 'buoy_displacement' topic. Sends the updated buoy position, previously set rudder,
         and the previously set sail.
         """
-        self.desired_buoy_displacement = msg.data
-        self.get_logger().info(f"Buoy position callback-sent to Teensy sail:{self.desired_sail}, rudder: {self.desired_rudder} buoy position: {self.desired_buoy_displacement}")
+        self.buoy_displacement = msg.data
+        self.get_logger().info(f"Buoy position callback-sent to Teensy sail:{self.desired_sail}, rudder: {self.desired_rudder} buoy position: {self.buoy_displacement}")
 
-        if self.teensy.send_command(self.desired_sail, self.desired_rudder, self.desired_buoy_displacement) == 0:
+        if self.teensy.send_command(self.desired_sail, self.desired_rudder, self.buoy_displacement) == 0:
             self.get_logger().info(f"Message sent to servo")
         else:
             self.get_logger().warn(f"Message failed to send to servo")

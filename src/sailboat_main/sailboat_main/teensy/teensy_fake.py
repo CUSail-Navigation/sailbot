@@ -14,6 +14,7 @@ class TeensyFake:
         self.wind_step = random.uniform(-5, 5) 
         self.last_sail = 0
         self.last_rudder = 0
+        self.buoy_angle = 90
         self.dropped_packets = 0
 
         print("Simulated TeensyFake initialized")
@@ -26,6 +27,7 @@ class TeensyFake:
         data["wind_angle"] = self._generate_random_wind()
         data["sail_angle"] = self.last_sail
         data["rudder_angle"] = self.last_rudder
+        data["buoy_angle"] = self.buoy_angle
         data["dropped_packets"] = self.dropped_packets
 
         return random.randint(0,1)
@@ -46,7 +48,7 @@ class TeensyFake:
         return int(self.wind_angle)
     
 
-    def send_command(self, sail, rudder):
+    def send_command(self, sail, rudder, buoy_displacement):
         """
         Send a properly formatted command packet to the servo.
 
@@ -55,6 +57,6 @@ class TeensyFake:
         """
         self.last_sail = sail
         self.last_rudder = rudder
-        command_packet = bytearray([self.START_BYTE, sail, rudder, self.END_BYTE])
+        command_packet = bytearray([self.START_BYTE, sail, rudder, buoy_displacement, self.END_BYTE])
 
         print(f'Sent to FakeTeensy: {command_packet}')
