@@ -62,7 +62,6 @@ class MainAlgo(Node):
 
         # Publisher for rudder angle
         self.rudder_angle_pub = self.create_publisher(Int32, 'algo_rudder', 10)
-        self.tacking_point_pub = self.create_publisher(NavSatFix, 'tacking_point', 10)
 
         # Internal state
         self.wind_dir = None
@@ -159,7 +158,7 @@ class MainAlgo(Node):
         Use the NavSatFix data to assign value to self.curr_loc
         """
         # assuming the zone_number and zone_letter are the same for the current location and the destination
-        easting, northing, zone_number, zone_letter = utm.from_latlon(msg.longitude, msg.latitude)
+        easting, northing, zone_number, zone_letter = utm.from_latlon(msg.latitude, msg.longitude)
         self.curr_loc = Point()
         self.curr_loc.x = easting
         self.curr_loc.y = northing
@@ -284,11 +283,6 @@ class MainAlgo(Node):
             self.get_logger().error(f'Tacking point easting: {tp.x}, northing: {tp.y}')
             self.get_logger().error(f'Error in calculateTP: {str(e)}') 
             lat, long = 0., 0.
-        nav_sat_msg = NavSatFix()
-        nav_sat_msg.longitude = long
-        nav_sat_msg.latitude = lat
-        nav_sat_msg.position_covariance_type = 0
-        self.tacking_point_pub.publish(nav_sat_msg)
         self.get_logger().info('Tacking Point: ' + 'Lat: ' + str(nav_sat_msg.latitude) + ' Long: ' + str(nav_sat_msg.longitude))
 
 
