@@ -63,6 +63,9 @@ class MainAlgo(Node):
         # Publisher for rudder angle
         self.rudder_angle_pub = self.create_publisher(Int32, 'algo_rudder', 10)
 
+        # Publisher for tacking point
+        self.tacking_point_pub = self.create_publisher(NavSatFix, 'tacking_point', 10)
+
         # Internal state
         self.wind_dir = None
         self.curr_loc = None
@@ -279,12 +282,14 @@ class MainAlgo(Node):
         # publish new TP
         try:
             lat, long = utm.to_latlon(tp.x, tp.y, self.zone_number, self.zone_letter)
+            tacking_point_msg = NavSatFix()
+            tacking_point_msg.latitude, tacking_point_msg.longitude = lat, long
+            self.tacking_point_pub.publish(tacking_point_msg)
         except Exception as e: 
             self.get_logger().error(f'Tacking point easting: {tp.x}, northing: {tp.y}')
             self.get_logger().error(f'Error in calculateTP: {str(e)}') 
             lat, long = 0., 0.
         self.get_logger().info('Tacking Point: ' + 'Lat: ' + str(nav_sat_msg.latitude) + ' Long: ' + str(nav_sat_msg.longitude))
-
 
         return tp
 

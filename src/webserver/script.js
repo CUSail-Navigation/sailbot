@@ -8,6 +8,7 @@ let waypoints = []; // Global array for storing waypoints
 const waypointMarkers = {}; // Global dictionary for waypoint markers
 let map; // Global variable for the map instance
 let sailboatMarker; // Global variable for the sailboat marker
+let tackingPointMarker; // Global variable for the tacking point marker
 
 let buoys = []
 const buoyMarkers = {};
@@ -162,6 +163,37 @@ function parseHeading(message) {
     }
 }
 
+// Updates the tacking point on the map and UI
+function parseTackingPoint(message) {
+    // Update the UI with the tacking point lat/long
+    const formattedLatitude = message.latitude.toFixed(6);
+    const formattedLongitude = message.longitude.toFixed(6);
+
+    document.getElementById('tacking-point-value').innerText = `${formattedLatitude}, ${formattedLongitude}`;
+
+    // Update the tacking point marker on the map
+    const tackingPointLocation = { lat: message.latitude, lng: message.longitude };
+    if (!tackingPointMarker) {
+        // Create a new marker if it doesn't exist
+        tackingPointMarker = new google.maps.Marker({
+            position: tackingPointLocation,
+            map: map,
+            title: "Tacking Point",
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 8,
+                fillColor: "#FFFFFF",
+                fillOpacity: 1,
+                strokeWeight: 1,
+                strokeColor: "#FFFFFF"
+            }
+        });
+    } else {
+        tackingPointMarker.setPosition(tackingPointLocation);
+    }
+
+}
+
 let waypointService;
 let BASE_THROTTLE_RATE = 1000;
 
@@ -290,6 +322,14 @@ function subscribeToTopics() {
         updateSailAngle(message.data, "actual-sail-angle-dial");
     });
 
+    const tackingPointTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: '/sailbot/tacking_point',
+        messageType: 'sensor_msgs/NavSatFix',
+        throttle_rate: BASE_THROTTLE_RATE,
+    })
+    tackingPointTopic.subscribe(parseTackingPoint);
+
     const algoDebugTopic = new ROSLIB.Topic({
         ros: ros,
         name: '/sailbot/main_algo_debug',
@@ -304,7 +344,7 @@ function subscribeToTopics() {
         const headingDir = message.heading_dir.data;
         const currDest = message.curr_dest;
         const diff = message.diff.data;
-    
+
         document.getElementById('tacking-value').innerText = tacking;
         document.getElementById('tacking-point-value').innerText = `${tackingPoint.latitude.toFixed(6)}, ${tackingPoint.longitude.toFixed(6)}`;
         document.getElementById('heading-dir-value').innerText = headingDir;
