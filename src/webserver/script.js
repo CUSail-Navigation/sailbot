@@ -289,6 +289,29 @@ function subscribeToTopics() {
         updateValue('actual-sail-angle-value', message.data);
         updateSailAngle(message.data, "actual-sail-angle-dial");
     });
+
+    const algoDebugTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: '/sailbot/main_algo_debug',
+        messageType: 'sailboat_interface/msg/AlgoDebug',
+        throttle_rate: BASE_THROTTLE_RATE,
+    });
+    algoDebugTopic.subscribe(function (message) {
+        console.log("Algo debug")
+        // Extract and log the received data
+        const tacking = message.tacking;
+        const tackingPoint = message.tacking_point;
+        const headingDir = message.heading_dir.data;
+        const currDest = message.curr_dest;
+        const diff = message.diff.data;
+    
+        document.getElementById('tacking-value').innerText = tacking;
+        document.getElementById('tacking-point-value').innerText = `${tackingPoint.latitude.toFixed(6)}, ${tackingPoint.longitude.toFixed(6)}`;
+        document.getElementById('heading-dir-value').innerText = headingDir;
+        document.getElementById('curr-dest-value').innerText = `${currDest.latitude.toFixed(6)}, ${currDest.longitude.toFixed(6)}`;
+        document.getElementById('diff-value').innerText = diff;
+    });
+
     waypointService = new ROSLIB.Service({
         ros: ros,
         name: '/sailbot/mutate_waypoint_queue',

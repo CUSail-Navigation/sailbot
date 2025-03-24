@@ -19,12 +19,13 @@ sailbot: #Namespace
 
    waypoint_service:
       ros__parameters:
-         waypoints:
-            - "65.473,232.01"
-            - "71.471,129.326"
-            - "81.099,86.541"
+             waypoints:
+               - "42.876379,-77.007822"
+               - "42.877381,-77.007830"
+               - "42.876394,-77.006820"
 
    main_algo:
       ros__parameters:
          tacking_buffer: 15
+         debug: True
 
