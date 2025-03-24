@@ -143,7 +143,6 @@ function parseGpsData(message) {
 
 function parseImuData(message) {
     parseHeading(message);
-    // parseAngularVelocityData(message);
 }
 
 function parseHeading(message) {
@@ -161,37 +160,6 @@ function parseHeading(message) {
             });
         });
     }
-}
-
-// Not in use after changing quaternion to vector3 type
-// function parseAngularVelocityData(message) {
-//     angularVelocityZ = message.z;
-
-//     angularVelocityZ = angularVelocityZ.toFixed(6);
-
-//     document.getElementById('angular-velocity-z-value').innerText = angularVelocityZ
-// }
-
-/**
- * Converts a quaternion to a heading angle in degrees.
- * @param {number} x - The x component of the quaternion.
- * @param {number} y - The y component of the quaternion.
- * @param {number} z - The z component of the quaternion.
- * @param {number} w - The w component of the quaternion.
- * @returns {number} The heading angle in degrees.
- */
-
-function quaternionToHeading(x, y, z, w) {
-    // Compute the heading angle (yaw) from the quaternion
-    const siny_cosp = 2 * (w * z + x * y);
-    const cosy_cosp = 1 - 2 * (y * y + z * z);
-    const headingRadians = Math.atan2(siny_cosp, cosy_cosp);
-
-    // Convert the heading from radians to degrees
-    const headingDegrees = headingRadians * (180 / Math.PI);
-
-    // Normalize to the range [0, 360)
-    return (headingDegrees + 360) % 360;
 }
 
 let waypointService;
@@ -655,6 +623,18 @@ function conditionalRender() {
     if (controlModeVal == "radio") {
         algoVals.forEach(el => el.style.display = "none");
         rcVals.forEach(el => el.style.display = "flex");
+    }
+}
+
+// minimizing status information
+function toggleVisibility(id, button) {
+    const element = document.getElementById(id);
+    if (element.style.display === "none" || element.style.display === "") {
+        element.style.display = "block";
+        button.textContent = button.textContent.replace("Show", "Hide");
+    } else {
+        element.style.display = "none";
+        button.textContent = button.textContent.replace("Hide", "Show");
     }
 }
 
