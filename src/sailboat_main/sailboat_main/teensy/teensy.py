@@ -34,7 +34,7 @@ class TeensyHardware:
                 self.packet_started = True
                 self.buffer = []
             # if we see a packet end byte, process the buffer data
-            elif incoming_byte == self.END_BYTE.to_bytes(1, 'big') and len(self.buffer) == PACKET_LENGTH:
+            elif incoming_byte == self.END_BYTE.to_bytes(1, 'big') and len(self.buffer) == self.PACKET_LENGTH:
                 self.packet_started = False
                 data["wind_angle"], \
                 data["sail_angle"], \
