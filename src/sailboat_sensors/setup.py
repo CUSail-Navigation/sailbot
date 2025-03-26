@@ -22,6 +22,7 @@ setup(
         'console_scripts': [
                 'anemometer = sailboat_sensors.anemometer.anemometer_node:main',
                 'airmar = sailboat_sensors.airmar.airmar_node:main',
+                'vectornav = sailboat_sensors.vectornav.vectornav_node:main',
         ],
     },
 )

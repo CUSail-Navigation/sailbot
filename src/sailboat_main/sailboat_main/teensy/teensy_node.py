@@ -23,7 +23,7 @@ class Teensy(Node):
         super().__init__('teensy')
 
         # declare parameters 
-        self.declare_parameter('teensy_port', '/dev/serial/by-id/SOMEPORT')
+        self.declare_parameter('teensy_port', '/dev/ttyACM0')
         self.declare_parameter('simulated', False)
 
         # teensy sends data every 0.5s, chose .25s read period to avoid overflow   
@@ -119,7 +119,7 @@ class Teensy(Node):
         previously set rudder.
         """
         self.desired_sail = msg.data
-        self.get_logger().info(f"Sail position callback-sent to Teensy sail:{self.desired_sail}, rudder: {self.desired_rudder} buoy position: {self.buoy_displacement}")
+        #self.get_logger().info(f"Sail callback-sent to Teensy sail:{self.desired_sail}, rudder: {self.desired_rudder}")
 
         if self.teensy.send_command(self.desired_sail, self.desired_rudder, self.buoy_displacement) == 0:
             self.get_logger().info(f"Message sent to servo")

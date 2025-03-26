@@ -16,3 +16,16 @@ sailbot: #Namespace
    radio:
       ros__parameters:
          simulated: true
+
+   waypoint_service:
+      ros__parameters:
+             waypoints:
+               - "42.876379,-77.007822"
+               - "42.877381,-77.007830"
+               - "42.876394,-77.006820"
+
+   main_algo:
+      ros__parameters:
+         tacking_buffer: 15
+         debug: True
+

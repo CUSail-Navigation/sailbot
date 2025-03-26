@@ -10,7 +10,7 @@ class TeensyFake:
     START_BYTE = 0xff
     END_BYTE = 0xee
     def __init__(self, ):
-        self.wind_angle = random.randint(0, 360)
+        self.wind_angle = random.randint(160, 200) #tacking range
         self.wind_step = random.uniform(-5, 5) 
         self.last_sail = 0
         self.last_rudder = 0

@@ -6,8 +6,8 @@ class MuxNode(Node):
     def __init__(self):
         super().__init__('mux_node')
 
-        # Switch flag; default is true, changed by topic below
-        self.use_radio = True
+        # Switch flag; default is false, changed by topic below
+        self.use_radio = False
 
         # Mux topic for changing control_mode topic
         self.control_mode_sub = self.create_subscription(
@@ -53,9 +53,12 @@ class MuxNode(Node):
     def control_mode_callback(self, msg):
         if msg.data == 'radio':
             self.use_radio = True
+            self.get_logger().info(f'Switched control mode to radio')
         elif msg.data == 'algorithm':
             self.use_radio = False
-        self.get_logger().info(f'Switched control mode: {msg.data}')
+            self.get_logger().info(f'Switched control mode to algorithm')
+        else:
+            self.get_logger().info(f'Invalid control mode request: {msg.data}. Staying in current mode ({"radio" if self.use_radio else "algorithm"})')
 
     def publish_muxed_values(self):
         # Mux logic: switch between radio or algorithm input based on `use_radio`

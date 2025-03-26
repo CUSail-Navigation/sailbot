@@ -10,7 +10,12 @@ sailbot: #Namespace
    
    teensy:
       ros__parameters:
-         teensy_port: "/dev/ttyS8"
+         teensy_port: "/dev/serial/by-id/usb-Teensyduino_USB_Serial_16089010-if00"
+         simulated: false
+
+   vectornav:
+      ros__parameters:
+         vectornav_port: "/dev/serial/by-id/usb-FTDI_USB-RS232-WE_AV0LF3XT-if00-port0"
          simulated: false
    computer_vision: 
       ros__parameters:

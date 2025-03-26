@@ -5,193 +5,212 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sailbot Status Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f0f0f0;
-        }
-
-        h1 {
-            text-align: center;
-        }
-
-        .status-table {
-            width: 100%;
-            max-width: 600px;
-            margin: auto;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .status-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-        }
-
-        .status-label {
-            font-weight: bold;
-        }
-
-        .status-value {
-            font-style: italic;
-        }
-    </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 
 <body>
-
-    <h1>Sailbot Status Dashboard</h1>
-
-    <div class="status-table">
-        <div class="status-row">
-            <span class="status-label">Algo Rudder:</span>
-            <span class="status-value" id="algo-rudder-value">N/A</span>
+    <div class="main-container">
+        <div class="left-column">
+            <div class="map-container">
+                <div class="map-content">
+                    <div id="map"></div>
+                </div>
+                <div class="waypoint-list">
+                    <span class="status-label">Waypoints:</span>
+                    <span class="status-value" id="waypoint-list"></span>
+                </div>
+                <div class="mouse-position">
+                    <div id="mouse-pos">Mouse position</div>
+                </div>
+            </div>
         </div>
-        <div class="status-row">
-            <span class="status-label">Algo Sail:</span>
-            <span class="status-value" id="algo-sail-value">N/A</span>
-        </div>
-        <div class="status-row">
-            <span class="status-label">Control Mode:</span>
-            <span class="status-value" id="control-mode-value">N/A</span>
-        </div>
-        <div class="status-row">
-            <span class="status-label">Radio Rudder:</span>
-            <span class="status-value" id="radio-rudder-value">N/A</span>
-        </div>
-        <div class="status-row">
-            <span class="status-label">Radio Sail:</span>
-            <span class="status-value" id="radio-sail-value">N/A</span>
-        </div>
-        <div class="status-row">
-            <span class="status-label">Rudder Angle:</span>
-            <span class="status-value" id="rudder-angle-value">N/A</span>
-        </div>
-        <div class="status-row">
-            <span class="status-label">Sail:</span>
-            <span class="status-value" id="sail-value">N/A</span>
+        <div class="right-column">
+            <div class="table-container">
+                <h1>Sailbot Status Dashboard</h1>
+                <div class="table status">
+                    <div class="status-row">
+                        <span class="status-label">Control Mode:</span>
+                        <span class="status-value" id="control-mode-value">N/A</span>
+                    </div>
+                    <div class="status-row algo-mode">
+                        <span class="status-label">Algo Rudder:</span>
+                        <span class="status-value" id="algo-rudder-value">N/A</span>
+                    </div>
+                    <div class="status-row algo-mode">
+                        <span class="status-label">Algo Sail:</span>
+                        <span class="status-value" id="algo-sail-value">N/A</span>
+                    </div>
+                    <div class="status-row rc-mode">
+                        <span class="status-label">Radio Rudder:</span>
+                        <span class="status-value" id="radio-rudder-value">N/A</span>
+                    </div>
+                    <div class="status-row rc-mode">
+                        <span class="status-label">Radio Sail:</span>
+                        <span class="status-value" id="radio-sail-value">N/A</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Rudder Angle:</span>
+                        <span class="status-value" id="rudder-angle-value">N/A</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Sail:</span>
+                        <span class="status-value" id="sail-value">N/A</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Wind Angle: </span>
+                        <span class="status-value" id="wind-angle-value">N/A</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label"> Sailboat Latitude: </span>
+                        <span class="status-value" id="latitude-value">N/A</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label"> Sailboat Longitude: </span>
+                        <span class="status-value" id="longitude-value">N/A</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label"> Actual Sail Angle: </span>
+                        <span class="status-value" id="actual-sail-angle-value">N/A</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label"> Actual Tail Angle: </span>
+                        <span class="status-value" id="actual-tail-angle-value">N/A</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label"> Dropped Packets: </span>
+                        <span class="status-value" id="dropped-packets-value">N/A</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label"> Heading Angle: </span>
+                        <span class="status-value" id="heading-value">N/A</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label"> Rate of Turn (Z): </span>
+                        <span class="status-value" id="angular-velocity-z-value">N/A</span>
+                    </div>
+                </div>
+            </div>
+            <div class="table-container">
+                <h1>Algo Debugger</h1>
+                <div class="table">
+                    <div class="status-row">
+                        <span class="status-label">Tacking:</span>
+                        <span class="status-value" id="tacking-value">N/A</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Tacking Point:</span>
+                        <span class="status-value" id="tacking-point-value">N/A</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Heading Direction:</span>
+                        <span class="status-value" id="heading-dir-value">N/A</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Current Destination:</span>
+                        <span class="status-value" id="curr-dest-value">N/A</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Difference:</span>
+                        <span class="status-value" id="diff-value">N/A</span>
+                    </div>
+                </div>
+            </div>
+            <div class="table-container">
+                <h1>Connect to ROS</h1>
+                <div class="table">
+                    <div class="status-row">
+                        <span class="status-label">ROS URL:</span>
+                        <div class="input-group">
+                            <input type="url" id="ros-url" name="ros-url" inputmode="url" placeholder="Enter ROS URL"
+                                required>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button type="button" id="connect-to-ros">Submit</button>
+                    </div>
+                </div>
+                <h1>Waypoint & Buoy Input</h1>
+            </div>
+            <div class="waypoint-buoy-container">
+                <div class="waypoint-buoy-table">
+                    <div class="status-row-input second">
+                        <span class="status-label">Latitude:</span>
+                        <div class="input-group">
+                            <input type="number" id="waypoint-latitude" name="latitude" inputmode="decimal"
+                                placeholder="Enter latitude" required>
+                        </div>
+                    </div>
+                    <div class="status-row-input second">
+                        <span class="status-label">Longitude:</span>
+                        <div class="input-group">
+                            <input type="number" id="waypoint-longitude" name="longitude" inputmode="decimal"
+                                placeholder="Enter longitude" required>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button type="button" id="submit-waypoint">Submit Waypoint</button>
+                    </div>
+                </div>
+                <div class="waypoint-buoy-table">
+                    <div class="status-row-input second">
+                        <span class="status-label">Latitude:</span>
+                        <div class="input-group">
+                            <input type="number" id="buoy-latitude" name="latitude" inputmode="decimal"
+                                placeholder="Enter latitude" required>
+                        </div>
+                    </div>
+                    <div class="status-row-input second">
+                        <span class="status-label">Longitude:</span>
+                        <div class="input-group">
+                            <input type="number" id="buoy-longitude" name="longitude" inputmode="decimal"
+                                placeholder="Enter longitude" required>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button type="button" id="submit-buoy">Submit Buoy</button>
+                    </div>
+                </div>
+            </div>
+            <div class="table-container">
+                <h1>Algo/RC Chooser</h1>
+                <div class="table">
+                    <div class="status-row second">
+                        <span class="status-label">Options: </span>
+                    </div>
+                    <div class="dropdown">
+                        <button class="dropdown-button" id="mode-button" onclick="toggleDropdown()">Select Mode</button>
+                        <div id="dropdown-content" class="dropdown-content">
+                            <a href="#" onclick="selectMode('Algorithm')">Algorithm</a>
+                            <a href="#" onclick="selectMode('Radio')">Radio</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="sailboat-angle-dashboard">
+                <div class="dial">
+                    <h3>Sail Angle</h3>
+                    <div id="dial-container-sail"></div>
+                    <p id="actual-sail-angle-dial">Sail Angle: N/A°</p>
+                </div>
+                <div class="dial">
+                    <h3>Tail Angle</h3>
+                    <div id="dial-container-tail"></div>
+                    <p id="actual-tail-angle-dial">Tail Angle: N/A°</p>
+                </div>
+                <div class="dial">
+                    <h3>Heading Angle</h3>
+                    <div id="dial-container-head"></div>
+                    <p id="heading-value-dial">Heading Angle: N/A°</p>
+                </div>
+            </div>
         </div>
     </div>
-
-    <script>
-        let ros;
-
-        function connectToROS() {
-            const rosbridgeAddress = "ws://localhost:9090";
-            ros = new ROSLIB.Ros({
-                url: rosbridgeAddress
-            });
-
-            ros.on('connection', function () {
-                console.log('Connected to rosbridge server.');
-                subscribeToTopics();
-            });
-
-            ros.on('error', function (error) {
-                console.error('Error connecting to rosbridge server:', error);
-            });
-
-            ros.on('close', function () {
-                console.log('Connection to rosbridge server closed.');
-            });
-        }
-
-        function subscribeToTopics() {
-            // Helper function to update DOM element with topic data
-            function updateValue(elementId, value) {
-                document.getElementById(elementId).innerText = value;
-            }
-
-            // Subscribe to /sailbot/algo_rudder
-            const algoRudderTopic = new ROSLIB.Topic({
-                ros: ros,
-                name: '/sailbot/algo_rudder',
-                messageType: 'std_msgs/Int32'
-            });
-
-            algoRudderTopic.subscribe(function (message) {
-                updateValue('algo-rudder-value', message.data);
-            });
-
-            // Subscribe to /sailbot/algo_sail
-            const algoSailTopic = new ROSLIB.Topic({
-                ros: ros,
-                name: '/sailbot/algo_sail',
-                messageType: 'std_msgs/Int32'
-            });
-
-            algoSailTopic.subscribe(function (message) {
-                updateValue('algo-sail-value', message.data);
-            });
-
-            // Subscribe to /sailbot/control_mode
-            const controlModeTopic = new ROSLIB.Topic({
-                ros: ros,
-                name: '/sailbot/control_mode',
-                messageType: 'std_msgs/String'
-            });
-
-            controlModeTopic.subscribe(function (message) {
-                updateValue('control-mode-value', message.data);
-            });
-
-            // Subscribe to /sailbot/radio_rudder
-            const radioRudderTopic = new ROSLIB.Topic({
-                ros: ros,
-                name: '/sailbot/radio_rudder',
-                messageType: 'std_msgs/Int32'
-            });
-
-            radioRudderTopic.subscribe(function (message) {
-                updateValue('radio-rudder-value', message.data);
-            });
-
-            // Subscribe to /sailbot/radio_sail
-            const radioSailTopic = new ROSLIB.Topic({
-                ros: ros,
-                name: '/sailbot/radio_sail',
-                messageType: 'std_msgs/Int32'
-            });
-
-            radioSailTopic.subscribe(function (message) {
-                updateValue('radio-sail-value', message.data);
-            });
-
-            // Subscribe to /sailbot/rudder_angle
-            const rudderAngleTopic = new ROSLIB.Topic({
-                ros: ros,
-                name: '/sailbot/rudder_angle',
-                messageType: 'std_msgs/Int32'
-            });
-
-            rudderAngleTopic.subscribe(function (message) {
-                updateValue('rudder-angle-value', message.data);
-            });
-
-            // Subscribe to /sailbot/sail
-            const sailTopic = new ROSLIB.Topic({
-                ros: ros,
-                name: '/sailbot/sail',
-                messageType: 'std_msgs/Int32'
-            });
-
-            sailTopic.subscribe(function (message) {
-                updateValue('sail-value', message.data);
-            });
-        }
-
-        // Connect to ROS when the page loads
-        window.onload = function () {
-            connectToROS();
-        };
+    <script src="script.js"></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=key&callback=initMap">
     </script>
-
 </body>
 
 </html>
