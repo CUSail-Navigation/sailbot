@@ -9,7 +9,7 @@ class TeensyHardware:
 
     START_BYTE = 0xff
     END_BYTE = 0xee
-    PACKET_LENGTH = 5
+    PACKET_LENGTH = 6
 
     def __init__(self, port):
         self.port = port
@@ -66,20 +66,20 @@ class TeensyHardware:
         else:
             sail_angle = packet[2]
         # uint8_t to int8_t conversion
-        if packet[2] >= 128:
-            rudder_angle = packet[2] - 256
-        else:
-            rudder_angle = packet[2]
-
-
         if packet[3] >= 128:
-            buoy_angle = packet[3] - 256
+            rudder_angle = packet[3] - 256
         else:
-            buoy_angle = packet[3]
+            rudder_angle = packet[3]
 
-        dropped_packets = packet[4]
 
-        return wind_angle, sail_angle, rudder_angle, dropped_packets
+        if packet[4] >= 128:
+            buoy_angle = packet[4] - 256
+        else:
+            buoy_angle = packet[4]
+
+        dropped_packets = packet[5]
+
+        return wind_angle, sail_angle, rudder_angle, buoy_angle, dropped_packets
 
 
     def send_command(self, sail, rudder, buoy_displacement):
