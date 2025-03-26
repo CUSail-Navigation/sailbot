@@ -12,8 +12,6 @@ from rclpy.task import Future
 
 from sailboat_interface.srv import Waypoint
 from sailboat_interface.msg import AlgoDebug
-from time import sleep
-
 
 import math
 
@@ -58,6 +56,13 @@ class MainAlgo(Node):
             self.wind_callback,
             10)
 
+        #Subscription for wind direction
+        self.subscription_wind_dir = self.create_subscription(
+            NavSatFix,
+            'current_waypoint',
+            self.update_current_waypoint,
+            10)
+        
         self.timer = self.create_timer(self.timer_period, self.step)
 
         # Publisher for rudder angle
@@ -80,8 +85,17 @@ class MainAlgo(Node):
             # Timer to publish state every 1 second
             self.state_timer = self.create_timer(1.0, self.publish_state_debug)
 
-        self.request_new_waypoint()
         self.get_logger().info('Main-algo started successfully')  # Check if this line prints
+
+    def update_current_waypoint(self, msg):
+        """
+        Callback to update the current destination waypoint from the 'current_waypoint' topic.
+        """
+        easting, northing, _, _ = utm.from_latlon(msg.latitude, msg.longitude)
+        self.curr_dest = Point()
+        self.curr_dest.x = easting
+        self.curr_dest.y = northing
+        self.get_logger().info(f'Updated current waypoint to: ({msg.latitude}, {msg.longitude})')
 
     def publish_state_debug(self):
         """
@@ -115,40 +129,27 @@ class MainAlgo(Node):
         self.state_pub.publish(debug_msg)
 
 
-    def request_new_waypoint(self):
+    def pop_waypoint(self):
         self.cli = self.create_client(Waypoint, 'mutate_waypoint_queue')
         while not self.cli.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Waypoint service not available, waiting...')
 
-        # Set up the request with the "get" command
+        # Set up the request with the "pop" command
         self.req = Waypoint.Request()
-        self.req.command = "get"
-        self.req.argument = ""  # No argument needed for the "get" command
+        self.req.command = "pop"
+        self.req.argument = ""  # No argument needed for the "pop" command
 
         self.future = self.cli.call_async(self.req)
         # Use a callback to handle the response
-        self.future.add_done_callback(self.waypoint_response_callback)
+        self.future.add_done_callback(self.pop_response_callback)
 
-    def waypoint_response_callback(self, future: Future):
+    def pop_response_callback(self, future: Future):
         try:
             response = future.result()
             if response.success:
-                # Parse the received waypoints from the service response
-                waypoints = eval(response.message)  # Convert string to list of tuples
-                if waypoints:
-                    # Extract the next waypoint
-                    next_waypoint = waypoints[0]
-                    self.get_logger().info(f'New waypoint received: {next_waypoint}')
-
-                    # Convert latitude and longitude to UTM coordinates
-                    easting, northing, _, _ = utm.from_latlon(next_waypoint[1], next_waypoint[0])
-                    self.curr_dest = Point()
-                    self.curr_dest.x = easting
-                    self.curr_dest.y = northing
-                else:
-                    self.get_logger().info('No waypoints available in the queue.')
+                self.get_logger().info('Waypoint popped successfully.')
             else:
-                self.get_logger().info('Failed to retrieve waypoints from the service.')
+                self.get_logger().info('Failed to pop waypoint from the service.')
         except Exception as e:
             self.get_logger().error(f'Error in waypoint_response_callback: {str(e)}')
 
@@ -169,8 +170,9 @@ class MainAlgo(Node):
         if self.curr_dest is not None:
             dist_to_dest = math.dist((self.curr_loc.x, self.curr_loc.y), (self.curr_dest.x, self.curr_dest.y))
             self.get_logger().info(f'Distance to destination: {dist_to_dest}')
+            # if we have reached our waypoint, pop it off 
             if dist_to_dest < 5:
-                self.request_new_waypoint()
+                self.pop_waypoint()
 
         self.calculate_rudder_angle()
 
@@ -236,6 +238,8 @@ class MainAlgo(Node):
         Check if the boat is in nogo zone based on the wind direction
         """
         self.get_logger().info(f'Wind Direction: {self.wind_dir}')
+        if self.wind_dir is None:
+            return False
         return (150 < self.wind_dir < 210)
 
     def calculateTP(self):
@@ -247,13 +251,14 @@ class MainAlgo(Node):
         """
 
         assert self.in_nogo(), "Not in nogo zone"
-        assert not self.tacking, "Already tacking"
+        assert self.tacking, "Already tacking"
         assert self.curr_loc is not None, "Current location is None"
         assert self.curr_dest is not None, "Current destination is None"
         assert self.wind_dir is not None, "Wind direction is None"
 
         x = self.curr_loc.x
         y = self.curr_loc.y
+        nav_sat_msg = NavSatFix()
 
         try:
             lat, long = utm.to_latlon(x, y, self.zone_number, self.zone_letter)
