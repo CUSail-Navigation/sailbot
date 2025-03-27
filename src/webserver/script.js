@@ -74,7 +74,6 @@ function updateTrail(latitude, longitude) {
     sailPath.setPath(currentPath);
 }
 
-
 function connectToROS(url) {
     ros = new ROSLIB.Ros({
         url: url
@@ -109,6 +108,8 @@ function parseGpsData(message) {
     const latitude = message.latitude;
     const longitude = message.longitude;
 
+    LatestData.latitude = latitude;
+    LatestData.longitude = longitude;
     // Format the latitude and longitude to your desired precision
     const formattedLatitude = latitude.toFixed(6);
     const formattedLongitude = longitude.toFixed(6);
@@ -151,6 +152,8 @@ function parseHeading(message) {
 
     formattedHeading = heading.toFixed(6);
 
+    LatestData.heading = heading;
+
     document.getElementById('heading-value').innerText = formattedHeading;
     updateHeadAngle(formattedHeading, 'heading-value-dial')
 
@@ -178,11 +181,11 @@ function parseTackingPoint(message) {
         tackingPointMarker = new google.maps.Marker({
             position: tackingPointLocation,
             map: map,
-            title: "Tacking Point",
+            title: "Tacking Point Location",
             icon: {
                 path: google.maps.SymbolPath.CIRCLE,
                 scale: 8,
-                fillColor: "#FFFFFF",
+                fillColor: "#0000FF",
                 fillOpacity: 1,
                 strokeWeight: 1,
                 strokeColor: "#FFFFFF"
@@ -262,6 +265,7 @@ function subscribeToTopics() {
     });
     rudderAngleTopic.subscribe(function (message) {
         updateValue('rudder-angle-value', message.data);
+        LatestData.rudderAngle = message.data;
     });
     // Subscribe to /sailbot/sail
     const sailTopic = new ROSLIB.Topic({
@@ -272,6 +276,7 @@ function subscribeToTopics() {
     });
     sailTopic.subscribe(function (message) {
         updateValue('sail-value', message.data);
+        LatestData.sailAngle = message.data;
     });
     const gpsTopic = new ROSLIB.Topic({
         ros: ros,
@@ -279,6 +284,7 @@ function subscribeToTopics() {
         messageType: 'sensor_msgs/NavSatFix',
         throttle_rate: BASE_THROTTLE_RATE,
     });
+    // logging handled in parseGpsData
     gpsTopic.subscribe(parseGpsData);
 
     const imuTopic = new ROSLIB.Topic({
@@ -287,6 +293,7 @@ function subscribeToTopics() {
         throttle_rate: BASE_THROTTLE_RATE,
         messageType: 'geometry_msgs/msg/Vector3'
     });
+    // logging handled in parseImuData
     imuTopic.subscribe(parseImuData);
 
     const actualRudderAngleTopic = new ROSLIB.Topic({
@@ -309,6 +316,7 @@ function subscribeToTopics() {
     });
     windAngleTopic.subscribe(function (message) {
         updateValue('wind-angle-value', message.data);
+        LatestData.windAngle = message.data;
     });
 
     const actualSailAngleTopic = new ROSLIB.Topic({
@@ -344,6 +352,14 @@ function subscribeToTopics() {
         const headingDir = message.heading_dir.data;
         const currDest = message.curr_dest;
         const diff = message.diff.data;
+
+        LatestData.tacking = tacking;
+        LatestData.tackingPointLat = tackingPoint.latitude;
+        LatestData.tackingPointLng = tackingPoint.longitude;
+        LatestData.headingDir = headingDir;
+        LatestData.currDestLat = currDest.latitude;
+        LatestData.currDestLng = currDest.longitude;
+        LatestData.diff = diff;
 
         document.getElementById('tacking-value').innerText = tacking;
         document.getElementById('tacking-point-value').innerText = `${tackingPoint.latitude.toFixed(6)}, ${tackingPoint.longitude.toFixed(6)}`;
@@ -689,18 +705,6 @@ function conditionalRender() {
     }
 }
 
-// minimizing status information
-function toggleVisibility(id, button) {
-    const element = document.getElementById(id);
-    if (element.style.display === "none" || element.style.display === "") {
-        element.style.display = "block";
-        button.textContent = button.textContent.replace("Show", "Hide");
-    } else {
-        element.style.display = "none";
-        button.textContent = button.textContent.replace("Hide", "Show");
-    }
-}
-
 
 // // Code for dial Configuration
 const width = 90;
@@ -902,3 +906,24 @@ function updateHeadAngle(angle, id) {
     // Update Text Display
     document.getElementById(id).innerText = "Angle: " + angle;
 }
+
+// BEGIN: logging functionality
+
+document.getElementById('start-log-button').addEventListener('click', function () {
+    Logger.startLogging();
+});
+
+document.getElementById('stop-log-button').addEventListener('click', function () {
+    Logger.stopLogging();
+});
+
+document.getElementById('clear-log-button').addEventListener('click', function () {
+    Logger.clear();
+});
+
+document.getElementById('download-log-button').addEventListener('click', function () {
+    const input = document.getElementById('log-filename').value.trim();
+
+    const sanitizedFilename = input.replace(/[<>:"/\\|?*]+/g, '') || 'sailbot-log';
+    Logger.download(sanitizedFilename);
+});

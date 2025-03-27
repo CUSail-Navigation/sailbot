@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="logging.js"></script>
 </head>
 
 <body>
@@ -42,8 +43,9 @@
                         <span class="status-label">Rudder Angle:</span>
                         <span class="status-value" id="rudder-angle-value">N/A</span>
                     </div>
-                    <button onclick="toggleVisibility('algo-mode-section', this)">Show Algo View</button>
-                    <div id="algo-mode-section">
+
+                    <details>
+                        <summary>Algo View</summary>
                         <div class="status-row algo-mode">
                             <span class="status-label">Algo Rudder:</span>
                             <span class="status-value" id="algo-rudder-value">N/A</span>
@@ -56,9 +58,10 @@
                             <span class="status-label">Tacking Point:</span>
                             <span class="status-value" id="algo-sail-value">N/A</span>
                         </div>
-                    </div>
-                    <button onclick="toggleVisibility('rc-mode-section', this)">Show RC View</button>
-                    <div id="rc-mode-section">
+                    </details>
+
+                    <details>
+                        <summary>RC View</summary>
                         <div class="status-row rc-mode">
                             <span class="status-label">Radio Rudder:</span>
                             <span class="status-value" id="radio-rudder-value">N/A</span>
@@ -67,41 +70,43 @@
                             <span class="status-label">Radio Sail:</span>
                             <span class="status-value" id="radio-sail-value">N/A</span>
                         </div>
-                    </div>
-                    <button onclick="toggleVisibility('sensor-data-section', this)">Show Sensor View</button>
-                    <div id="sensor-data-section">
+                    </details>
+
+                    <details>
+                        <summary>Sensor View</summary>
                         <div class="status-row">
                             <span class="status-label">Wind Angle: </span>
                             <span class="status-value" id="wind-angle-value">N/A</span>
                         </div>
                         <div class="status-row">
-                            <span class="status-label"> Heading Angle: </span>
+                            <span class="status-label">Heading Angle: </span>
                             <span class="status-value" id="heading-value">N/A</span>
                         </div>
                         <div class="status-row">
-                            <span class="status-label"> Sailboat Latitude: </span>
+                            <span class="status-label">Sailboat Latitude: </span>
                             <span class="status-value" id="latitude-value">N/A</span>
                         </div>
                         <div class="status-row">
-                            <span class="status-label"> Sailboat Longitude: </span>
+                            <span class="status-label">Sailboat Longitude: </span>
                             <span class="status-value" id="longitude-value">N/A</span>
                         </div>
-                    </div>
-                    <button onclick="toggleVisibility('teensy-data-section', this)">Show Teensy View</button>
-                    <div id="teensy-data-section">
+                    </details>
+
+                    <details>
+                        <summary>Teensy View</summary>
                         <div class="status-row">
-                            <span class="status-label"> Actual Sail Angle: </span>
+                            <span class="status-label">Actual Sail Angle: </span>
                             <span class="status-value" id="actual-sail-angle-value">N/A</span>
                         </div>
                         <div class="status-row">
-                            <span class="status-label"> Actual Tail Angle: </span>
+                            <span class="status-label">Actual Tail Angle: </span>
                             <span class="status-value" id="actual-tail-angle-value">N/A</span>
                         </div>
                         <div class="status-row">
-                            <span class="status-label"> Dropped Packets: </span>
+                            <span class="status-label">Dropped Packets: </span>
                             <span class="status-value" id="dropped-packets-value">N/A</span>
                         </div>
-                    </div>
+                    </details>
                 </div>
             </div>
             <div class="table-container">
@@ -129,6 +134,25 @@
                     </div>
                 </div>
             </div>
+            <div class="table-container">
+                <h1>Logging</h1>
+                <div class="logging-card">
+                    <!-- Row 1: Control buttons -->
+                    <div class="logging-button-row">
+                        <button id="start-log-button" class="log-button">Start Logging</button>
+                        <button id="stop-log-button" class="log-button">Stop Logging</button>
+                        <button id="clear-log-button" class="log-button">Clear Log</button>
+                    </div>
+
+                    <!-- Row 2: Filename + download -->
+                    <div class="logging-filename-row">
+                        <label for="log-filename" class="log-label">Filename:</label>
+                        <input type="text" id="log-filename" placeholder="sailbot-log" class="log-input">
+                        <button id="download-log-button" class="log-button">Download</button>
+                    </div>
+                </div>
+            </div>
+
             <div class="table-container">
                 <h1>Connect to ROS</h1>
                 <div class="table">
@@ -223,8 +247,9 @@
         </div>
     </div>
     <script src="script.js"></script>
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=key&callback=initMap">
-    </script>
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=REMOVED&callback=initMap">
+        </script>
 </body>
 
 </html>
