@@ -279,7 +279,7 @@ class MainAlgo(Node):
 
         assert tp.x < 900000 and tp.x > 100000, "Easting out of range"
 
-        # publish new TP if we do not not encounter an exception
+        # publish new TP if we do not encounter an exception
         try:
             lat, long = utm.to_latlon(tp.x, tp.y, self.zone_number, self.zone_letter)
             tacking_point_msg = NavSatFix()
