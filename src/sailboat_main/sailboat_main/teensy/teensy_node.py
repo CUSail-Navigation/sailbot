@@ -2,7 +2,8 @@ import rclpy
 from rclpy.node import Node
 from sailboat_interface.msg import SailTail
 from std_msgs.msg import Int32
-
+#import statement may or may not be necessary
+from geometry_msgs.msg import Point
 from . import teensy
 from . import teensy_fake
 
@@ -44,11 +45,13 @@ class Teensy(Node):
         # keep track of our desired sail and rudder angles
         self.desired_sail = 0
         self.desired_rudder = 0
+        self.buoy_displacement = 0
 
         # telemetry data publishers
         self.wind_angle_pub = self.create_publisher(Int32, 'wind', 10)
         self.actual_sail_angle_pub = self.create_publisher(Int32, 'actual_sail_angle', 10)
         self.actual_rudder_angle_pub = self.create_publisher(Int32, 'actual_rudder_angle', 10)
+        self.buoy_angle_pub = self.create_publisher(Int32, 'buoy_angle', 10)
         self.dropped_packets_pub = self.create_publisher(Int32, 'dropped_packets', 10)
 
         # callback to read teensy data
@@ -65,6 +68,13 @@ class Teensy(Node):
             Int32,
             'rudder_angle',
             self.rudder_callback,
+            10)
+        
+        #subscription for buoy displacement
+        self.subscription = self.create_subscription(
+            Int32, 
+            '/buoy_displacement', 
+            self.buoy_displacement_callback, 
             10)
     
     def check_telemetry(self):
@@ -87,6 +97,10 @@ class Teensy(Node):
             rudder_angle_msg.data = data["rudder_angle"]
             self.actual_rudder_angle_pub.publish(rudder_angle_msg)
 
+            buoy_angle_msg = Int32()
+            buoy_angle_msg.data = data["buoy_angle"]
+            self.buoy_angle_pub.publish(buoy_angle_msg)
+
             dropped_packets_msg = Int32()
             dropped_packets_msg.data = data["dropped_packets"]
             self.dropped_packets_pub.publish(dropped_packets_msg)
@@ -94,6 +108,7 @@ class Teensy(Node):
             self.get_logger().info(f"{'Wind angle:':<20} {wind_angle_msg.data}")
             self.get_logger().info(f"{'Actual sail angle:':<20} {sail_angle_msg.data}")
             self.get_logger().info(f"{'Actual tail angle:':<20} {rudder_angle_msg.data}")
+            self.get_logger().info(f"{'Buoy angle:':<20} {buoy_angle_msg.data}")
             self.get_logger().info(f"{'Dropped packets:':<20} {dropped_packets_msg.data}")
         else:
             self.get_logger().info("No telemetry received")
@@ -106,20 +121,33 @@ class Teensy(Node):
         self.desired_sail = msg.data
         #self.get_logger().info(f"Sail callback-sent to Teensy sail:{self.desired_sail}, rudder: {self.desired_rudder}")
 
-        if self.teensy.send_command(self.desired_sail, self.desired_rudder) == 0:
+        if self.teensy.send_command(self.desired_sail, self.desired_rudder, self.buoy_displacement) == 0:
             self.get_logger().info(f"Message sent to servo")
         else:
             self.get_logger().warn(f"Message failed to send to servo")
-    
+
     def rudder_callback(self, msg):
         """
         Callback function for the 'rudder_angle' topic. Sends the updated rudder
         and the previously set sail.
         """
         self.desired_rudder = msg.data
-        self.get_logger().info(f"Rudder callback-sent to Teensy sail:{self.desired_sail}, rudder: {self.desired_rudder}")
+        self.get_logger().info(f"Rudder position callback-sent to Teensy sail:{self.desired_sail}, rudder: {self.desired_rudder} buoy position: {self.buoy_displacement}")
 
-        if self.teensy.send_command(self.desired_sail, self.desired_rudder) == 0:
+        if self.teensy.send_command(self.desired_sail, self.desired_rudder, self.buoy_displacement) == 0:
+            self.get_logger().info(f"Message sent to servo")
+        else:
+            self.get_logger().warn(f"Message failed to send to servo")
+
+    def buoy_displacement_callback(self, msg):
+        """
+        Callback function for the 'buoy_displacement' topic. Sends the updated buoy position, previously set rudder,
+        and the previously set sail.
+        """
+        self.buoy_displacement = msg.data
+        self.get_logger().info(f"Buoy position callback-sent to Teensy sail:{self.desired_sail}, rudder: {self.desired_rudder} buoy position: {self.buoy_displacement}")
+
+        if self.teensy.send_command(self.desired_sail, self.desired_rudder, self.buoy_displacement) == 0:
             self.get_logger().info(f"Message sent to servo")
         else:
             self.get_logger().warn(f"Message failed to send to servo")

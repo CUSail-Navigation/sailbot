@@ -21,6 +21,7 @@ void SerialControlTask::execute()
             sfr::anemometer::wind_angle & 0xFF,
             sfr::servo::sail_angle,
             sfr::servo::rudder_angle,
+            sfr::serial::buoy_angle,
             sfr::serial::dropped_packets,
             constants::serial::TX_END_FLAG};
 

@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
   && locale-gen en_US.UTF-8 \
   && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 \
   && rm -rf /var/lib/apt/lists/*
-ENV LANG en_US.UTF-8
+ENV LANG=en_US.UTF-8
 
 # Install timezone
 RUN ln -fs /usr/share/zoneinfo/UTC /etc/localtime \
@@ -137,8 +137,8 @@ RUN chmod +x /home/ros2_user/setup_ros.sh
 RUN pip3 install -r /home/ros2_user/ros2_ws/requirements.txt
 
 # Install RosBridge and other WebDev Packages
-RUN sudo apt update \
-&& sudo apt install curl \ 
+RUN sudo apt-get -y update \
+&& sudo apt-get -y install curl \ 
 && sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo tee /usr/share/keyrings/ros-archive-keyring.gpg > /dev/null \ 
 && echo "deb [signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null \ 
 && sudo apt-get -y install ros-humble-rosbridge-server

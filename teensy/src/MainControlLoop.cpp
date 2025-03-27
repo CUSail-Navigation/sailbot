@@ -5,10 +5,6 @@ MainControlLoop::MainControlLoop()
       serial_monitor(),
       servo_control_task(),
       serial_control_task()
-// MainControlLoop::MainControlLoop()
-//      : 
-//         serial_monitor(),
-//        serial_control_task()
 {
 
 
@@ -21,4 +17,5 @@ void MainControlLoop::execute()
     serial_monitor.execute();
     servo_control_task.execute();
     serial_control_task.execute();
+    tracker_control_task.execute();
 }
