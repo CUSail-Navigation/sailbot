@@ -78,6 +78,7 @@ class MainAlgo(Node):
         self.zone_number = None
         self.zone_letter = None
         self.diff = None
+        self.dist_to_dest = None
 
         if self.debug:
             # Publisher for internal state
@@ -126,6 +127,13 @@ class MainAlgo(Node):
         debug_msg.diff = Int32()
         debug_msg.diff.data = int(self.diff) if self.diff is not None else 0
 
+        if self.dist_to_dest is not None:
+            debug_msg.dist_to_dest = Int32()
+            debug_msg.dist_to_dest.data = int(self.dist_to_dest)
+        else:
+            debug_msg.dist_to_dest = Int32()
+            debug_msg.dist_to_dest.data = -666
+
         self.state_pub.publish(debug_msg)
 
 
@@ -170,6 +178,7 @@ class MainAlgo(Node):
         if self.curr_dest is not None:
             dist_to_dest = math.dist((self.curr_loc.x, self.curr_loc.y), (self.curr_dest.x, self.curr_dest.y))
             self.get_logger().info(f'Distance to destination: {dist_to_dest}')
+            self.dist_to_dest = dist_to_dest
             # if we have reached our waypoint, pop it off 
             if dist_to_dest < 5:
                 self.pop_waypoint()
