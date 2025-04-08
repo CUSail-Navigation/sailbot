@@ -17,3 +17,10 @@ sailbot: #Namespace
       ros__parameters:
          vectornav_port: "/dev/serial/by-id/usb-FTDI_USB-RS232-WE_AV0LF3XT-if00-port0"
          simulated: false
+      
+   main_algo:
+      ros__parameters:
+         tacking_buffer: 15
+         debug: True
+   
+

@@ -344,12 +344,14 @@ function subscribeToTopics() {
         const headingDir = message.heading_dir.data;
         const currDest = message.curr_dest;
         const diff = message.diff.data;
-
+        const dist = message.dist_to_dest.data;
+    
         document.getElementById('tacking-value').innerText = tacking;
         document.getElementById('tacking-point-value').innerText = `${tackingPoint.latitude.toFixed(6)}, ${tackingPoint.longitude.toFixed(6)}`;
         document.getElementById('heading-dir-value').innerText = headingDir;
         document.getElementById('curr-dest-value').innerText = `${currDest.latitude.toFixed(6)}, ${currDest.longitude.toFixed(6)}`;
         document.getElementById('diff-value').innerText = diff;
+        document.getElementById('dist-value').innerText = dist;
     });
 
     waypointService = new ROSLIB.Service({
