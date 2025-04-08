@@ -20,12 +20,12 @@ let waypointPlanCoordinates = []; // Global variable for waypoint path coordinat
 
 // Initialize the Google Map
 function initMap() {
-    const defaultLocation = { lat: 0, lng: 0 }; // Default center
+    const defaultLocation = { lat: 42.45, lng: -76.474 }; // Ithaca, NY (for now)
 
     // Create a new map instance
     map = new google.maps.Map(document.getElementById("map"), {
         center: defaultLocation, // Center the map at the default location
-        zoom: 2, // Set an initial zoom level
+        zoom: 12, // Set an initial zoom level
     });
 
     google.maps.event.addListener(map, "mousemove", function (event) {
@@ -137,8 +137,7 @@ function parseGpsData(message) {
     }
 
     // Optionally center the map on the sailboat
-    map.setCenter(sailboatLocation);
-    map.setZoom(17);
+    // map.setCenter(sailboatLocation);
 }
 
 
