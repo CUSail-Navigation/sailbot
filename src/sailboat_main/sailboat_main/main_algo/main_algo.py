@@ -91,7 +91,6 @@ class MainAlgo(Node):
         # Publisher for tacking point
         self.tacking_point_pub = self.create_publisher(NavSatFix, 'tacking_point', 10)
 
-        self.request_new_waypoint()
         self.get_logger().info('Main-algo started successfully')  # Check if this line prints
 
     def update_current_waypoint(self, msg):
@@ -187,8 +186,7 @@ class MainAlgo(Node):
             self.dist_to_dest = dist_to_dest
             # if we have reached our waypoint, pop it off 
             if dist_to_dest < 5:
-                for i in range(1,5):
-                    self.get_logger().info(f'=============================== Waypoint popped ===============================')
+                self.get_logger().info('=============================== Waypoint popped ===============================')
                 self.pop_waypoint()
 
         self.calculate_rudder_angle()
