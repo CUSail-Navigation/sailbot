@@ -40,9 +40,9 @@ class SailVectorNav:
     
     def readVectorNavYaw(self):
         """Returns the yaw in degrees. 0 degrees is North, 90 degrees is East,
-        180 degrees is South, 270 degrees is West."""
+        180 degrees is South, 270 degrees is West.""" # TODO: Validate this comment
         with self.lock:
-            return float(self.readings['yaw'])
+            return (450.0 - float(self.readings['yaw'])) % 360.0
     
     def readVectorNavPitch(self):
         """Returns the pitch in degrees. 0 degrees is level, positive is bow up,

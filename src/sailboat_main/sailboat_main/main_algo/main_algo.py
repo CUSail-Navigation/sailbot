@@ -6,7 +6,7 @@ from rclpy.service import Service
 
 import utm
 from sensor_msgs.msg import NavSatFix, Imu
-from geometry_msgs.msg import Point
+from geometry_msgs.msg import Point, Vector3
 from std_msgs.msg import Bool, Int32
 from rclpy.task import Future
 
@@ -44,7 +44,7 @@ class MainAlgo(Node):
 
         #Subscription for heading direction
         self.subscription_heading_dir = self.create_subscription(
-            Imu,
+            Vector3,
             '/imu',
             self.heading_dir_callback,
             10)
@@ -67,6 +67,8 @@ class MainAlgo(Node):
 
         # Publisher for rudder angle
         self.rudder_angle_pub = self.create_publisher(Int32, 'algo_rudder', 10)
+
+        self.tacking_point_pub = self.create_publisher(NavSatFix, 'tacking_point', 10)
 
         # Internal state
         self.wind_dir = None
@@ -181,6 +183,8 @@ class MainAlgo(Node):
             self.dist_to_dest = dist_to_dest
             # if we have reached our waypoint, pop it off 
             if dist_to_dest < 5:
+                for i in range(1,5):
+                    self.get_logger().info(f'=============================== Waypoint popped ===============================')
                 self.pop_waypoint()
 
         self.calculate_rudder_angle()
@@ -195,9 +199,9 @@ class MainAlgo(Node):
         """
         Use the imu data to assign value to self.heading_dir
         """
-        data = msg.orientation
-        roll_x, roll_y, roll_z = euler_from_quaternion(data.x, data.y, data.z, data.w)
-        self.heading_dir = np.degrees(roll_x)
+        data = msg.z
+        # roll_x, roll_y, roll_z = euler_from_quaternion(data.x, data.y, data.z, data.w)
+        self.heading_dir = data
 
     def calculate_rudder_angle(self):
         """
@@ -270,7 +274,7 @@ class MainAlgo(Node):
         nav_sat_msg = NavSatFix()
 
         try:
-            lat, long = utm.to_latlon(x, y, self.zone_number, self.zone_letter)
+            lat, long = utm.to_latlon(x, y, self.zone_number, self.zone_letter)         
             self.get_logger().info(f'Current Location: ({lat}, {long})')
         except Exception as e:
             self.get_logger().error(f'Error in Lat Long: {str(e)}') 
@@ -293,6 +297,9 @@ class MainAlgo(Node):
         # publish new TP
         try:
             lat, long = utm.to_latlon(tp.x, tp.y, self.zone_number, self.zone_letter)
+            tacking_point_msg = NavSatFix()
+            tacking_point_msg.latitude, tacking_point_msg.longitude = lat, long
+            self.tacking_point_pub.publish(tacking_point_msg)
         except Exception as e: 
             self.get_logger().error(f'Tacking point easting: {tp.x}, northing: {tp.y}')
             self.get_logger().error(f'Error in calculateTP: {str(e)}') 
