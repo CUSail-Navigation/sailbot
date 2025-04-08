@@ -8,6 +8,7 @@ let waypoints = []; // Global array for storing waypoints
 const waypointMarkers = {}; // Global dictionary for waypoint markers
 let map; // Global variable for the map instance
 let sailboatMarker; // Global variable for the sailboat marker
+let tackingPointMarker; // Global variable for the tacking point marker
 
 let buoys = []
 const buoyMarkers = {};
@@ -143,7 +144,6 @@ function parseGpsData(message) {
 
 function parseImuData(message) {
     parseHeading(message);
-    // parseAngularVelocityData(message);
 }
 
 function parseHeading(message) {
@@ -163,35 +163,35 @@ function parseHeading(message) {
     }
 }
 
-// Not in use after changing quaternion to vector3 type
-// function parseAngularVelocityData(message) {
-//     angularVelocityZ = message.z;
+// Updates the tacking point on the map and UI
+function parseTackingPoint(message) {
+    // Update the UI with the tacking point lat/long
+    const formattedLatitude = message.latitude.toFixed(6);
+    const formattedLongitude = message.longitude.toFixed(6);
 
-//     angularVelocityZ = angularVelocityZ.toFixed(6);
+    document.getElementById('tacking-point-value').innerText = `${formattedLatitude}, ${formattedLongitude}`;
 
-//     document.getElementById('angular-velocity-z-value').innerText = angularVelocityZ
-// }
+    // Update the tacking point marker on the map
+    const tackingPointLocation = { lat: message.latitude, lng: message.longitude };
+    if (!tackingPointMarker) {
+        // Create a new marker if it doesn't exist
+        tackingPointMarker = new google.maps.Marker({
+            position: tackingPointLocation,
+            map: map,
+            title: "Tacking Point Location",
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 8,
+                fillColor: "#0000FF",
+                fillOpacity: 1,
+                strokeWeight: 1,
+                strokeColor: "#FFFFFF"
+            }
+        });
+    } else {
+        tackingPointMarker.setPosition(tackingPointLocation);
+    }
 
-/**
- * Converts a quaternion to a heading angle in degrees.
- * @param {number} x - The x component of the quaternion.
- * @param {number} y - The y component of the quaternion.
- * @param {number} z - The z component of the quaternion.
- * @param {number} w - The w component of the quaternion.
- * @returns {number} The heading angle in degrees.
- */
-
-function quaternionToHeading(x, y, z, w) {
-    // Compute the heading angle (yaw) from the quaternion
-    const siny_cosp = 2 * (w * z + x * y);
-    const cosy_cosp = 1 - 2 * (y * y + z * z);
-    const headingRadians = Math.atan2(siny_cosp, cosy_cosp);
-
-    // Convert the heading from radians to degrees
-    const headingDegrees = headingRadians * (180 / Math.PI);
-
-    // Normalize to the range [0, 360)
-    return (headingDegrees + 360) % 360;
 }
 
 let waypointService;
@@ -321,6 +321,14 @@ function subscribeToTopics() {
         updateValue('actual-sail-angle-value', message.data);
         updateSailAngle(message.data, "actual-sail-angle-dial");
     });
+
+    const tackingPointTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: '/sailbot/tacking_point',
+        messageType: 'sensor_msgs/NavSatFix',
+        throttle_rate: BASE_THROTTLE_RATE,
+    })
+    tackingPointTopic.subscribe(parseTackingPoint);
 
     const algoDebugTopic = new ROSLIB.Topic({
         ros: ros,

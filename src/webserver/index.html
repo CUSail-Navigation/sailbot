@@ -34,62 +34,78 @@
                         <span class="status-label">Control Mode:</span>
                         <span class="status-value" id="control-mode-value">N/A</span>
                     </div>
-                    <div class="status-row algo-mode">
-                        <span class="status-label">Algo Rudder:</span>
-                        <span class="status-value" id="algo-rudder-value">N/A</span>
-                    </div>
-                    <div class="status-row algo-mode">
-                        <span class="status-label">Algo Sail:</span>
-                        <span class="status-value" id="algo-sail-value">N/A</span>
-                    </div>
-                    <div class="status-row rc-mode">
-                        <span class="status-label">Radio Rudder:</span>
-                        <span class="status-value" id="radio-rudder-value">N/A</span>
-                    </div>
-                    <div class="status-row rc-mode">
-                        <span class="status-label">Radio Sail:</span>
-                        <span class="status-value" id="radio-sail-value">N/A</span>
+                    <div class="status-row">
+                        <span class="status-label">Sail Angle:</span>
+                        <span class="status-value" id="sail-value">N/A</span>
                     </div>
                     <div class="status-row">
                         <span class="status-label">Rudder Angle:</span>
                         <span class="status-value" id="rudder-angle-value">N/A</span>
                     </div>
-                    <div class="status-row">
-                        <span class="status-label">Sail:</span>
-                        <span class="status-value" id="sail-value">N/A</span>
-                    </div>
-                    <div class="status-row">
-                        <span class="status-label">Wind Angle: </span>
-                        <span class="status-value" id="wind-angle-value">N/A</span>
-                    </div>
-                    <div class="status-row">
-                        <span class="status-label"> Sailboat Latitude: </span>
-                        <span class="status-value" id="latitude-value">N/A</span>
-                    </div>
-                    <div class="status-row">
-                        <span class="status-label"> Sailboat Longitude: </span>
-                        <span class="status-value" id="longitude-value">N/A</span>
-                    </div>
-                    <div class="status-row">
-                        <span class="status-label"> Actual Sail Angle: </span>
-                        <span class="status-value" id="actual-sail-angle-value">N/A</span>
-                    </div>
-                    <div class="status-row">
-                        <span class="status-label"> Actual Tail Angle: </span>
-                        <span class="status-value" id="actual-tail-angle-value">N/A</span>
-                    </div>
-                    <div class="status-row">
-                        <span class="status-label"> Dropped Packets: </span>
-                        <span class="status-value" id="dropped-packets-value">N/A</span>
-                    </div>
-                    <div class="status-row">
-                        <span class="status-label"> Heading Angle: </span>
-                        <span class="status-value" id="heading-value">N/A</span>
-                    </div>
-                    <div class="status-row">
-                        <span class="status-label"> Rate of Turn (Z): </span>
-                        <span class="status-value" id="angular-velocity-z-value">N/A</span>
-                    </div>
+
+                    <details>
+                        <summary>Algo View</summary>
+                        <div class="status-row algo-mode">
+                            <span class="status-label">Algo Rudder:</span>
+                            <span class="status-value" id="algo-rudder-value">N/A</span>
+                        </div>
+                        <div class="status-row algo-mode">
+                            <span class="status-label">Algo Sail:</span>
+                            <span class="status-value" id="algo-sail-value">N/A</span>
+                        </div>
+                        <div class="status-row algo-mode">
+                            <span class="status-label">Tacking Point:</span>
+                            <span class="status-value" id="algo-sail-value">N/A</span>
+                        </div>
+                    </details>
+
+                    <details>
+                        <summary>RC View</summary>
+                        <div class="status-row rc-mode">
+                            <span class="status-label">Radio Rudder:</span>
+                            <span class="status-value" id="radio-rudder-value">N/A</span>
+                        </div>
+                        <div class="status-row rc-mode">
+                            <span class="status-label">Radio Sail:</span>
+                            <span class="status-value" id="radio-sail-value">N/A</span>
+                        </div>
+                    </details>
+
+                    <details>
+                        <summary>Sensor View</summary>
+                        <div class="status-row">
+                            <span class="status-label">Wind Angle: </span>
+                            <span class="status-value" id="wind-angle-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Heading Angle: </span>
+                            <span class="status-value" id="heading-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Sailboat Latitude: </span>
+                            <span class="status-value" id="latitude-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Sailboat Longitude: </span>
+                            <span class="status-value" id="longitude-value">N/A</span>
+                        </div>
+                    </details>
+
+                    <details>
+                        <summary>Teensy View</summary>
+                        <div class="status-row">
+                            <span class="status-label">Actual Sail Angle: </span>
+                            <span class="status-value" id="actual-sail-angle-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Actual Tail Angle: </span>
+                            <span class="status-value" id="actual-tail-angle-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Dropped Packets: </span>
+                            <span class="status-value" id="dropped-packets-value">N/A</span>
+                        </div>
+                    </details>
                 </div>
             </div>
             <div class="table-container">
@@ -135,45 +151,47 @@
                         <button type="button" id="connect-to-ros">Submit</button>
                     </div>
                 </div>
-                <h1>Waypoint & Buoy Input</h1>
             </div>
-            <div class="waypoint-buoy-container">
-                <div class="waypoint-buoy-table">
-                    <div class="status-row-input second">
-                        <span class="status-label">Latitude:</span>
-                        <div class="input-group">
-                            <input type="number" id="waypoint-latitude" name="latitude" inputmode="decimal"
-                                placeholder="Enter latitude" required>
+            <div class="table-container">
+                <h1>Waypoint & Buoy Input</h1>
+                <div class="waypoint-buoy-container">
+                    <div class="waypoint-buoy-table">
+                        <div class="status-row-input second">
+                            <span class="status-label">Latitude:</span>
+                            <div class="input-group">
+                                <input type="number" id="waypoint-latitude" name="latitude" inputmode="decimal"
+                                    placeholder="Enter latitude" required>
+                            </div>
+                        </div>
+                        <div class="status-row-input second">
+                            <span class="status-label">Longitude:</span>
+                            <div class="input-group">
+                                <input type="number" id="waypoint-longitude" name="longitude" inputmode="decimal"
+                                    placeholder="Enter longitude" required>
+                            </div>
+                        </div>
+                        <div class="button-group">
+                            <button type="button" id="submit-waypoint">Submit Waypoint</button>
                         </div>
                     </div>
-                    <div class="status-row-input second">
-                        <span class="status-label">Longitude:</span>
-                        <div class="input-group">
-                            <input type="number" id="waypoint-longitude" name="longitude" inputmode="decimal"
-                                placeholder="Enter longitude" required>
+                    <div class="waypoint-buoy-table">
+                        <div class="status-row-input second">
+                            <span class="status-label">Latitude:</span>
+                            <div class="input-group">
+                                <input type="number" id="buoy-latitude" name="latitude" inputmode="decimal"
+                                    placeholder="Enter latitude" required>
+                            </div>
                         </div>
-                    </div>
-                    <div class="button-group">
-                        <button type="button" id="submit-waypoint">Submit Waypoint</button>
-                    </div>
-                </div>
-                <div class="waypoint-buoy-table">
-                    <div class="status-row-input second">
-                        <span class="status-label">Latitude:</span>
-                        <div class="input-group">
-                            <input type="number" id="buoy-latitude" name="latitude" inputmode="decimal"
-                                placeholder="Enter latitude" required>
+                        <div class="status-row-input second">
+                            <span class="status-label">Longitude:</span>
+                            <div class="input-group">
+                                <input type="number" id="buoy-longitude" name="longitude" inputmode="decimal"
+                                    placeholder="Enter longitude" required>
+                            </div>
                         </div>
-                    </div>
-                    <div class="status-row-input second">
-                        <span class="status-label">Longitude:</span>
-                        <div class="input-group">
-                            <input type="number" id="buoy-longitude" name="longitude" inputmode="decimal"
-                                placeholder="Enter longitude" required>
+                        <div class="button-group">
+                            <button type="button" id="submit-buoy">Submit Buoy</button>
                         </div>
-                    </div>
-                    <div class="button-group">
-                        <button type="button" id="submit-buoy">Submit Buoy</button>
                     </div>
                 </div>
             </div>
@@ -192,7 +210,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div id="sailboat-angle-dashboard">
                 <div class="dial">
                     <h3>Sail Angle</h3>

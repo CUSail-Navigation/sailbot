@@ -88,6 +88,10 @@ class MainAlgo(Node):
             # Timer to publish state every 1 second
             self.state_timer = self.create_timer(1.0, self.publish_state_debug)
 
+        # Publisher for tacking point
+        self.tacking_point_pub = self.create_publisher(NavSatFix, 'tacking_point', 10)
+
+        self.request_new_waypoint()
         self.get_logger().info('Main-algo started successfully')  # Check if this line prints
 
     def update_current_waypoint(self, msg):
@@ -294,7 +298,7 @@ class MainAlgo(Node):
 
         assert tp.x < 900000 and tp.x > 100000, "Easting out of range"
 
-        # publish new TP
+        # publish new TP if we do not encounter an exception
         try:
             lat, long = utm.to_latlon(tp.x, tp.y, self.zone_number, self.zone_letter)
             tacking_point_msg = NavSatFix()
