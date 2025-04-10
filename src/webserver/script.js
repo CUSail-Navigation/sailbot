@@ -344,7 +344,7 @@ function subscribeToTopics() {
         const currDest = message.curr_dest;
         const diff = message.diff.data;
         const dist = message.dist_to_dest.data;
-    
+
         document.getElementById('tacking-value').innerText = tacking;
         document.getElementById('tacking-point-value').innerText = `${tackingPoint.latitude.toFixed(6)}, ${tackingPoint.longitude.toFixed(6)}`;
         document.getElementById('heading-dir-value').innerText = headingDir;
@@ -520,6 +520,16 @@ document.getElementById('submit-buoy').addEventListener('click', function () {
                 fillOpacity: 1,
                 strokeWeight: 1,
                 strokeColor: "#FFFFFF" // Optional: border color
+            }
+        });
+
+        marker.addListener("click", function () {
+            console.log(`Buoy clicked and removed: ${buoy}`);
+            marker.setMap(null); // Remove from map
+            delete buoyMarkers[buoy]; // Remove from marker tracking
+            const index = buoys.indexOf(buoy);
+            if (index !== -1) {
+                buoys.splice(index, 1);
             }
         });
 
