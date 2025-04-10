@@ -121,13 +121,20 @@ function parseGpsData(message) {
     const sailboatLocation = { lat: latitude, lng: longitude };
 
     if (!sailboatMarker) {
-        // Create a new marker if it doesn't exist
+        // Create a new arrow marker if it doesn't exist
         sailboatMarker = new google.maps.Marker({
             position: sailboatLocation,
             map: map,
             title: "Sailboat Location",
             icon: {
-                url: "boat.png", // Custom marker icon (optional)
+                path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                scale: 5,
+                fillColor: "#007bff",  // Blue
+                fillOpacity: 1,
+                strokeWeight: 1,
+                strokeColor: "#ffffff",
+                rotation: 0, // Default heading (will update in parseHeading)
+                anchor: new google.maps.Point(0, 2), // Helps center arrow tip
             }
         });
     } else {
@@ -154,10 +161,15 @@ function parseHeading(message) {
     updateHeadAngle(formattedHeading, 'heading-value-dial')
 
     if (sailboatMarker) {
-        rotateMarkerIcon("boat.png", heading, function (rotatedImageUrl) {
-            sailboatMarker.setIcon({
-                url: rotatedImageUrl
-            });
+        sailboatMarker.setIcon({
+            path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+            scale: 5,
+            fillColor: "#007bff",
+            fillOpacity: 1,
+            strokeWeight: 1,
+            strokeColor: "#ffffff",
+            rotation: heading,
+            anchor: new google.maps.Point(0, 2)
         });
     }
 }
