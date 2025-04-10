@@ -19,13 +19,13 @@ let waypointPath; // Global variable for waypoint trail
 let waypointPlanCoordinates = []; // Global variable for waypoint path coordinates
 
 // Initialize the Google Map
-function initMap() {    
-    const defaultLocation = { lat: 0, lng: 0 }; // Default center
+function initMap() {
+    const defaultLocation = { lat: 42.45, lng: -76.474 }; // Ithaca, NY (for now)
 
     // Create a new map instance
     map = new google.maps.Map(document.getElementById("map"), {
         center: defaultLocation, // Center the map at the default location
-        zoom: 2, // Set an initial zoom level
+        zoom: 12, // Set an initial zoom level
     });
 
     google.maps.event.addListener(map, "mousemove", function (event) {
@@ -168,8 +168,7 @@ function parseGpsData(message) {
     }
 
     // Optionally center the map on the sailboat
-    map.setCenter(sailboatLocation);
-    map.setZoom(17);
+    // map.setCenter(sailboatLocation);
 }
 
 
@@ -375,12 +374,14 @@ function subscribeToTopics() {
         const headingDir = message.heading_dir.data;
         const currDest = message.curr_dest;
         const diff = message.diff.data;
-
+        const dist = message.dist_to_dest.data;
+    
         document.getElementById('tacking-value').innerText = tacking;
         document.getElementById('tacking-point-value').innerText = `${tackingPoint.latitude.toFixed(6)}, ${tackingPoint.longitude.toFixed(6)}`;
         document.getElementById('heading-dir-value').innerText = headingDir;
         document.getElementById('curr-dest-value').innerText = `${currDest.latitude.toFixed(6)}, ${currDest.longitude.toFixed(6)}`;
         document.getElementById('diff-value').innerText = diff;
+        document.getElementById('dist-value').innerText = dist;
     });
 
     waypointService = new ROSLIB.Service({
