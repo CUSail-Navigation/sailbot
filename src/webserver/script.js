@@ -34,8 +34,6 @@ function initMap() {
             Mouse Longitude: ${event.latLng.lng().toFixed(3)}`;
     });
 
-
-
     sailPath = new google.maps.Polyline({
         path: sailPlanCoordinates,
         geodesic: true,
@@ -190,7 +188,6 @@ function parseTackingPoint(message) {
     } else {
         tackingPointMarker.setPosition(tackingPointLocation);
     }
-
 }
 
 let waypointService;
@@ -407,6 +404,28 @@ function rotateMarkerIcon(src, heading, callback, size) {
         console.error("Error loading image:", err);
     };
 }
+
+function shiftWaypointTrail () {
+    console.log("shifting waypoint trail")
+    // delete current trail that is drawn
+    waypointPlanCoordinates = []
+
+    // loop through waypoints and redraw trail
+    for (let i = 0; i < waypoints.length; i++) {
+        const waypointString = waypoints[i];
+        const [lat, lng] = waypointString.split(',');
+        
+        const latLng = {
+            lat: parseFloat(lat),
+            lng: parseFloat(lng),
+        };
+
+        waypointPlanCoordinates.push(latLng);
+    }
+    waypointPath.setPath(waypointPlanCoordinates);
+}
+
+
 document.getElementById('submit-waypoint').addEventListener('click', function () {
     const latitude = document.getElementById('waypoint-latitude').value;
     const longitude = document.getElementById('waypoint-longitude').value;
@@ -578,8 +597,8 @@ function handleDragEnd(event) {
             console.error(result.message);
         }
     });
-
     getWaypointQueue()
+    shiftWaypointTrail()
 }
 function deleteWaypoint(index) {
     // Remove the waypoint from the local array
