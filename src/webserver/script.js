@@ -59,6 +59,44 @@ function initMap() {
 };
 window.initMap = initMap;
 
+function fetchInitialWaypoints() {
+    const getRequest = new ROSLIB.ServiceRequest({
+        command: "get",
+        argument: ""
+    });
+
+    waypointService.callService(getRequest, function (getResult) {
+        if (getResult.success) {
+            console.log("Current ROS waypoint queue:", getResult.message);
+
+            const formatted = getResult.message
+                .replace(/\(/g, '[')
+                .replace(/\)/g, ']')
+                .replace(/'/g, '"');
+
+            const parsed = JSON.parse(formatted);
+
+            waypoints = parsed.map(pair => `${pair[0]},${pair[1]}`);
+            waypointPlanCoordinates = parsed.map(pair => ({ lat: pair[0], lng: pair[1] }));
+
+            displayWaypoints();
+            waypointPath.setPath(waypointPlanCoordinates);
+
+            parsed.forEach(([lat, lng]) => {
+                const key = `${lat},${lng}`;
+                const marker = new google.maps.Marker({
+                    position: { lat, lng },
+                    map: map,
+                    title: `Waypoint (${lat}, ${lng})`,
+                });
+                waypointMarkers[key] = marker;
+            });
+        } else {
+            console.error("Failed to fetch waypoint queue:", getResult.message);
+        }
+    });
+}
+
 function updateTrail(latitude, longitude) {
     const timestamp = Date.now();
     sailPlanCoordinates.push({ lat: latitude, lng: longitude, timestamp });
@@ -384,6 +422,8 @@ function subscribeToTopics() {
     droppedPacketsTopic.subscribe(function (message) {
         updateValue('dropped-packets-value', message.data);
     });
+    fetchInitialWaypoints();
+    setInterval(syncWaypointQueueFromBackend, 5000);
 }
 // Connect to ROS when the page loads
 window.onload = function () {
@@ -473,6 +513,52 @@ function addWaypointToQueue(waypoint) {
 
     getWaypointQueue();
 }
+
+function syncWaypointQueueFromBackend() {
+    const getRequest = new ROSLIB.ServiceRequest({
+        command: "get",
+        argument: ""
+    });
+
+    waypointService.callService(getRequest, function (getResult) {
+        if (getResult.success) {
+            console.log("Synced waypoint queue from backend:", getResult.message);
+
+            const formatted = getResult.message
+                .replace(/\(/g, '[')
+                .replace(/\)/g, ']')
+                .replace(/'/g, '"');
+
+            const parsed = JSON.parse(formatted);
+
+            waypoints = parsed.map(pair => `${pair[0]},${pair[1]}`);
+            waypointPlanCoordinates = parsed.map(pair => ({ lat: pair[0], lng: pair[1] }));
+
+            // Clear existing markers
+            for (const key in waypointMarkers) {
+                waypointMarkers[key].setMap(null);
+            }
+            Object.keys(waypointMarkers).forEach(key => delete waypointMarkers[key]);
+
+            // Add new markers
+            parsed.forEach(([lat, lng]) => {
+                const key = `${lat},${lng}`;
+                const marker = new google.maps.Marker({
+                    position: { lat, lng },
+                    map: map,
+                    title: `Waypoint (${lat}, ${lng})`,
+                });
+                waypointMarkers[key] = marker;
+            });
+
+            displayWaypoints();
+            waypointPath.setPath(waypointPlanCoordinates);
+        } else {
+            console.error("Failed to sync waypoint queue from backend:", getResult.message);
+        }
+    });
+}
+
 function displayWaypoints() {
     const waypointListElement = document.getElementById('waypoint-list');
     waypointListElement.innerHTML = ''; // Clear existing list
