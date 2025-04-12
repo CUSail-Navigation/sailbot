@@ -17,6 +17,8 @@ namespace sfr
     {
         bool update_servos = false;
 
+        bool autonomous_mode = false;
+
         uint8_t dropped_packets = 0;
 
         uint8_t buffer[3] = {0};

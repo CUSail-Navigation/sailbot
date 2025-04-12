@@ -14,14 +14,12 @@ void SerialMonitor::execute()
         // only set flags if packet start byte is correct
         if (incoming_byte == constants::serial::RX_START_FLAG)
         {
-            Serial.println("reached serial monitor task 17");
             packet_started = true;
             buffer_index = 0;
         }
         // check if packet end byte is correct and buffer is full
         else if (incoming_byte == constants::serial::RX_END_FLAG && buffer_index == sizeof(sfr::serial::buffer) && packet_started)
         {
-            Serial.println("serial monitor 24");
             buffer_index = 0;
             packet_started = false;
             sfr::serial::update_servos = true;
