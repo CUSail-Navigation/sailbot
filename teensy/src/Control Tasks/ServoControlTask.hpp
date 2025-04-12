@@ -12,7 +12,7 @@ public:
 
 private:
     uint32_t sail_to_pwm(uint8_t angle);
-    uint32_t rudder_to_pwm(uint8_t angle);
+    uint32_t rudder_to_pwm(int8_t angle);
 
     uint8_t trim_sail();
     

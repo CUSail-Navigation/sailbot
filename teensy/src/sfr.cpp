@@ -9,7 +9,7 @@ namespace sfr
     namespace servo
     {
         uint8_t sail_angle = 0;
-        uint8_t rudder_angle = 0;
+        int8_t rudder_angle = 0;
         uint32_t sail_pwm = 0;   // FIXME: is this a PWM value? set to whatever corresponds to angle of 0
         uint32_t rudder_pwm = 0; // FIXME: is this a PWM value? set to whatever corresponds to angle of 0
     }

@@ -74,12 +74,13 @@ class TeensyHardware:
         return wind_angle, sail_angle, rudder_angle, dropped_packets
 
 
-    def send_command(self, sail, rudder):
+    def send_command(self, sail, rudder, mode):
         """
         Send a properly formatted command packet to the servo.
 
         :param sail: Sail position (integer)
         :param tail: Tail position (integer)
+        :param mode: Control mode (boolean)
         """
         try:
             # check bounds
@@ -90,8 +91,11 @@ class TeensyHardware:
             sail_byte = sail & 0xFF if sail >= 0 else (sail + 256) & 0xFF
             rudder_byte = rudder & 0xFF if rudder >= 0 else (rudder + 256) & 0xFF
 
-            # create the packet: [start flag] [sail] [tail] [end flag]
-            command_packet = bytearray([self.START_BYTE, sail_byte, rudder_byte, self.END_BYTE])
+            # convert mode flag to byte
+            mode_byte = 1 if mode else 0
+
+            # create the packet: [start flag] [mode] [sail] [rudder] [end flag]
+            command_packet = bytearray([self.START_BYTE, mode_byte, sail_byte, rudder_byte, self.END_BYTE])
 
             # send the packet over serial
             self.serial.write(command_packet)
