@@ -48,7 +48,7 @@ class TeensyFake:
         return int(self.wind_angle)
     
 
-    def send_command(self, sail, rudder, buoy_displacement):
+    def send_command(self, sail, rudder, servo_angle):
         """
         Send a properly formatted command packet to the servo.
 
@@ -57,6 +57,6 @@ class TeensyFake:
         """
         self.last_sail = sail
         self.last_rudder = rudder
-        command_packet = bytearray([self.START_BYTE, sail, rudder, buoy_displacement, self.END_BYTE])
+        command_packet = bytearray([self.START_BYTE, sail, rudder, servo_angle, self.END_BYTE])
 
         print(f'Sent to FakeTeensy: {command_packet}')

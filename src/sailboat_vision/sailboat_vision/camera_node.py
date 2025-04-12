@@ -16,11 +16,13 @@ class BuoyDetectorNode(Node):
         self.declare_parameter('hsv_upper', [10, 160, 255])
         self.declare_parameter('detection_threshold', 100)
         self.declare_parameter('timer_period', 0.1)  # Timer period for frame processing
+        self.declare_parameter('servo_angle_step', 5) # How much to shift servo by each time
         
         hsv_lower = self.get_parameter('hsv_lower').value
         hsv_upper = self.get_parameter('hsv_upper').value
         detection_threshold = self.get_parameter('detection_threshold').value
         self.timer_period = self.get_parameter('timer_period').value
+        self.servo_angle_step = self.get_parameter('servo_angle_step').value
 
         self.pipeline = rs.pipeline()
         config = rs.config()
@@ -34,9 +36,10 @@ class BuoyDetectorNode(Node):
         self.CENTER = 320
         self.MARGIN = 30 # TODO: Find best value for margin of error
         self.angle = 0
+        self.servo_angle = 90 #initialize to center position (check this)
 
-        self.displacement_publisher = self.create_publisher(Int32, '/buoy_displacement', 10)
         self.position_publisher = self.create_publisher(Point, '/buoy_position', 10)
+        self.servo_angle_publisher = self.create_publisher(Int32, '/servo_angle', 10)
 
         self.timer = self.create_timer(self.timer_period, self.process_frame)
 
@@ -67,30 +70,32 @@ class BuoyDetectorNode(Node):
         if not buoy_center:
             self.get_logger().info(f'No buoy detected')
             return
+ 
+        #default angle
+        servo_angle = 90
         
-        displacement = 0
+        #move servo right (min of 0)
         if buoy_center[0] > self.CENTER + self.MARGIN:
-            displacement = 1
+            servo_angle = max(0, self.servo_angle - self.servo_angle_step)
+        #move servo left (max of 180)
         elif buoy_center[0] < self.CENTER - self.MARGIN:
-            displacement = -1
+            servo_angle = min(180, self.servo_angle + self.servo_angle_step)
         
-        if displacement:
-            displacement_msg = Int32()
-            displacement_msg.data = displacement
-            self.displacement_publisher.publish(displacement_msg)
-            self.get_logger().info(f'Detected buoy displacement: {displacement}')
-            return
+        angle_msg = Int32()
+        angle_msg.data = servo_angle
+        self.servo_angle_publisher.publish(angle_msg)
+        self.get_logger().info(f'Servo angle: {servo_angle}')
 
         depth = depth_image[buoy_center[0], buoy_center[1]] / 1000
         point_msg = Point()
-        point_msg.x = (depth * math.sin(self.angle))
+        point_msg.x = (depth * math.sin(math.radians(self.angle) - 90))
         point_msg.y = float(buoy_center[1])
-        point_msg.z = depth * math.cos(self.angle)
+        point_msg.z = depth * math.cos(math.radians(self.angle) - 90)
         self.position_publisher.publish(point_msg)
         self.get_logger().info(f'Detected buoy at: ({point_msg.x, point_msg.y, point_msg.z})')
     
     def buoy_angle_callback(self, msg):
-        self.angle = math.radians(msg.data - 90)
+        self.angle = msg.data
 
     def update_detector_parameters(self):
         """Update the CV detector parameters dynamically."""

@@ -45,7 +45,7 @@ class Teensy(Node):
         # keep track of our desired sail and rudder angles
         self.desired_sail = 0
         self.desired_rudder = 0
-        self.buoy_displacement = 0
+        self.servo_angle = 0
 
         # telemetry data publishers
         self.wind_angle_pub = self.create_publisher(Int32, 'wind', 10)
@@ -70,11 +70,11 @@ class Teensy(Node):
             self.rudder_callback,
             10)
         
-        #subscription for buoy displacement
+        #subscription for servo angle
         self.subscription = self.create_subscription(
-            Int32, 
-            '/buoy_displacement', 
-            self.buoy_displacement_callback, 
+            Int32,
+            '/servo_angle',
+            self.servo_angle_callback,
             10)
     
     def check_telemetry(self):
@@ -121,7 +121,7 @@ class Teensy(Node):
         self.desired_sail = msg.data
         #self.get_logger().info(f"Sail callback-sent to Teensy sail:{self.desired_sail}, rudder: {self.desired_rudder}")
 
-        if self.teensy.send_command(self.desired_sail, self.desired_rudder, self.buoy_displacement) == 0:
+        if self.teensy.send_command(self.desired_sail, self.desired_rudder, self.servo_angle) == 0:
             self.get_logger().info(f"Message sent to servo")
         else:
             self.get_logger().warn(f"Message failed to send to servo")
@@ -132,22 +132,22 @@ class Teensy(Node):
         and the previously set sail.
         """
         self.desired_rudder = msg.data
-        self.get_logger().info(f"Rudder position callback-sent to Teensy sail:{self.desired_sail}, rudder: {self.desired_rudder} buoy position: {self.buoy_displacement}")
+        self.get_logger().info(f"Rudder position callback-sent to Teensy sail:{self.desired_sail}, rudder: {self.desired_rudder} servo angle: {self.servo_angle}")
 
-        if self.teensy.send_command(self.desired_sail, self.desired_rudder, self.buoy_displacement) == 0:
+        if self.teensy.send_command(self.desired_sail, self.desired_rudder, self.servo_angle) == 0:
             self.get_logger().info(f"Message sent to servo")
         else:
             self.get_logger().warn(f"Message failed to send to servo")
-
-    def buoy_displacement_callback(self, msg):
+    
+    def servo_angle_callback(self, msg):
         """
-        Callback function for the 'buoy_displacement' topic. Sends the updated buoy position, previously set rudder,
+        Callback function for the 'servo_angle' topic. Sends the updated servo angle, previously set rudder,
         and the previously set sail.
         """
-        self.buoy_displacement = msg.data
-        self.get_logger().info(f"Buoy position callback-sent to Teensy sail:{self.desired_sail}, rudder: {self.desired_rudder} buoy position: {self.buoy_displacement}")
+        self.servo_angle = msg.data
+        self.get_logger().info(f"Buoy position callback-sent to Teensy sail:{self.desired_sail}, rudder: {self.desired_rudder} servo angle: {self.servo_angle}")
 
-        if self.teensy.send_command(self.desired_sail, self.desired_rudder, self.buoy_displacement) == 0:
+        if self.teensy.send_command(self.desired_sail, self.desired_rudder, self.servo_angle) == 0:
             self.get_logger().info(f"Message sent to servo")
         else:
             self.get_logger().warn(f"Message failed to send to servo")

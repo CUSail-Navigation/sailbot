@@ -9,18 +9,11 @@ void TrackerControlTask::execute()
 {
     if (sfr::serial::update_servos)
     {
-        if (sfr::serial::buoy_displacement > 0)
-        {
-            actuate_servo(tracker_servo, read_servo(tracker_servo) + 10);
-        }
-        else if (sfr::serial::buoy_displacement < 0)
-        {
-            actuate_servo(tracker_servo, read_servo(tracker_servo) - 10);
-        }
-        {
-            actuate_servo(tracker_servo, read_servo(tracker_servo));
-            sfr::serial::buoy_angle = read_servo(tracker_servo);
-        }
+        // Directly set servo to the commanded angle
+        actuate_servo(tracker_servo, angle_to_pwm(sfr::serial::servo_angle));
+        
+        // Update the buoy angle to reflect the current servo position
+        sfr::serial::buoy_angle = sfr::serial::servo_angle;
     }
 }
 
