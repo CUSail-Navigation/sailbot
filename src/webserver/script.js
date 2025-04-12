@@ -121,13 +121,20 @@ function parseGpsData(message) {
     const sailboatLocation = { lat: latitude, lng: longitude };
 
     if (!sailboatMarker) {
-        // Create a new marker if it doesn't exist
+        // Create a new arrow marker if it doesn't exist
         sailboatMarker = new google.maps.Marker({
             position: sailboatLocation,
             map: map,
             title: "Sailboat Location",
             icon: {
-                url: "boat.png", // Custom marker icon (optional)
+                path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                scale: 5,
+                fillColor: "#007bff",  // Blue
+                fillOpacity: 1,
+                strokeWeight: 1,
+                strokeColor: "#ffffff",
+                rotation: 0, // Default heading (will update in parseHeading)
+                anchor: new google.maps.Point(0, 2), // Helps center arrow tip
             }
         });
     } else {
@@ -152,12 +159,18 @@ function parseHeading(message) {
 
     document.getElementById('heading-value').innerText = formattedHeading;
     updateHeadAngle(formattedHeading, 'heading-value-dial')
+    let googleHeading = (90 - heading + 360) % 360;
 
     if (sailboatMarker) {
-        rotateMarkerIcon("boat.png", heading, function (rotatedImageUrl) {
-            sailboatMarker.setIcon({
-                url: rotatedImageUrl
-            });
+        sailboatMarker.setIcon({
+            path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+            scale: 5,
+            fillColor: "#007bff",
+            fillOpacity: 1,
+            strokeWeight: 1,
+            strokeColor: "#ffffff",
+            rotation: googleHeading,
+            anchor: new google.maps.Point(0, 2)
         });
     }
 }
@@ -344,7 +357,7 @@ function subscribeToTopics() {
         const currDest = message.curr_dest;
         const diff = message.diff.data;
         const dist = message.dist_to_dest.data;
-    
+
         document.getElementById('tacking-value').innerText = tacking;
         document.getElementById('tacking-point-value').innerText = `${tackingPoint.latitude.toFixed(6)}, ${tackingPoint.longitude.toFixed(6)}`;
         document.getElementById('heading-dir-value').innerText = headingDir;
