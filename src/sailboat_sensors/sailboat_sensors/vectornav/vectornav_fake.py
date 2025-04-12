@@ -15,6 +15,7 @@ class FakeVectorNav:
         self.heading = np.random.uniform(0, 360)
         self.pitch = np.random.uniform(-90, 90)
         self.roll = np.random.uniform(0, 360)
+        self.rate_of_turn = np.random.uniform(-1, 1)
 
     def readVectorNavYaw(self):
         # Simulate heading change
