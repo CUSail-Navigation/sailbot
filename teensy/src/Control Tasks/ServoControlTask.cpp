@@ -19,13 +19,14 @@ void ServoControlTask::execute()
         uint8_t sail_angle = sfr::serial::buffer[0];
         uint8_t rudder_angle = sfr::serial::buffer[1];
 
-        if(sfr::serial::buffer[2])
+        if(sfr::serial::autonomous_mode)
         {
-            uint8_t sail_angle = trim_sail();
-            sfr::servo::sail_angle = sail_angle;
-            sfr::servo::sail_pwm = sail_to_pwm(sail_angle);
+            uint8_t auto_sail_angle = trim_sail();
+            sfr::servo::sail_angle = auto_sail_angle;
+            sfr::servo::sail_pwm = sail_to_pwm(auto_sail_angle);
             // actuate sail servo
             actuate_servo(sail_servo, sfr::servo::sail_pwm);
+            // Serial.println("In autonomous mode");
         }
         else
         {
@@ -37,6 +38,7 @@ void ServoControlTask::execute()
 
                 // actuate sail servo
                 actuate_servo(sail_servo, sfr::servo::sail_pwm);
+                // Serial.println("In RC sail mode");
             }
         }
 
@@ -47,15 +49,10 @@ void ServoControlTask::execute()
 
             // actuate rudder servo
             actuate_servo(rudder_servo, sfr::servo::rudder_pwm);
+            // Serial.println("In rudder");
         }
         sfr::serial::update_servos = false; // reset flag for next update
     }
-
-    uint8_t sail_angle = trim_sail();
-    sfr::servo::sail_angle = sail_angle;
-    sfr::servo::sail_pwm = sail_to_pwm(sail_angle);
-    // actuate sail servo
-    actuate_servo(sail_servo, sfr::servo::sail_pwm);
 }
 
 uint8_t ServoControlTask::trim_sail()
