@@ -1,3 +1,15 @@
+import {
+    initializeScrollBar,
+    recordHistoricalData,
+    isViewingLiveData,
+  } from "./components/scrollbar.js";
+
+// Add global variables to track current sensor data
+let currentSensorData = {};
+let currentPosition = null;
+let currentControlMode = "";
+
+
 let ros;
 let controlModeTopic;
 let waypointTopic;
@@ -111,6 +123,11 @@ function parseGpsData(message) {
     // Format the latitude and longitude to your desired precision
     const formattedLatitude = latitude.toFixed(6);
     const formattedLongitude = longitude.toFixed(6);
+
+    // Store data for history
+    currentSensorData['latitude-value'] = formattedLatitude;
+    currentSensorData['longitude-value'] = formattedLongitude;
+    currentPosition = { lat: latitude, lng: longitude };
 
     // Update the DOM elements
     document.getElementById('latitude-value').innerText = formattedLatitude;
@@ -340,10 +357,41 @@ function subscribeToTopics() {
         updateValue('dropped-packets-value', message.data);
     });
 }
+/**
+ * Capture a snapshot of the current sailboat state
+ */
+function captureDataSnapshot() {
+    // Only record data if we're viewing live data
+    if (!isViewingLiveData()) return;
+  
+    // Create a snapshot of all current sensor values
+    const sensorSnapshot = { ...currentSensorData };
+  
+    // Package the data for the history record
+    const dataPackage = {
+      position: currentPosition,
+      controlMode: currentControlMode,
+      sensorData: sensorSnapshot,
+    };
+  
+    // Record the data
+    recordHistoricalData(dataPackage);
+  }
+
+
 // Connect to ROS when the page loads
 window.onload = function () {
+    // Initialize the scrollbar with the root element ID
+    console.log("Initializing scrollbar...");
+    initializeScrollBar("scrollbar-root");
+    
+    // Connect to ROS
     connectToROS();
-};
+    
+    // Set up a timer to record historical data every second
+    setInterval(captureDataSnapshot, 1000);
+  };
+
 function rotateMarkerIcon(src, heading, callback, size) {
     const image = new Image();
     image.src = src;
