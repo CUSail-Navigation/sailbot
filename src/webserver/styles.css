@@ -116,6 +116,7 @@ input[type="number"] {
 .status-row {
     display: flex;
     justify-content: space-between;
+
 }
 
 .status-row-input {
@@ -147,10 +148,6 @@ button {
     border: none;
     border-radius: 5px;
     cursor: pointer;
-}
-
-button:hover {
-    background-color: #0056b3;
 }
 
 .dropdown-button {
@@ -214,16 +211,8 @@ button:hover {
     width: 200px;
 }
 
-details summary {
-    margin-bottom: 10px;
-    color: darkblue;
-    cursor: pointer;
-    text-decoration: underline;
-}
 
-details div {
-    margin-top: 10px;
-}
+
 
 /* Styles for the time scrollbar */
 .time-scrollbar-container {
@@ -232,21 +221,21 @@ details div {
     background-color: #f8f9fa;
     border-radius: 8px;
     margin-bottom: 15px;
-}
+    }
     
-.scrollbar-controls {
+    .scrollbar-controls {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 5px;
-}
+    }
     
-.scrollbar-label {
+    .scrollbar-label {
     font-weight: bold;
     font-size: 0.9em;
-}
+    }
     
-#time-scrollbar {
+    #time-scrollbar {
     width: 100%;
     margin: 5px 0;
     -webkit-appearance: none;
@@ -254,9 +243,9 @@ details div {
     border-radius: 5px;
     background: #d3d3d3;
     outline: none;
-}
+    }
     
-#time-scrollbar::-webkit-slider-thumb {
+    #time-scrollbar::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
     width: 20px;
@@ -264,46 +253,46 @@ details div {
     border-radius: 50%;
     background: #4CAF50;
     cursor: pointer;
-}
+    }
     
-#time-scrollbar::-moz-range-thumb {
+    #time-scrollbar::-moz-range-thumb {
     width: 20px;
     height: 20px;
     border-radius: 50%;
     background: #4CAF50;
     cursor: pointer;
-}
+    }
     
-.time-labels {
+    .time-labels {
     display: flex;
     justify-content: space-between;
     font-size: 0.8em;
     margin-top: 5px;
-}
+    }
     
-#history-status {
+    #history-status {
     text-align: center;
     font-weight: bold;
     margin-top: 10px;
     color: #4CAF50;
-}
+    }
     
-.playback-btn {
+    .playback-btn {
     background: none;
     border: none;
     font-size: 1.5em;
     cursor: pointer;
     padding: 0;
     margin: 0;
-}
+    }
     
-/* Highlight the current data display mode */
-.historical-data-active {
+    /* Highlight the current data display mode */
+    .historical-data-active {
     background-color: rgba(255, 235, 59, 0.2);
     border-left: 3px solid #F39C12;
-}
+    }
     
-.live-data-active {
+    .live-data-active {
     background-color: rgba(76, 175, 80, 0.1);
     border-left: 3px solid #4CAF50;
-}
+    }
