@@ -71,6 +71,7 @@ class UTMPoint():
         """
         Calculate the distance to another UTM point.
         """
+        assert self.zone_number == other.zone_number, "Zone numbers must be the same for distance calculation"
         return math.dist((self.easting, self.northing), (other.easting, other.northing))
 
     def __repr__(self):
