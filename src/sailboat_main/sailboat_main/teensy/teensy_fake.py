@@ -46,7 +46,7 @@ class TeensyFake:
         return int(self.wind_angle)
     
 
-    def send_command(self, sail, rudder):
+    def send_command(self, sail, rudder, mode):
         """
         Send a properly formatted command packet to the servo.
 
