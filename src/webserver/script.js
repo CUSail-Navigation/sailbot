@@ -371,11 +371,6 @@ function subscribeToTopics() {
         name: '/sailbot/mutate_waypoint_queue',
         serviceType: 'sailboat_interface/srv/Waypoint'
     });
-    waypointService = new ROSLIB.Service({
-        ros: ros,
-        name: '/sailbot/mutate_waypoint_queue',
-        serviceType: 'sailboat_interface/srv/Waypoint'
-    });
     const droppedPacketsTopic = new ROSLIB.Topic({
         ros: ros,
         name: '/sailbot/dropped_packets',
@@ -389,37 +384,6 @@ function subscribeToTopics() {
 window.onload = function () {
     connectToROS();
 };
-function rotateMarkerIcon(src, heading, callback, size) {
-    const image = new Image();
-    image.src = src;
-    image.onload = function () {
-        // Use provided size, or fallback to the image’s natural dimensions.
-        const width = size || image.naturalWidth;
-        const height = size || image.naturalHeight;
-        const diagonal = Math.sqrt(width * width + height * height);
-
-        // Create a canvas with the determined dimensions
-        const canvas = document.createElement("canvas");
-        canvas.width = diagonal;
-        canvas.height = diagonal;
-
-        const ctx = canvas.getContext("2d");
-        ctx.clearRect(0, 0, width, height);
-
-        // Translate to center and rotate (adjust by -90 degrees if needed)
-        ctx.translate(diagonal / 2, diagonal / 2);
-        ctx.rotate((heading - 90) * (Math.PI / 180));
-
-        // Draw the image centered
-        ctx.drawImage(image, -width / 2, -height / 2, width, height);
-
-        // Return the rotated image as a data URL
-        callback(canvas.toDataURL());
-    };
-    image.onerror = function (err) {
-        console.error("Error loading image:", err);
-    };
-}
 document.getElementById('submit-waypoint').addEventListener('click', function () {
     const latitude = document.getElementById('waypoint-latitude').value;
     const longitude = document.getElementById('waypoint-longitude').value;
