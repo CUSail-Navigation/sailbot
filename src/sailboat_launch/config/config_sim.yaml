@@ -15,7 +15,7 @@ sailbot: #Namespace
    
    teensy:
       ros__parameters:
-         teensy_port: "COM9"
+         teensy_port: "/dev/serial/by-id/usb-Teensyduino_USB_Serial_16089010-if00"
          simulated: true
 
    radio:
