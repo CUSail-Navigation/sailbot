@@ -15,8 +15,8 @@ namespace constants
         constexpr uint8_t SAIL_MIN_ANGLE = 0;
         constexpr uint8_t SAIL_MAX_ANGLE = 90;
 
-        constexpr uint8_t RUDDER_MIN_ANGLE = 0;
-        constexpr uint8_t RUDDER_MAX_ANGLE = 90;
+        constexpr int8_t RUDDER_MIN_ANGLE = -30;
+        constexpr int8_t RUDDER_MAX_ANGLE = 30;
     }
     namespace serial
     {

@@ -2,10 +2,11 @@ import rclpy
 from rclpy.node import Node
 from sailboat_interface.msg import SailTail
 from std_msgs.msg import Int32
+from std_msgs.msg import String
 
 from . import teensy
 from . import teensy_fake
-
+ 
 
 
 class Teensy(Node):
@@ -45,6 +46,9 @@ class Teensy(Node):
         self.desired_sail = 0
         self.desired_rudder = 0
 
+        # Control mode
+        self.autonomous_mode = False  # Default to RC Mode
+
         # telemetry data publishers
         self.wind_angle_pub = self.create_publisher(Int32, 'wind', 10)
         self.actual_sail_angle_pub = self.create_publisher(Int32, 'actual_sail_angle', 10)
@@ -65,6 +69,13 @@ class Teensy(Node):
             Int32,
             'rudder_angle',
             self.rudder_callback,
+            10)
+        
+        # subscription to control mode topic
+        self.subscription = self.create_subscription(
+            String,
+            'control_mode',
+            self.control_mode_callback,
             10)
     
     def check_telemetry(self):
@@ -106,11 +117,12 @@ class Teensy(Node):
         self.desired_sail = msg.data
         #self.get_logger().info(f"Sail callback-sent to Teensy sail:{self.desired_sail}, rudder: {self.desired_rudder}")
 
-        if self.teensy.send_command(self.desired_sail, self.desired_rudder) == 0:
+        if self.teensy.send_command(self.desired_sail, self.desired_rudder, self.autonomous_mode) == 0:
             self.get_logger().info(f"Message sent to servo")
         else:
             self.get_logger().warn(f"Message failed to send to servo")
     
+
     def rudder_callback(self, msg):
         """
         Callback function for the 'rudder_angle' topic. Sends the updated rudder
@@ -119,10 +131,17 @@ class Teensy(Node):
         self.desired_rudder = msg.data
         self.get_logger().info(f"Rudder callback-sent to Teensy sail:{self.desired_sail}, rudder: {self.desired_rudder}")
 
-        if self.teensy.send_command(self.desired_sail, self.desired_rudder) == 0:
+        if self.teensy.send_command(self.desired_sail, self.desired_rudder, self.autonomous_mode) == 0:
             self.get_logger().info(f"Message sent to servo")
         else:
             self.get_logger().warn(f"Message failed to send to servo")
+
+    def control_mode_callback(self, msg):
+        if msg.data == 'radio':
+            self.autonomous_mode = False  # RC Mode
+        elif msg.data == 'algorithm':
+            self.autonomous_mode = True  # Autonomous Mode
+        self.get_logger().info(f"Control Mode Updated: {msg.data}")
 
     def destroy_node(self):
         """
