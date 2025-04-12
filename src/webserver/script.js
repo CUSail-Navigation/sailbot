@@ -2,6 +2,9 @@ let ros;
 let controlModeTopic;
 let waypointTopic;
 
+let radioSailAngleTopic;
+let radioRudderAngleTopic;
+
 console.log("script.js loaded successfully");
 
 let waypoints = []; // Global array for storing waypoints
@@ -904,3 +907,16 @@ function updateHeadAngle(angle, id) {
     // Update Text Display
     document.getElementById(id).innerText = "Angle: " + angle;
 }
+
+// ====================== BEGIN: Sail/Rudder Handling ==========================
+
+document.getElementById('sail-rudder-button').addEventListener('click', function (event) {
+    const sailAngle = document.getElementById('sail-input');
+    const rudderAngle = document.getElementById('rudder-input');
+
+    console.log(sailAngle.value);
+    console.log(rudderAngle.value);
+})
+
+
+// ====================== END: Sail/Rudder Handling ============================
