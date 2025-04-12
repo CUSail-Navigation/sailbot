@@ -8,5 +8,6 @@ AnemometerMonitor::AnemometerMonitor()
 void AnemometerMonitor::execute()
 { 
     //adjusted value converts 368 to 360 
-    sfr::anemometer::wind_angle = ((0.97826))*((360*analogRead(constants::anemometer::ANEMOMETER_PIN))/1000);//0.97826 = 360/368
+    //sfr::anemometer::wind_angle = ((0.97826))*((360*analogRead(constants::anemometer::ANEMOMETER_PIN))/1000);//0.97826 = 360/368
+    sfr::anemometer::wind_angle = 15; // for testing purposes, set to 15 degrees
 }
