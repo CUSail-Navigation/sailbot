@@ -51,6 +51,7 @@ class TeensyHardware:
             return 1
     
 
+
     def _parse_packet(self, packet):
         """
         Parse a packet from the Teensy.

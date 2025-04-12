@@ -11,10 +11,18 @@ def generate_launch_description():
       'config',
       'config_sim.yaml'
       )
-   gps_cmd = Node(
+   # gps_cmd = Node(
+   #    package='sailboat_sensors',
+   #    executable='airmar',
+   #    name='airmar',
+   #    namespace='sailbot',
+   #    parameters=[config]
+   # )
+
+   vectornav_cmd = Node(
       package='sailboat_sensors',
-      executable='airmar',
-      name='airmar',
+      executable='vectornav',
+      name='vectornav',
       namespace='sailbot',
       parameters=[config]
    )
@@ -91,7 +99,7 @@ def generate_launch_description():
    ld = LaunchDescription()
 
    # Sensors
-   ld.add_action(gps_cmd)
+   ld.add_action(vectornav_cmd)
    ld.add_action(teensy_cmd)
    ld.add_action(main_algo_cmd)
    ld.add_action(trim_sail_cmd)

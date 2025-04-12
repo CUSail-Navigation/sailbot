@@ -20,6 +20,7 @@ let waypoints = []; // Global array for storing waypoints
 const waypointMarkers = {}; // Global dictionary for waypoint markers
 let map; // Global variable for the map instance
 let sailboatMarker; // Global variable for the sailboat marker
+let tackingPointMarker; // Global variable for the tacking point marker
 
 let buoys = []
 const buoyMarkers = {};
@@ -31,12 +32,12 @@ let waypointPlanCoordinates = []; // Global variable for waypoint path coordinat
 
 // Initialize the Google Map
 function initMap() {
-    const defaultLocation = { lat: 0, lng: 0 }; // Default center
+    const defaultLocation = { lat: 42.45, lng: -76.474 }; // Ithaca, NY (for now)
 
     // Create a new map instance
     map = new google.maps.Map(document.getElementById("map"), {
         center: defaultLocation, // Center the map at the default location
-        zoom: 2, // Set an initial zoom level
+        zoom: 12, // Set an initial zoom level
     });
 
     google.maps.event.addListener(map, "mousemove", function (event) {
@@ -137,13 +138,20 @@ function parseGpsData(message) {
     const sailboatLocation = { lat: latitude, lng: longitude };
 
     if (!sailboatMarker) {
-        // Create a new marker if it doesn't exist
+        // Create a new arrow marker if it doesn't exist
         sailboatMarker = new google.maps.Marker({
             position: sailboatLocation,
             map: map,
             title: "Sailboat Location",
             icon: {
-                url: "boat.png", // Custom marker icon (optional)
+                path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                scale: 5,
+                fillColor: "#007bff",  // Blue
+                fillOpacity: 1,
+                strokeWeight: 1,
+                strokeColor: "#ffffff",
+                rotation: 0, // Default heading (will update in parseHeading)
+                anchor: new google.maps.Point(0, 2), // Helps center arrow tip
             }
         });
     } else {
@@ -153,14 +161,12 @@ function parseGpsData(message) {
     }
 
     // Optionally center the map on the sailboat
-    map.setCenter(sailboatLocation);
-    map.setZoom(17);
+    // map.setCenter(sailboatLocation);
 }
 
 
 function parseImuData(message) {
     parseHeading(message);
-    // parseAngularVelocityData(message);
 }
 
 function parseHeading(message) {
@@ -170,45 +176,51 @@ function parseHeading(message) {
 
     document.getElementById('heading-value').innerText = formattedHeading;
     updateHeadAngle(formattedHeading, 'heading-value-dial')
+    let googleHeading = (90 - heading + 360) % 360;
 
     if (sailboatMarker) {
-        rotateMarkerIcon("boat.png", heading, function (rotatedImageUrl) {
-            sailboatMarker.setIcon({
-                url: rotatedImageUrl
-            });
+        sailboatMarker.setIcon({
+            path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+            scale: 5,
+            fillColor: "#007bff",
+            fillOpacity: 1,
+            strokeWeight: 1,
+            strokeColor: "#ffffff",
+            rotation: googleHeading,
+            anchor: new google.maps.Point(0, 2)
         });
     }
 }
 
-// Not in use after changing quaternion to vector3 type
-// function parseAngularVelocityData(message) {
-//     angularVelocityZ = message.z;
+// Updates the tacking point on the map and UI
+function parseTackingPoint(message) {
+    // Update the UI with the tacking point lat/long
+    const formattedLatitude = message.latitude.toFixed(6);
+    const formattedLongitude = message.longitude.toFixed(6);
 
-//     angularVelocityZ = angularVelocityZ.toFixed(6);
+    document.getElementById('tacking-point-value').innerText = `${formattedLatitude}, ${formattedLongitude}`;
 
-//     document.getElementById('angular-velocity-z-value').innerText = angularVelocityZ
-// }
+    // Update the tacking point marker on the map
+    const tackingPointLocation = { lat: message.latitude, lng: message.longitude };
+    if (!tackingPointMarker) {
+        // Create a new marker if it doesn't exist
+        tackingPointMarker = new google.maps.Marker({
+            position: tackingPointLocation,
+            map: map,
+            title: "Tacking Point Location",
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 8,
+                fillColor: "#0000FF",
+                fillOpacity: 1,
+                strokeWeight: 1,
+                strokeColor: "#FFFFFF"
+            }
+        });
+    } else {
+        tackingPointMarker.setPosition(tackingPointLocation);
+    }
 
-/**
- * Converts a quaternion to a heading angle in degrees.
- * @param {number} x - The x component of the quaternion.
- * @param {number} y - The y component of the quaternion.
- * @param {number} z - The z component of the quaternion.
- * @param {number} w - The w component of the quaternion.
- * @returns {number} The heading angle in degrees.
- */
-
-function quaternionToHeading(x, y, z, w) {
-    // Compute the heading angle (yaw) from the quaternion
-    const siny_cosp = 2 * (w * z + x * y);
-    const cosy_cosp = 1 - 2 * (y * y + z * z);
-    const headingRadians = Math.atan2(siny_cosp, cosy_cosp);
-
-    // Convert the heading from radians to degrees
-    const headingDegrees = headingRadians * (180 / Math.PI);
-
-    // Normalize to the range [0, 360)
-    return (headingDegrees + 360) % 360;
 }
 
 let waypointService;
@@ -338,6 +350,39 @@ function subscribeToTopics() {
         updateValue('actual-sail-angle-value', message.data);
         updateSailAngle(message.data, "actual-sail-angle-dial");
     });
+
+    const tackingPointTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: '/sailbot/tacking_point',
+        messageType: 'sensor_msgs/NavSatFix',
+        throttle_rate: BASE_THROTTLE_RATE,
+    })
+    tackingPointTopic.subscribe(parseTackingPoint);
+
+    const algoDebugTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: '/sailbot/main_algo_debug',
+        messageType: 'sailboat_interface/msg/AlgoDebug',
+        throttle_rate: BASE_THROTTLE_RATE,
+    });
+    algoDebugTopic.subscribe(function (message) {
+        console.log("Algo debug")
+        // Extract and log the received data
+        const tacking = message.tacking;
+        const tackingPoint = message.tacking_point;
+        const headingDir = message.heading_dir.data;
+        const currDest = message.curr_dest;
+        const diff = message.diff.data;
+        const dist = message.dist_to_dest.data;
+
+        document.getElementById('tacking-value').innerText = tacking;
+        document.getElementById('tacking-point-value').innerText = `${tackingPoint.latitude.toFixed(6)}, ${tackingPoint.longitude.toFixed(6)}`;
+        document.getElementById('heading-dir-value').innerText = headingDir;
+        document.getElementById('curr-dest-value').innerText = `${currDest.latitude.toFixed(6)}, ${currDest.longitude.toFixed(6)}`;
+        document.getElementById('diff-value').innerText = diff;
+        document.getElementById('dist-value').innerText = dist;
+    });
+
     waypointService = new ROSLIB.Service({
         ros: ros,
         name: '/sailbot/mutate_waypoint_queue',

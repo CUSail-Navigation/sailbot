@@ -11,22 +11,14 @@ def generate_launch_description():
       'config',
       'config.yaml'
       )
-      
    gps_cmd = Node(
       package='sailboat_sensors',
-      executable='vectornav',
-      name='vectornav',
+      executable='airmar',
+      name='airmar',
       namespace='sailbot',
       parameters=[config]
    )
 
-   teensy_cmd = Node(
-         package='sailboat_main',
-         executable='teensy',
-         name='teensy',
-         namespace='sailbot',
-         parameters=[config]
-      )
 
    mux_cmd = Node(
       package='sailboat_main',
@@ -34,7 +26,7 @@ def generate_launch_description():
       name='mux',
       namespace='sailbot',
       parameters=[config]
-   )
+   ) 
 
    main_algo_cmd  = Node(
       package='sailboat_main',
@@ -42,6 +34,14 @@ def generate_launch_description():
       name='main_algo',
       namespace='sailbot',
       parameters=[config]
+   )
+
+   teensy_cmd = Node(
+    package='sailboat_main',
+    executable='teensy',
+    name='teensy',
+    namespace='sailbot',
+    parameters=[config]
    )
 
    trim_sail_cmd = Node(
@@ -60,35 +60,16 @@ def generate_launch_description():
       parameters=[config]
    )
 
-   rosbridge_node = Node(
-        package='rosbridge_server',
-        executable='rosbridge_websocket',
-        name='rosbridge_websocket',
-        output='screen',
-        parameters=[{
-            'port': 9090  # This is the default WebSocket port for rosbridge
-        }]
-    )
 
-   radio_cmd = Node(
-      package='sailboat_main',
-      executable='radio',
-      name='radio',
-      namespace='sailbot',
-      parameters=[config]
-   )
-   
+
    ld = LaunchDescription()
 
    # Sensors
    ld.add_action(gps_cmd)
-   ld.add_action(teensy_cmd)
    ld.add_action(main_algo_cmd)
-   ld.add_action(radio_cmd)
-   #ld.add_action(event_driver_cmd)
+   ld.add_action(trim_sail_cmd)
    ld.add_action(waypoint_service_cmd)
    ld.add_action(mux_cmd)
-   # ld.add_action(rosbridge_node)
-   ld.add_action(rosbridge_node)
+   ld.add_action(teensy_cmd)
 
    return ld

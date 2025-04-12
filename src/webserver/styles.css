@@ -150,6 +150,10 @@ button {
     cursor: pointer;
 }
 
+button:hover {
+    background-color: #0056b3;
+}
+
 .dropdown-button {
     background-color: #007bff;
     color: white;
@@ -210,9 +214,6 @@ button {
     font-weight: bold;
     width: 200px;
 }
-
-
-
 
 /* Styles for the time scrollbar */
 .time-scrollbar-container {
@@ -296,3 +297,15 @@ button {
     background-color: rgba(76, 175, 80, 0.1);
     border-left: 3px solid #4CAF50;
     }
+
+details summary {
+    margin-bottom: 10px;
+    color: darkblue;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+details div {
+    margin-top: 10px;
+}
+
