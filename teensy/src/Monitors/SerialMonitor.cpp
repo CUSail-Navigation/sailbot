@@ -27,6 +27,7 @@ void SerialMonitor::execute()
             sfr::serial::update_servos = true;
             sfr::servo::sail_angle = sfr::serial::buffer[0];
             sfr::servo::rudder_angle = sfr::serial::buffer[1];
+            sfr::serial::autonomous_mode = sfr::serial::buffer[2];
         }
         else if (packet_started)
         {

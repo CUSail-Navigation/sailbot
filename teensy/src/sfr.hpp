@@ -22,9 +22,10 @@ namespace sfr
     {
         extern bool update_servos;
         extern bool send_telemetry;
+        extern bool autonomous_mode;
 
         extern uint8_t dropped_packets;
 
-        extern uint8_t buffer[2];
+        extern uint8_t buffer[3];
     }
 }
