@@ -25,7 +25,7 @@ void SerialControlTask::execute()
             constants::serial::TX_END_FLAG};
 
         last_telemetry_send_time = millis();
-        //Serial.write(data, sizeof(data));
+        Serial.write(data, sizeof(data));
         send_telemetry = false;
     }
     current_time = millis();

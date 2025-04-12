@@ -16,10 +16,10 @@ void ServoControlTask::execute()
     // check if we have new serial data to update servos
     if (sfr::serial::update_servos)
     {
-        // uint8_t sail_angle = sfr::serial::buffer[0];
+        uint8_t sail_angle = sfr::serial::buffer[0];
         uint8_t rudder_angle = sfr::serial::buffer[1];
 
-        if(sfr::serial::autonomous_mode)
+        if(sfr::serial::buffer[2])
         {
             uint8_t sail_angle = trim_sail();
             sfr::servo::sail_angle = sail_angle;
