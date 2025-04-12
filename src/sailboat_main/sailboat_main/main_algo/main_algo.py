@@ -188,6 +188,7 @@ class MainAlgo(Node):
             if dist_to_dest < 5:
                 self.get_logger().info('=============================== Waypoint popped ===============================')
                 self.pop_waypoint()
+                self.curr_dest = None
 
         self.calculate_rudder_angle()
 
