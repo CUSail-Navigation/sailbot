@@ -159,6 +159,7 @@ function parseHeading(message) {
 
     document.getElementById('heading-value').innerText = formattedHeading;
     updateHeadAngle(formattedHeading, 'heading-value-dial')
+    let googleHeading = (90 - heading + 360) % 360;
 
     if (sailboatMarker) {
         sailboatMarker.setIcon({
@@ -168,7 +169,7 @@ function parseHeading(message) {
             fillOpacity: 1,
             strokeWeight: 1,
             strokeColor: "#ffffff",
-            rotation: heading,
+            rotation: googleHeading,
             anchor: new google.maps.Point(0, 2)
         });
     }
@@ -356,7 +357,7 @@ function subscribeToTopics() {
         const currDest = message.curr_dest;
         const diff = message.diff.data;
         const dist = message.dist_to_dest.data;
-    
+
         document.getElementById('tacking-value').innerText = tacking;
         document.getElementById('tacking-point-value').innerText = `${tackingPoint.latitude.toFixed(6)}, ${tackingPoint.longitude.toFixed(6)}`;
         document.getElementById('heading-dir-value').innerText = headingDir;
