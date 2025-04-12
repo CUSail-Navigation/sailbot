@@ -2,25 +2,95 @@ import numpy as np
 import rclpy
 
 from rclpy.node import Node
-from rclpy.service import Service
 
 import utm
-from sensor_msgs.msg import NavSatFix, Imu
-from geometry_msgs.msg import Point, Vector3
-from std_msgs.msg import Bool, Int32
+from sensor_msgs.msg import NavSatFix
+from geometry_msgs.msg import Vector3
+from std_msgs.msg import Int32
 from rclpy.task import Future
+from typing import Optional
 
 from sailboat_interface.srv import Waypoint
 from sailboat_interface.msg import AlgoDebug
 
 import math
 
+class LatLongPoint():
+    """
+    A class to represent a point in latitude and longitude coordinates.
+    """
+    latitude : float
+    longitude : float
+    def __init__(self, latitude, longitude):
+        self.latitude = latitude
+        self.longitude = longitude
+
+    def to_utm(self) -> 'UTMPoint':
+        """
+        Convert latitude and longitude to UTM coordinates.
+        """
+        x, y, zone_number, zone_letter = utm.from_latlon(self.latitude, self.longitude)
+        return UTMPoint(x, y, zone_number, zone_letter) 
+
+    def __repr__(self):
+        return f"latitude={self.latitude}, longitude={self.longitude}"
+
+class UTMPoint():
+    """
+    A class to represent a point in UTM coordinates.
+    """
+    easting : float
+    northing : float
+    zone_number : int
+    zone_letter : str
+
+    def __init__(self, easting, northing, zone_number, zone_letter):
+        self.easting = easting
+        self.northing = northing
+        self.zone_number = zone_number
+        self.zone_letter = zone_letter
+
+    def to_latlon(self) -> LatLongPoint:
+        """
+        Convert UTM coordinates to latitude and longitude.
+        """
+        latitude, longitude = utm.to_latlon(self.easting, self.northing, self.zone_number, self.zone_letter)
+        return LatLongPoint(latitude, longitude) 
+
+    def to_navsatfix_msg(self) -> NavSatFix:
+        """
+        Convert UTM coordinates to NavSatFix message.
+        """
+        lat_long = self.to_latlon()
+        msg = NavSatFix()
+        msg.latitude = lat_long.latitude
+        msg.longitude = lat_long.longitude
+        return msg
+    
+    def distance_to(self, other: 'UTMPoint') -> float:
+        """
+        Calculate the distance to another UTM point.
+        """
+        assert self.zone_number == other.zone_number, "Zone numbers must be the same for distance calculation"
+        return math.dist((self.easting, self.northing), (other.easting, other.northing))
+
+    def __repr__(self):
+        return f"UTMPoint(x={self.x}, y={self.y}, zone_number={self.zone_number}, zone_letter={self.zone_letter})"
+
 class MainAlgo(Node):
     """
     The sailing algorithm responsible for changing the rudder angle based on the 
     current location, destination, and heading direction.
     """
-    
+    wind_dir : Optional[float]
+    curr_loc : Optional[UTMPoint]
+    tacking : bool
+    tacking_point : Optional[UTMPoint]
+    heading_dir : Optional[float]
+    curr_dest : Optional[UTMPoint]
+    diff : Optional[float]
+    dist_to_dest : Optional[float]
+
     def __init__(self):
         super().__init__('main_algo')
 
@@ -77,8 +147,6 @@ class MainAlgo(Node):
         self.tacking_point = None
         self.heading_dir = None
         self.curr_dest = None
-        self.zone_number = None
-        self.zone_letter = None
         self.diff = None
         self.dist_to_dest = None
 
@@ -97,10 +165,7 @@ class MainAlgo(Node):
         """
         Callback to update the current destination waypoint from the 'current_waypoint' topic.
         """
-        easting, northing, _, _ = utm.from_latlon(msg.latitude, msg.longitude)
-        self.curr_dest = Point()
-        self.curr_dest.x = easting
-        self.curr_dest.y = northing
+        self.curr_dest = LatLongPoint(msg.latitude, msg.longitude).to_utm()
         self.get_logger().info(f'Updated current waypoint to: ({msg.latitude}, {msg.longitude})')
 
     def publish_state_debug(self):
@@ -111,23 +176,17 @@ class MainAlgo(Node):
         debug_msg.tacking = self.tacking
 
         if self.tacking_point is not None:
-            debug_msg.tacking_point = NavSatFix()
-            debug_msg.tacking_point.latitude, debug_msg.tacking_point.longitude = utm.to_latlon(
-            self.tacking_point.x, self.tacking_point.y, self.zone_number, self.zone_letter
-            )
+            debug_msg.tacking_point = self.tacking_point.to_navsatfix_msg()
         else:
-            debug_msg.tacking_point = NavSatFix()
+            debug_msg.tacking_point = NavSatFix() # empty msg
 
         debug_msg.heading_dir = Int32()
         debug_msg.heading_dir.data = int(self.heading_dir) if self.heading_dir is not None else 0
 
         if self.curr_dest is not None:
-            debug_msg.curr_dest = NavSatFix()
-            debug_msg.curr_dest.latitude, debug_msg.curr_dest.longitude = utm.to_latlon(
-            self.curr_dest.x, self.curr_dest.y, self.zone_number, self.zone_letter
-            )
+            debug_msg.curr_dest = self.curr_dest.to_navsatfix_msg()
         else:
-            debug_msg.curr_dest = NavSatFix()
+            debug_msg.curr_dest = NavSatFix() # empty msg
 
         debug_msg.diff = Int32()
         debug_msg.diff.data = int(self.diff) if self.diff is not None else 0
@@ -172,16 +231,11 @@ class MainAlgo(Node):
         Use the NavSatFix data to assign value to self.curr_loc
         """
         # assuming the zone_number and zone_letter are the same for the current location and the destination
-        easting, northing, zone_number, zone_letter = utm.from_latlon(msg.latitude, msg.longitude)
-        self.curr_loc = Point()
-        self.curr_loc.x = easting
-        self.curr_loc.y = northing
-        self.zone_number = zone_number
-        self.zone_letter = zone_letter
+        self.curr_loc = LatLongPoint(latitude=msg.latitude, longitude=msg.longitude).to_utm()
 
         # Update the distance to destination, check if we have reached our waypoint
         if self.curr_dest is not None:
-            dist_to_dest = math.dist((self.curr_loc.x, self.curr_loc.y), (self.curr_dest.x, self.curr_dest.y))
+            dist_to_dest = self.curr_loc.distance_to(self.curr_dest)
             self.get_logger().info(f'Distance to destination: {dist_to_dest}')
             self.dist_to_dest = dist_to_dest
             # if we have reached our waypoint, pop it off 
@@ -221,11 +275,12 @@ class MainAlgo(Node):
 
         #Handle tacking logic in step
         if self.tacking: 
-            final = self.tacking_point
+            dest = self.tacking_point
         else:
-            final = self.curr_dest
-        x_distance = final.x - self.curr_loc.x
-        y_distance = final.y - self.curr_loc.y
+            dest = self.curr_dest
+
+        x_distance = dest.easting - self.curr_loc.easting
+        y_distance = dest.northing - self.curr_loc.northing
 
         target_bearing = np.arctan2(y_distance, x_distance) * 180 / np.pi
         self.get_logger().info(f'Target Bearing: {target_bearing}')
@@ -258,7 +313,7 @@ class MainAlgo(Node):
             return False
         return (150 < self.wind_dir < 210)
 
-    def calculateTP(self):
+    def calculateTP(self) -> UTMPoint:
         """
         Calcualte tacking point to begin tacking. uses winddir + dest
         Assuming that the boat is heading towards the positive x-axis and the destination
@@ -272,43 +327,36 @@ class MainAlgo(Node):
         assert self.curr_dest is not None, "Current destination is None"
         assert self.wind_dir is not None, "Wind direction is None"
 
-        x = self.curr_loc.x
-        y = self.curr_loc.y
-        nav_sat_msg = NavSatFix()
-
         try:
-            lat, long = utm.to_latlon(x, y, self.zone_number, self.zone_letter)         
+            latlong = self.curr_loc.to_latlon()
+            lat,long = latlong.latitude, latlong.longitude
             self.get_logger().info(f'Current Location: ({lat}, {long})')
         except Exception as e:
             self.get_logger().error(f'Error in Lat Long: {str(e)}') 
 
-        dist2dest = math.dist((x,y), (self.curr_dest.x,self.curr_dest.y)) 
+        dist2dest = self.curr_loc.distance_to(self.curr_dest) 
 
         if self.wind_dir >= 180 and self.wind_dir <= 210:
-            x_TP = x + dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.sin(np.deg2rad(45+self.wind_dir))
-            y_TP = y - dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.cos(np.deg2rad(45+self.wind_dir))
+            easting_tp = self.curr_loc.easting + dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.sin(np.deg2rad(45+self.wind_dir))
+            northing_tp = self.curr_loc.northing - dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.cos(np.deg2rad(45+self.wind_dir))
         elif self.wind_dir >= 150 and self.wind_dir <= 180:
             self.wind_dir = 360 - self.wind_dir
-            x_TP = x + dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.sin(np.deg2rad(45+self.wind_dir))
-            y_TP = y + dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.cos(np.deg2rad(45+self.wind_dir))
-        tp = Point()
-        tp.x = x_TP
-        tp.y = y_TP
+            easting_tp = self.curr_loc.easting + dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.sin(np.deg2rad(45+self.wind_dir))
+            northing_tp =  self.curr_loc.northing + dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.cos(np.deg2rad(45+self.wind_dir))
 
-        assert tp.x < 900000 and tp.x > 100000, "Easting out of range"
+        tp = UTMPoint(easting=easting_tp, northing=northing_tp, zone_number=self.curr_loc.zone_number, zone_letter=self.curr_loc.zone_letter)
+
+        assert tp.easting > 100000 and tp.easting < 900000, "Easting out of range"
 
         # publish new TP if we do not encounter an exception
         try:
-            lat, long = utm.to_latlon(tp.x, tp.y, self.zone_number, self.zone_letter)
-            tacking_point_msg = NavSatFix()
-            tacking_point_msg.latitude, tacking_point_msg.longitude = lat, long
+            tacking_point_msg = tp.to_navsatfix_msg()
             self.tacking_point_pub.publish(tacking_point_msg)
         except Exception as e: 
-            self.get_logger().error(f'Tacking point easting: {tp.x}, northing: {tp.y}')
+            self.get_logger().error(f'Tacking point easting: {tp.easting}, northing: {tp.northing}')
             self.get_logger().error(f'Error in calculateTP: {str(e)}') 
-            lat, long = 0., 0.
-        self.get_logger().info('Tacking Point: ' + 'Lat: ' + str(nav_sat_msg.latitude) + ' Long: ' + str(nav_sat_msg.longitude))
 
+        self.get_logger().info(f'Tacking Point: {str(tp.to_latlon())}')
 
         return tp
 
@@ -316,7 +364,6 @@ class MainAlgo(Node):
         """
         Sail. 
         """
-        # FIXME: This stuff starts not as None
         if self.curr_loc is None or (self.tacking and self.tacking_point is None) or self.curr_dest is None:
             # Not enough information to calculate rudder angle yet
             return
@@ -336,30 +383,6 @@ class MainAlgo(Node):
         self.calculate_rudder_angle()
 
         self.get_logger().info("Sailing")
-
-
-def euler_from_quaternion(x, y, z, w):
-        """
-        This is a helper function.
-        Convert a quaternion into euler angles (roll, pitch, yaw)
-        roll is rotation around x in radians (counterclockwise)
-        pitch is rotation around y in radians (counterclockwise)
-        yaw is rotation around z in radians (counterclockwise)
-        """
-        t0 = +2.0 * (w * x + y * z)
-        t1 = +1.0 - 2.0 * (x * x + y * y)
-        roll_x = math.atan2(t0, t1)
-    
-        t2 = +2.0 * (w * y - z * x)
-        t2 = +1.0 if t2 > +1.0 else t2
-        t2 = -1.0 if t2 < -1.0 else t2
-        pitch_y = math.asin(t2)
-    
-        t3 = +2.0 * (w * z + x * y)
-        t4 = +1.0 - 2.0 * (y * y + z * z)
-        yaw_z = math.atan2(t3, t4)
-    
-        return roll_x, pitch_y, yaw_z
 
 def main(args=None):
     rclpy.init(args=args)
