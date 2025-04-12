@@ -5,6 +5,7 @@ namespace constants
 {
     namespace anemometer
     {
+        constexpr uint8_t ANEMOMETER_PIN = 14; // FIXME: change to correct pin number
         constexpr uint8_t ANEMOMETER_PIN = 18;
     }
     namespace servo

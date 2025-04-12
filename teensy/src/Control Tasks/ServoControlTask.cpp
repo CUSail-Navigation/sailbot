@@ -1,5 +1,6 @@
 #include "ServoControlTask.hpp"
 #include <math.h>
+#include <math.h>
 
 ServoControlTask::ServoControlTask()
 {
@@ -16,7 +17,7 @@ void ServoControlTask::execute()
     // check if we have new serial data to update servos
     if (sfr::serial::update_servos)
     {
-        uint8_t sail_angle = sfr::serial::buffer[0];
+        // uint8_t sail_angle = sfr::serial::buffer[0];
         uint8_t rudder_angle = sfr::serial::buffer[1];
 
         if(sfr::serial::autonomous_mode)
@@ -50,6 +51,12 @@ void ServoControlTask::execute()
         }
         sfr::serial::update_servos = false; // reset flag for next update
     }
+
+    uint8_t sail_angle = trim_sail();
+    sfr::servo::sail_angle = sail_angle;
+    sfr::servo::sail_pwm = sail_to_pwm(sail_angle);
+    // actuate sail servo
+    actuate_servo(sail_servo, sfr::servo::sail_pwm);
 }
 
 uint8_t ServoControlTask::trim_sail()
