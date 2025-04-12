@@ -115,7 +115,7 @@ class Teensy(Node):
         previously set rudder.
         """
         self.desired_sail = msg.data
-        self.get_logger().info(f"Sail callback-sent to Teensy sail:{self.desired_sail}, rudder: {self.desired_rudder}")
+        #self.get_logger().info(f"Sail callback-sent to Teensy sail:{self.desired_sail}, rudder: {self.desired_rudder}")
 
         if self.teensy.send_command(self.desired_sail, self.desired_rudder, self.autonomous_mode) == 0:
             self.get_logger().info(f"Message sent to servo")
