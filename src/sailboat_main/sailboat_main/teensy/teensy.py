@@ -95,8 +95,8 @@ class TeensyHardware:
             # convert mode flag to byte
             mode_byte = 1 if mode else 0
 
-            # create the packet: [start flag] [mode] [sail] [rudder] [end flag]
-            command_packet = bytearray([self.START_BYTE, mode_byte, sail_byte, rudder_byte, self.END_BYTE])
+            # create the packet: [start flag] [sail] [rudder] [mode] [end flag]
+            command_packet = bytearray([self.START_BYTE, sail_byte, rudder_byte,  mode_byte, self.END_BYTE])
 
             # send the packet over serial
             self.serial.write(command_packet)
