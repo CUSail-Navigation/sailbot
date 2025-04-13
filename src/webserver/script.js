@@ -358,11 +358,6 @@ function subscribeToTopics() {
         name: '/sailbot/mutate_waypoint_queue',
         serviceType: 'sailboat_interface/srv/Waypoint'
     });
-    waypointService = new ROSLIB.Service({
-        ros: ros,
-        name: '/sailbot/mutate_waypoint_queue',
-        serviceType: 'sailboat_interface/srv/Waypoint'
-    });
     const droppedPacketsTopic = new ROSLIB.Topic({
         ros: ros,
         name: '/sailbot/dropped_packets',
@@ -371,8 +366,15 @@ function subscribeToTopics() {
     droppedPacketsTopic.subscribe(function (message) {
         updateValue('dropped-packets-value', message.data);
     });
-    syncWaypointQueueFromBackend();
-    setInterval(syncWaypointQueueFromBackend, 5000);
+    const currentWaypoint = new ROSLIB.Topic({
+        ros,
+        name: 'sailbot/current_waypoint',
+        messageType: 'sensor_msgs/NavSatFix',
+    });
+
+    currentWaypoint.subscribe((_) => {
+        syncWaypointQueueFromBackend();
+    })
 }
 // Connect to ROS when the page loads
 window.onload = function () {
