@@ -6,7 +6,7 @@ class MuxNode(Node):
     def __init__(self):
         super().__init__('mux_node')
 
-        self.declare_parameter('control_node', 'algorithm')
+        self.declare_parameter('control_mode', 'algorithm')
         self.control_mode = self.get_parameter('control_mode').value
 
         # Mux topic for changing control_mode topic
@@ -26,10 +26,10 @@ class MuxNode(Node):
             Int32, 'algo_rudder', self.algo_rudder_callback, 10)
         
         # Subscribers for webserver topics
-        self.algo_sail_sub = self.create_subscription(
-            Int32, 'webserver_sail', self.algo_sail_callback, 10)
-        self.algo_rudder_sub = self.create_subscription(
-            Int32, 'webserver_rudder', self.algo_rudder_callback, 10)
+        self.webserver_sail_sub = self.create_subscription(
+            Int32, 'webserver_sail', self.webserver_sail_callback, 10)
+        self.webserver_rudder_sub = self.create_subscription(
+            Int32, 'webserver_rudder', self.webserver_rudder_callback, 10)
 
         # Publishers for multiplexed output (rudder_angle and sail)
         self.rudder_pub = self.create_publisher(Int32, 'rudder_angle', 10)
@@ -59,9 +59,11 @@ class MuxNode(Node):
         self.algo_rudder = msg.data
 
     def webserver_sail_callback(self, msg):
+        self.get_logger().info(f'Webserver sail angle: {msg.data}')
         self.webserver_sail = msg.data
 
     def webserver_rudder_callback(self, msg):
+        self.get_logger().info(f'Webserver rudder angle: {msg.data}')
         self.webserver_rudder = msg.data
 
     def control_mode_callback(self, msg):

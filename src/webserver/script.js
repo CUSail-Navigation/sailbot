@@ -2,8 +2,9 @@ let ros;
 let controlModeTopic;
 let waypointTopic;
 
-let radioRudderTopicGlobal;
-let radioSailTopicGlobal;
+// topics for publishing sail and rudder angles from the webserver to the sailboat
+let webserverRudderTopic;
+let webserverSailTopic;
 
 console.log("script.js loaded successfully");
 
@@ -85,6 +86,7 @@ function connectToROS(url) {
     ros.on('connection', function () {
         console.log('Connected to rosbridge server at:', url);
         subscribeToTopics();
+        initializePublishers();
     });
 
     ros.on('error', function (error) {
@@ -387,6 +389,21 @@ function subscribeToTopics() {
         updateValue('dropped-packets-value', message.data);
     });
 }
+
+// Publisher topic initializations for webserver sail and rudder angles
+function initializePublishers() {
+    webserverRudderTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: '/sailbot/webserver_rudder',
+        messageType: 'std_msgs/Int32'
+    });
+    webserverSailTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: '/sailbot/webserver_sail',
+        messageType: 'std_msgs/Int32'
+    });
+}
+
 // Connect to ROS when the page loads
 window.onload = function () {
     connectToROS();
@@ -921,8 +938,8 @@ document.getElementById('sail-rudder-button').addEventListener('click', function
     const rudderMessage = new ROSLIB.Message({
         data: parseInt(rudderAngle.value, 10)
     });
-    radioRudderTopicGlobal.publish(rudderMessage);
-    radioSailTopicGlobal.publish(sailMessage);
+    webserverRudderTopic.publish(rudderMessage);
+    webserverSailTopic.publish(sailMessage);
 })
 
 
