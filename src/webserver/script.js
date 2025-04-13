@@ -349,7 +349,7 @@ function subscribeToTopics() {
         throttle_rate: BASE_THROTTLE_RATE,
     });
     algoDebugTopic.subscribe(function (message) {
-        console.log("Algo debug")
+        // console.log("Algo debug")
         // Extract and log the received data
         const tacking = message.tacking;
         const tackingPoint = message.tacking_point;
@@ -388,6 +388,8 @@ function subscribeToTopics() {
     currentWaypoint.subscribe((_) => {
         syncWaypointQueueFromBackend();
     })
+
+    syncWaypointQueueFromBackend();
 }
 // Connect to ROS when the page loads
 window.onload = function () {
@@ -641,7 +643,6 @@ function handleDragEnd(event) {
             console.error(result.message);
         }
     });
-
     syncWaypointQueueFromBackend();
 }
 function deleteWaypoint(index) {

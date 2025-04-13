@@ -46,7 +46,7 @@ class FakeVectorNav:
     
     def readVectorNavLatitude(self):
         # Simulate slight latitude changes over time
-        self.latitude += np.random.uniform(-0.0001, 0.0001)
+        self.latitude += np.random.uniform(-0.000001, 0.000001)
         # Ensure the latitude stays within valid range
         if self.latitude > 84:
             self.latitude = 84
@@ -56,7 +56,7 @@ class FakeVectorNav:
 
     def readVectorNavLongitude(self):
         # Simulate slight longitude changes over time
-        self.longitude += np.random.uniform(-0.0001, 0.0001)
+        self.longitude += np.random.uniform(-0.000001, 0.000001)
         # Ensure the longitude stays within valid range
         if self.longitude > 180:
             self.longitude = -180 + (self.longitude - 180)
