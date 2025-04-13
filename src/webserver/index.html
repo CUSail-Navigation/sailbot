@@ -43,29 +43,25 @@
                         <span class="status-value" id="rudder-angle-value">N/A</span>
                     </div>
 
-                    <details>
+                    <details class="algo-mode">
                         <summary>Algo View</summary>
-                        <div class="status-row algo-mode">
+                        <div class="status-row">
                             <span class="status-label">Algo Rudder:</span>
                             <span class="status-value" id="algo-rudder-value">N/A</span>
                         </div>
-                        <div class="status-row algo-mode">
+                        <div class="status-row">
                             <span class="status-label">Algo Sail:</span>
-                            <span class="status-value" id="algo-sail-value">N/A</span>
-                        </div>
-                        <div class="status-row algo-mode">
-                            <span class="status-label">Tacking Point:</span>
                             <span class="status-value" id="algo-sail-value">N/A</span>
                         </div>
                     </details>
 
-                    <details>
+                    <details class="rc-mode">
                         <summary>RC View</summary>
-                        <div class="status-row rc-mode">
+                        <div class="status-row">
                             <span class="status-label">Radio Rudder:</span>
                             <span class="status-value" id="radio-rudder-value">N/A</span>
                         </div>
-                        <div class="status-row rc-mode">
+                        <div class="status-row">
                             <span class="status-label">Radio Sail:</span>
                             <span class="status-value" id="radio-sail-value">N/A</span>
                         </div>
@@ -153,9 +149,25 @@
                 </div>
             </div>
             <div class="table-container">
+                <h1>Algo/RC Chooser</h1>
+                <div class="table">
+                    <div class="status-row second">
+                        <span class="status-label">Options: </span>
+                    </div>
+                    <div class="dropdown">
+                        <button class="dropdown-button" id="mode-button" onclick="toggleDropdown()">Select Mode</button>
+                        <div id="dropdown-content" class="dropdown-content">
+                            <a href="#" onclick="selectMode('Algorithm')">Algorithm</a>
+                            <a href="#" onclick="selectMode('Radio')">Radio</a>
+                            <a href="#" onclick="selectMode('Webserver')">Webserver</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-container">
                 <h1>Sail/Rudder Input</h1>
                 <div class="table">
-                    <div class="status-row">
+                    <div class="status-row webserver-mode">
                         <span class="status-label">Sail Input:</span>
                         <div class="input-group">
                             <input type="number" id="sail-input" name="sail-input" placeholder="Enter sail input"
@@ -211,22 +223,6 @@
                         </div>
                         <div class="button-group">
                             <button type="button" id="submit-buoy">Submit Buoy</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="table-container">
-                <h1>Algo/RC Chooser</h1>
-                <div class="table">
-                    <div class="status-row second">
-                        <span class="status-label">Options: </span>
-                    </div>
-                    <div class="dropdown">
-                        <button class="dropdown-button" id="mode-button" onclick="toggleDropdown()">Select Mode</button>
-                        <div id="dropdown-content" class="dropdown-content">
-                            <a href="#" onclick="selectMode('Algorithm')">Algorithm</a>
-                            <a href="#" onclick="selectMode('Radio')">Radio</a>
-                            <a href="#" onclick="selectMode('Webserver')">Webserver</a>
                         </div>
                     </div>
                 </div>

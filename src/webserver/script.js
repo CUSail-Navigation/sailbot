@@ -710,15 +710,19 @@ window.onclick = function (event) {
 
 function conditionalRender() {
     let controlModeVal = document.getElementById("control-mode-value").innerText.trim();
-    let algoVals = document.querySelectorAll(".algo-mode");
-    let rcVals = document.querySelectorAll(".rc-mode");
+
+    let algoVals = document.querySelector("details.algo-mode");
+    let rcVals = document.querySelector("details.rc-mode");
+
     if (controlModeVal == "algorithm") {
-        algoVals.forEach(el => el.style.display = "flex");
-        rcVals.forEach(el => el.style.display = "none");
+        console.log("collapsing rc values");
+        algoVals.open = true;
+        rcVals.open = false;
     }
-    if (controlModeVal == "radio") {
-        algoVals.forEach(el => el.style.display = "none");
-        rcVals.forEach(el => el.style.display = "flex");
+    else if (controlModeVal == "radio") {
+        console.log("collapsing algo values");
+        algoVals.open = false;
+        rcVals.open = true;
     }
 }
 
