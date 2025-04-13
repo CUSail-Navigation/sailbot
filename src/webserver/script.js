@@ -462,7 +462,7 @@ function addWaypointToQueue(waypoint) {
         }
     });
 
-    getWaypointQueue();
+    syncWaypointQueueFromBackend();
 }
 
 function syncWaypointQueueFromBackend() {
@@ -629,7 +629,7 @@ function handleDragEnd(event) {
         }
     });
 
-    getWaypointQueue()
+    syncWaypointQueueFromBackend();
 }
 function deleteWaypoint(index) {
     // Remove the waypoint from the local array
@@ -678,23 +678,10 @@ function deleteWaypoint(index) {
     });
 
     // Update the display
-    getWaypointQueue();
+    syncWaypointQueueFromBackend();
     displayWaypoints();
 }
-function getWaypointQueue() {
-    const getRequest = new ROSLIB.ServiceRequest({
-        command: "get",
-        argument: ""
-    });
 
-    waypointService.callService(getRequest, function (getResult) {
-        if (getResult.success) {
-            console.log("Current ROS waypoint queue:", getResult.message);
-        } else {
-            console.error("Failed to fetch waypoint queue:", getResult.message);
-        }
-    });
-}
 // Function to toggle dropdown visibility
 function toggleDropdown() {
     const dropdownContent = document.getElementById("dropdown-content");
