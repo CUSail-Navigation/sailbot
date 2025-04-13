@@ -2,8 +2,8 @@ let ros;
 let controlModeTopic;
 let waypointTopic;
 
-let radioSailAngleTopic;
-let radioRudderAngleTopic;
+let radioRudderTopicGlobal;
+let radioSailTopicGlobal;
 
 console.log("script.js loaded successfully");
 
@@ -76,7 +76,6 @@ function updateTrail(latitude, longitude) {
     // Update the polyline with the filtered, current path
     sailPath.setPath(currentPath);
 }
-
 
 function connectToROS(url) {
     ros = new ROSLIB.Ros({
@@ -249,23 +248,23 @@ function subscribeToTopics() {
         conditionalRender();
     });
     // Subscribe to /sailbot/radio_rudder
-    const radioRudderTopic = new ROSLIB.Topic({
+    radioRudderTopicGlobal = new ROSLIB.Topic({
         ros: ros,
         name: '/sailbot/radio_rudder',
         messageType: 'std_msgs/Int32',
         throttle_rate: BASE_THROTTLE_RATE,
     });
-    radioRudderTopic.subscribe(function (message) {
+    radioRudderTopicGlobal.subscribe(function (message) {
         updateValue('radio-rudder-value', message.data);
     });
     // Subscribe to /sailbot/radio_sail
-    const radioSailTopic = new ROSLIB.Topic({
+    radioSailTopicGlobal = new ROSLIB.Topic({
         ros: ros,
         name: '/sailbot/radio_sail',
         messageType: 'std_msgs/Int32',
         throttle_rate: BASE_THROTTLE_RATE,
     });
-    radioSailTopic.subscribe(function (message) {
+    radioSailTopicGlobal.subscribe(function (message) {
         updateValue('radio-sail-value', message.data);
     });
     // Subscribe to /sailbot/rudder_angle
@@ -911,11 +910,19 @@ function updateHeadAngle(angle, id) {
 // ====================== BEGIN: Sail/Rudder Handling ==========================
 
 document.getElementById('sail-rudder-button').addEventListener('click', function (event) {
+    console.log("Button clicked!");
     const sailAngle = document.getElementById('sail-input');
     const rudderAngle = document.getElementById('rudder-input');
 
-    console.log(sailAngle.value);
-    console.log(rudderAngle.value);
+    const sailMessage = new ROSLIB.Message({
+        data: parseInt(sailAngle.value, 10)
+    });
+
+    const rudderMessage = new ROSLIB.Message({
+        data: parseInt(rudderAngle.value, 10)
+    });
+    radioRudderTopicGlobal.publish(rudderMessage);
+    radioSailTopicGlobal.publish(sailMessage);
 })
 
 
