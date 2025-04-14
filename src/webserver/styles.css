@@ -225,3 +225,10 @@ details summary {
 details div {
     margin-top: 10px;
 }
+
+details summary {
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+}
