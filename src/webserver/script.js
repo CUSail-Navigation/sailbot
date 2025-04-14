@@ -35,8 +35,10 @@ function initMap() {
     });
 
     map.addListener("dblclick", (e) => {
-        const latitude = e.latLng.lat().toFixed(6);
-        const longitude = e.latLng.lng().toFixed(6);
+        // const latitude = e.latLng.lat().toFixed(6);
+        // const longitude = e.latLng.lng().toFixed(6);
+        const latitude = e.latLng.lat();
+        const longitude = e.latLng.lng();
     
         if (latitude && longitude) {
             // Create a waypoint string for storage
@@ -59,10 +61,12 @@ function initMap() {
             });
 
             marker.addListener("click", function() {
+                console.log("clicked waypoint");
                 const waypointKey = `${latitude},${longitude}`;
-                console.log("Waypoint (${waypointKey}) clicked and removed");
+                console.log(`Waypoint (${waypointKey}) clicked and removed`);
                 const index = waypoints.indexOf(waypointKey);
-                deleteWaypoint(index)
+                if (index !== -1) deleteWaypoint(index);
+                else console.warn(`Waypoint ${waypointKey} not found in list`);
             });
     
             waypointMarkers[waypoint] = marker;
@@ -488,6 +492,15 @@ document.getElementById('submit-waypoint').addEventListener('click', function ()
             title: `Waypoint (${latitude},${longitude})`,
         });
 
+        marker.addListener("click", function() {
+            console.log("clicked waypoint");
+            const waypointKey = `${latitude},${longitude}`;
+            console.log(`Waypoint (${waypointKey}) clicked and removed`);
+            const index = waypoints.indexOf(waypointKey);
+            if (index !== -1) deleteWaypoint(index);
+            else console.warn(`Waypoint ${waypointKey} not found in list`);
+        });
+
         waypointMarkers[waypoint] = marker;
         waypointPlanCoordinates.push(latLng);
 
@@ -625,7 +638,7 @@ document.getElementById('submit-buoy').addEventListener('click', function () {
             lng: parseFloat(longitude),
         };
 
-        // Add a marker for the new waypoint on the map
+        // Add a marker for the new buoy on the map
         const marker = new google.maps.Marker({
             position: latLng,
             map: map,
