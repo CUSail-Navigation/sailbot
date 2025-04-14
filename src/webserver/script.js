@@ -2,6 +2,10 @@ let ros;
 let controlModeTopic;
 let waypointTopic;
 
+// topics for publishing sail and rudder angles from the webserver to the sailboat
+let webserverRudderTopic;
+let webserverSailTopic;
+
 console.log("script.js loaded successfully");
 
 let waypoints = []; // Global array for storing waypoints
@@ -74,7 +78,6 @@ function updateTrail(latitude, longitude) {
     sailPath.setPath(currentPath);
 }
 
-
 function connectToROS(url) {
     ros = new ROSLIB.Ros({
         url: url
@@ -83,6 +86,7 @@ function connectToROS(url) {
     ros.on('connection', function () {
         console.log('Connected to rosbridge server at:', url);
         subscribeToTopics();
+        initializePublishers();
     });
 
     ros.on('error', function (error) {
@@ -246,23 +250,23 @@ function subscribeToTopics() {
         conditionalRender();
     });
     // Subscribe to /sailbot/radio_rudder
-    const radioRudderTopic = new ROSLIB.Topic({
+    radioRudderTopicGlobal = new ROSLIB.Topic({
         ros: ros,
         name: '/sailbot/radio_rudder',
         messageType: 'std_msgs/Int32',
         throttle_rate: BASE_THROTTLE_RATE,
     });
-    radioRudderTopic.subscribe(function (message) {
+    radioRudderTopicGlobal.subscribe(function (message) {
         updateValue('radio-rudder-value', message.data);
     });
     // Subscribe to /sailbot/radio_sail
-    const radioSailTopic = new ROSLIB.Topic({
+    radioSailTopicGlobal = new ROSLIB.Topic({
         ros: ros,
         name: '/sailbot/radio_sail',
         messageType: 'std_msgs/Int32',
         throttle_rate: BASE_THROTTLE_RATE,
     });
-    radioSailTopic.subscribe(function (message) {
+    radioSailTopicGlobal.subscribe(function (message) {
         updateValue('radio-sail-value', message.data);
     });
     // Subscribe to /sailbot/rudder_angle
@@ -385,6 +389,21 @@ function subscribeToTopics() {
         updateValue('dropped-packets-value', message.data);
     });
 }
+
+// Publisher topic initializations for webserver sail and rudder angles
+function initializePublishers() {
+    webserverRudderTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: '/sailbot/webserver_rudder',
+        messageType: 'std_msgs/Int32'
+    });
+    webserverSailTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: '/sailbot/webserver_sail',
+        messageType: 'std_msgs/Int32'
+    });
+}
+
 // Connect to ROS when the page loads
 window.onload = function () {
     connectToROS();
@@ -904,3 +923,24 @@ function updateHeadAngle(angle, id) {
     // Update Text Display
     document.getElementById(id).innerText = "Angle: " + angle;
 }
+
+// ====================== BEGIN: Sail/Rudder Handling ==========================
+
+document.getElementById('sail-rudder-button').addEventListener('click', function (event) {
+    console.log("Button clicked!");
+    const sailAngle = document.getElementById('sail-input');
+    const rudderAngle = document.getElementById('rudder-input');
+
+    const sailMessage = new ROSLIB.Message({
+        data: parseInt(sailAngle.value, 10)
+    });
+
+    const rudderMessage = new ROSLIB.Message({
+        data: parseInt(rudderAngle.value, 10)
+    });
+    webserverRudderTopic.publish(rudderMessage);
+    webserverSailTopic.publish(sailMessage);
+})
+
+
+// ====================== END: Sail/Rudder Handling ============================
