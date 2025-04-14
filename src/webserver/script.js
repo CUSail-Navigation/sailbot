@@ -57,6 +57,13 @@ function initMap() {
                 map: map,
                 title: `Waypoint (${latitude},${longitude})`,
             });
+
+            marker.addListener("click", function() {
+                const waypointKey = `${latitude},${longitude}`;
+                console.log("Waypoint (${waypointKey}) clicked and removed");
+                const index = waypoints.indexOf(waypointKey);
+                deleteWaypoint(index)
+            });
     
             waypointMarkers[waypoint] = marker;
             waypointPlanCoordinates.push(latLng);
@@ -64,7 +71,7 @@ function initMap() {
             waypointPath.setPath(waypointPlanCoordinates);
     
             console.log(`Waypoint added: ${waypoint}`);
-        }
+        };
     });
 
     sailPath = new google.maps.Polyline({
