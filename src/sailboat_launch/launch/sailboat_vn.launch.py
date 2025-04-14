@@ -28,7 +28,6 @@ def generate_launch_description():
          parameters=[config]
       )
 
-
    mux_cmd = Node(
       package='sailboat_main',
       executable='mux',
