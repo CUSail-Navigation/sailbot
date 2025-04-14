@@ -30,11 +30,42 @@ function initMap() {
 
     google.maps.event.addListener(map, "mousemove", function (event) {
         document.getElementById("mouse-pos").innerText =
-            `Mouse Latitude: ${event.latLng.lat().toFixed(3)}
-            Mouse Longitude: ${event.latLng.lng().toFixed(3)}`;
+            `Mouse Latitude: ${event.latLng.lat().toFixed(6)}
+            Mouse Longitude: ${event.latLng.lng().toFixed(6)}`;
     });
 
-
+    map.addListener("dblclick", (e) => {
+        const latitude = e.latLng.lat().toFixed(6);
+        const longitude = e.latLng.lng().toFixed(6);
+    
+        if (latitude && longitude) {
+            // Create a waypoint string for storage
+            const waypoint = `${latitude},${longitude}`;
+            waypoints.push(waypoint)
+            addWaypointToQueue(waypoint); // Send the waypoint to ROS
+            displayWaypoints(); // Update the waypoint list in the UI
+    
+            // Parse latitude and longitude to create a LatLng object
+            const latLng = {
+                lat: parseFloat(latitude),
+                lng: parseFloat(longitude),
+            };
+    
+            // Add a marker for the new waypoint on the map
+            const marker = new google.maps.Marker({
+                position: latLng,
+                map: map,
+                title: `Waypoint (${latitude},${longitude})`,
+            });
+    
+            waypointMarkers[waypoint] = marker;
+            waypointPlanCoordinates.push(latLng);
+    
+            waypointPath.setPath(waypointPlanCoordinates);
+    
+            console.log(`Waypoint added: ${waypoint}`);
+        }
+    });
 
     sailPath = new google.maps.Polyline({
         path: sailPlanCoordinates,
@@ -461,6 +492,8 @@ document.getElementById('submit-waypoint').addEventListener('click', function ()
         alert('Please enter both latitude and longitude.');
     }
 });
+
+
 function addWaypointToQueue(waypoint) {
     const waypointsString = waypoints.join(';');
 
@@ -535,12 +568,24 @@ function displayWaypoints() {
         waypointElement.setAttribute('draggable', true);
         waypointElement.setAttribute('data-index', index);
 
-        // Create the text for the waypoint
-        const waypointText = document.createElement('span');
-        waypointText.textContent = waypoint;
+        const waypointText = document.createElement('div');
+        waypointText.classList.add('waypoint-coord');
+
+        const [lat, lng] = waypoint.split(',');
+
+        const latSpan = document.createElement('span');
+        latSpan.classList.add('lat');
+        latSpan.textContent = lat;
+
+        const lngSpan = document.createElement('span');
+        lngSpan.classList.add('lng');
+        lngSpan.textContent = lng;
+
+        waypointText.appendChild(latSpan);
+        waypointText.appendChild(document.createTextNode(', '));
+        waypointText.appendChild(lngSpan);
         waypointElement.appendChild(waypointText);
 
-        // Create the delete button
         const deleteButton = document.createElement('button');
         deleteButton.textContent = 'Delete';
         deleteButton.classList.add('delete-button');
