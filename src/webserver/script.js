@@ -59,15 +59,6 @@ function initMap() {
                 map: map,
                 title: `Waypoint (${latitude},${longitude})`,
             });
-
-            marker.addListener("click", function() {
-                console.log("clicked waypoint");
-                const waypointKey = `${latitude},${longitude}`;
-                console.log(`Waypoint (${waypointKey}) clicked and removed`);
-                const index = waypoints.indexOf(waypointKey);
-                if (index !== -1) deleteWaypoint(index);
-                else console.warn(`Waypoint ${waypointKey} not found in list`);
-            });
     
             waypointMarkers[waypoint] = marker;
             waypointPlanCoordinates.push(latLng);
@@ -490,15 +481,6 @@ document.getElementById('submit-waypoint').addEventListener('click', function ()
             position: latLng,
             map: map,
             title: `Waypoint (${latitude},${longitude})`,
-        });
-
-        marker.addListener("click", function() {
-            console.log("clicked waypoint");
-            const waypointKey = `${latitude},${longitude}`;
-            console.log(`Waypoint (${waypointKey}) clicked and removed`);
-            const index = waypoints.indexOf(waypointKey);
-            if (index !== -1) deleteWaypoint(index);
-            else console.warn(`Waypoint ${waypointKey} not found in list`);
         });
 
         waypointMarkers[waypoint] = marker;
