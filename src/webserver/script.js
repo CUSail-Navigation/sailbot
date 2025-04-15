@@ -39,8 +39,10 @@ function initMap() {
     });
 
     map.addListener("dblclick", (e) => {
-        const latitude = e.latLng.lat().toFixed(6);
-        const longitude = e.latLng.lng().toFixed(6);
+        // const latitude = e.latLng.lat().toFixed(6);
+        // const longitude = e.latLng.lng().toFixed(6);
+        const latitude = e.latLng.lat();
+        const longitude = e.latLng.lng();
     
         if (latitude && longitude) {
             // Create a waypoint string for storage
@@ -68,7 +70,7 @@ function initMap() {
             waypointPath.setPath(waypointPlanCoordinates);
     
             console.log(`Waypoint added: ${waypoint}`);
-        }
+        };
     });
 
     sailPath = new google.maps.Polyline({
@@ -566,6 +568,17 @@ function syncWaypointQueueFromBackend() {
                     map: map,
                     title: `Waypoint (${lat}, ${lng})`,
                 });
+
+                marker.addListener("click", function () {
+                    console.log("Clicked on waypoint marker");
+                    const index = waypoints.indexOf(key);
+                    if (index !== -1) {
+                        deleteWaypoint(index);
+                    } else {
+                        console.warn(`Waypoint ${key} not found in list`);
+                    }
+                });
+
                 waypointMarkers[key] = marker;
             });
 
@@ -637,7 +650,7 @@ document.getElementById('submit-buoy').addEventListener('click', function () {
             lng: parseFloat(longitude),
         };
 
-        // Add a marker for the new waypoint on the map
+        // Add a marker for the new buoy on the map
         const marker = new google.maps.Marker({
             position: latLng,
             map: map,
@@ -649,6 +662,16 @@ document.getElementById('submit-buoy').addEventListener('click', function () {
                 fillOpacity: 1,
                 strokeWeight: 1,
                 strokeColor: "#FFFFFF" // Optional: border color
+            }
+        });
+
+        marker.addListener("click", function () {
+            console.log(`Buoy clicked and removed: ${buoy}`);
+            marker.setMap(null); // Remove from map
+            delete buoyMarkers[buoy]; // Remove from marker tracking
+            const index = buoys.indexOf(buoy);
+            if (index !== -1) {
+                buoys.splice(index, 1);
             }
         });
 
