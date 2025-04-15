@@ -567,6 +567,17 @@ function syncWaypointQueueFromBackend() {
                     map: map,
                     title: `Waypoint (${lat}, ${lng})`,
                 });
+
+                marker.addListener("click", function () {
+                    console.log("Clicked on waypoint marker");
+                    const index = waypoints.indexOf(key);
+                    if (index !== -1) {
+                        deleteWaypoint(index);
+                    } else {
+                        console.warn(`Waypoint ${key} not found in list`);
+                    }
+                });
+
                 waypointMarkers[key] = marker;
             });
 
