@@ -20,7 +20,7 @@ class WaypointService(Node):
         self.waypoint_publisher = self.create_publisher(NavSatFix, 'current_waypoint', 10)
 
         # Get initial waypoints from config
-        self.declare_parameter('waypoints', ["0, 0"])  # Dummy initial
+        self.declare_parameter('waypoints', ["42.444235, -76.483628"])  # default initial, located in Eng Quad
         waypoints_param = self.get_parameter('waypoints').get_parameter_value().string_array_value
 
         self.waypoints = self.parse_waypoints_param(waypoints_param)
