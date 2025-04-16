@@ -20,11 +20,9 @@ class WaypointService(Node):
         self.waypoint_publisher = self.create_publisher(NavSatFix, 'current_waypoint', 10)
 
         # Get initial waypoints from config
-        self.declare_parameter('waypoints', ["42.444235, -76.483628"])  # default initial, located in Eng Quad
+        self.declare_parameter('waypoints', ["42.444235, -76.483628"]) # default initial, located in Eng Quad
         waypoints_param = self.get_parameter('waypoints').get_parameter_value().string_array_value
-
         self.waypoints = self.parse_waypoints_param(waypoints_param)
-        self.current_index = 0  # Index for the front of the waypoint queue
 
         self.publish_current_waypoint()
 
@@ -43,7 +41,7 @@ class WaypointService(Node):
         Publish the current waypoint (front of queue) as a NavSatFix message.
         Assumes coordinates are in latitude, longitude format.
         """
-        if not self.waypoints:
+        if self.waypoints == []:
             self.get_logger().warning("No waypoints to publish")
             return
             
