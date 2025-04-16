@@ -4,6 +4,7 @@ from std_msgs.msg import String
 from sensor_msgs.msg import NavSatFix
 import threading
 from sailboat_interface.srv import Waypoint
+from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 
 
 class WaypointService(Node):
@@ -20,11 +21,17 @@ class WaypointService(Node):
         self.waypoint_publisher = self.create_publisher(NavSatFix, 'current_waypoint', 10)
 
         # Get initial waypoints from config
-        self.declare_parameter('waypoints', ["42.444235, -76.483628"]) # default initial, located in Eng Quad
+        self.declare_parameter('waypoints', [""], ParameterDescriptor(
+            type=ParameterType.PARAMETER_STRING_ARRAY,
+            description="List of waypoints in the format 'lat,lon' separated by ';'. Example: '37.7749,-122.4194;37.7749,-122.4195'",
+        ))  # Default to an empty list if no waypoints are provided
         waypoints_param = self.get_parameter('waypoints').get_parameter_value().string_array_value
-        self.waypoints = self.parse_waypoints_param(waypoints_param)
 
-        self.publish_current_waypoint()
+        # this is a workaround for if no defaults are set; ROS requires a parameter string array be non-empty when declaring a parameter
+        # but we want a default truly empty waypoint queue
+        self.waypoints = self.parse_waypoints_param(waypoints_param) if waypoints_param != [''] else []
+
+        self.publish_current_waypoint() # Publish the first waypoint if self.waypoints is non-empty
 
         self.get_logger().info('Navigate service started')
 
