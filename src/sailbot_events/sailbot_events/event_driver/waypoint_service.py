@@ -1,6 +1,5 @@
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import String
 from sensor_msgs.msg import NavSatFix
 import threading
 from sailboat_interface.srv import Waypoint
