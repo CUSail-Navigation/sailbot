@@ -411,7 +411,8 @@ function subscribeToTopics() {
     const droppedPacketsTopic = new ROSLIB.Topic({
         ros: ros,
         name: '/sailbot/dropped_packets',
-        messageType: 'std_msgs/Int32'
+        messageType: 'std_msgs/Int32',
+        throttle_rate: BASE_THROTTLE_RATE
     });
     droppedPacketsTopic.subscribe(function (message) {
         updateValue('dropped-packets-value', message.data);
@@ -420,6 +421,7 @@ function subscribeToTopics() {
         ros,
         name: 'sailbot/current_waypoint',
         messageType: 'sensor_msgs/NavSatFix',
+        throttle_rate: BASE_THROTTLE_RATE
     });
 
     currentWaypoint.subscribe((_) => {
@@ -434,12 +436,14 @@ function initializePublishers() {
     webserverRudderTopic = new ROSLIB.Topic({
         ros: ros,
         name: '/sailbot/webserver_rudder',
-        messageType: 'std_msgs/Int32'
+        messageType: 'std_msgs/Int32',
+        throttle_rate: BASE_THROTTLE_RATE
     });
     webserverSailTopic = new ROSLIB.Topic({
         ros: ros,
         name: '/sailbot/webserver_sail',
-        messageType: 'std_msgs/Int32'
+        messageType: 'std_msgs/Int32',
+        throttle_rate: BASE_THROTTLE_RATE
     });
 }
 
