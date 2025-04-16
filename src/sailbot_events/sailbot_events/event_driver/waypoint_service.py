@@ -23,7 +23,7 @@ class WaypointService(Node):
         # Get initial waypoints from config
         self.declare_parameter('waypoints', [""], ParameterDescriptor(
             type=ParameterType.PARAMETER_STRING_ARRAY,
-            description="List of waypoints in the format 'lat,lon' separated by ';'. Example: '37.7749,-122.4194;37.7749,-122.4195'",
+            description="List of waypoints in the format 'lat,lon' separated by ',. Example: '37.7749,-122.4194,37.7749,-122.4195'",
         ))  # Default to an empty list if no waypoints are provided
         waypoints_param = self.get_parameter('waypoints').get_parameter_value().string_array_value
 
