@@ -39,13 +39,11 @@ class MuxNode(Node):
 
     def sail_callback(self, msg, source):
         self.control_sources[source]['sail'] = msg.data
-        if source == 'webserver' or source == 'controller_app':
-            self.get_logger().info(f'{source} sail angle: {msg.data}')
+        self.get_logger().info(f'{source} sail angle: {msg.data}')
 
     def rudder_callback(self, msg, source):
         self.control_sources[source]['rudder'] = msg.data
-        if source == 'webserver' or source == 'controller_app':
-            self.get_logger().info(f'{source} rudder angle: {msg.data}')
+        self.get_logger().info(f'{source} rudder angle: {msg.data}')
 
     def control_mode_callback(self, msg):
         if msg.data in self.control_sources:
