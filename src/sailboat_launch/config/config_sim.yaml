@@ -3,9 +3,8 @@
       timer_period: 0.5
 
 sailbot: #Namespace
-   airmar: #Node
+   vectornav:
       ros__parameters:
-         airmar_port: "/dev/ttyACM0"
          use_fake_data: true
 
    vectornav:
@@ -15,7 +14,6 @@ sailbot: #Namespace
    
    teensy:
       ros__parameters:
-         teensy_port: "COM9"
          simulated: true
 
    radio:

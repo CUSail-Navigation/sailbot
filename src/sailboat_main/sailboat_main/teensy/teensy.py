@@ -85,7 +85,7 @@ class TeensyHardware:
         try:
             # check bounds
             sail = max(min(sail, 127), -128)
-            rudder = max(min(rudder, 127), -128)
+            rudder = rudder + 25
         
             # convert sail and tail to signed 8-bit integers (bytes)
             sail_byte = sail & 0xFF if sail >= 0 else (sail + 256) & 0xFF

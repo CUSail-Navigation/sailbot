@@ -82,7 +82,7 @@ body {
 }
 
 .waypoint-list {
-    width: 200px;
+    width: 300px;
     top: 20px;
     right: 20px;
     padding: 10px;
@@ -231,8 +231,35 @@ button:hover {
 
 .waypoint-item {
     display: flex;
+    align-items: center;
     justify-content: space-between;
+    padding: 5px 10px;
     border-radius: 10px;
+    font-family: monospace;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+
+.waypoint-coord {
+    display: flex;
+    flex: 1;
+    gap: 4px;
+    overflow: hidden;
+}
+
+.lat, .lng {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.waypoint-item span {
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .waypoint-item:hover {
@@ -240,15 +267,21 @@ button:hover {
 }
 
 .delete-button {
+    margin-left: 10px;
     background-color: #B41414;
-    margin-bottom: 5px;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 #mouse-pos {
     padding: 10px;
     font-size: 16px;
     font-weight: bold;
-    width: 200px;
+    width: 400px;
 }
 
 details summary {

@@ -2,6 +2,10 @@ let ros;
 let controlModeTopic;
 let waypointTopic;
 
+// topics for publishing sail and rudder angles from the webserver to the sailboat
+let webserverRudderTopic;
+let webserverSailTopic;
+
 console.log("script.js loaded successfully");
 
 let waypoints = []; // Global array for storing waypoints
@@ -30,11 +34,44 @@ function initMap() {
 
     google.maps.event.addListener(map, "mousemove", function (event) {
         document.getElementById("mouse-pos").innerText =
-            `Mouse Latitude: ${event.latLng.lat().toFixed(3)}
-            Mouse Longitude: ${event.latLng.lng().toFixed(3)}`;
+            `Mouse Latitude: ${event.latLng.lat().toFixed(6)}
+            Mouse Longitude: ${event.latLng.lng().toFixed(6)}`;
     });
 
-
+    map.addListener("dblclick", (e) => {
+        // const latitude = e.latLng.lat().toFixed(6);
+        // const longitude = e.latLng.lng().toFixed(6);
+        const latitude = e.latLng.lat();
+        const longitude = e.latLng.lng();
+    
+        if (latitude && longitude) {
+            // Create a waypoint string for storage
+            const waypoint = `${latitude},${longitude}`;
+            waypoints.push(waypoint)
+            addWaypointToQueue(waypoint); // Send the waypoint to ROS
+            displayWaypoints(); // Update the waypoint list in the UI
+    
+            // Parse latitude and longitude to create a LatLng object
+            const latLng = {
+                lat: parseFloat(latitude),
+                lng: parseFloat(longitude),
+            };
+    
+            // Add a marker for the new waypoint on the map
+            const marker = new google.maps.Marker({
+                position: latLng,
+                map: map,
+                title: `Waypoint (${latitude},${longitude})`,
+            });
+    
+            waypointMarkers[waypoint] = marker;
+            waypointPlanCoordinates.push(latLng);
+    
+            waypointPath.setPath(waypointPlanCoordinates);
+    
+            console.log(`Waypoint added: ${waypoint}`);
+        };
+    });
 
     sailPath = new google.maps.Polyline({
         path: sailPlanCoordinates,
@@ -74,7 +111,6 @@ function updateTrail(latitude, longitude) {
     sailPath.setPath(currentPath);
 }
 
-
 function connectToROS(url) {
     ros = new ROSLIB.Ros({
         url: url
@@ -83,6 +119,7 @@ function connectToROS(url) {
     ros.on('connection', function () {
         console.log('Connected to rosbridge server at:', url);
         subscribeToTopics();
+        initializePublishers();
     });
 
     ros.on('error', function (error) {
@@ -122,11 +159,20 @@ function parseGpsData(message) {
 
     if (!sailboatMarker) {
         // Create a new arrow marker if it doesn't exist
+        // Create a new arrow marker if it doesn't exist
         sailboatMarker = new google.maps.Marker({
             position: sailboatLocation,
             map: map,
             title: "Sailboat Location",
             icon: {
+                path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                scale: 5,
+                fillColor: "#007bff",  // Blue
+                fillOpacity: 1,
+                strokeWeight: 1,
+                strokeColor: "#ffffff",
+                rotation: 0, // Default heading (will update in parseHeading)
+                anchor: new google.maps.Point(0, 2), // Helps center arrow tip
                 path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
                 scale: 5,
                 fillColor: "#007bff",  // Blue
@@ -162,6 +208,16 @@ function parseHeading(message) {
     let googleHeading = (90 - heading + 360) % 360;
 
     if (sailboatMarker) {
+        sailboatMarker.setIcon({
+            path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+            scale: 5,
+            fillColor: "#007bff",
+            fillOpacity: 1,
+            strokeWeight: 1,
+            strokeColor: "#ffffff",
+            rotation: googleHeading,
+            anchor: new google.maps.Point(0, 2)
+        });
         sailboatMarker.setIcon({
             path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
             scale: 5,
@@ -246,23 +302,23 @@ function subscribeToTopics() {
         conditionalRender();
     });
     // Subscribe to /sailbot/radio_rudder
-    const radioRudderTopic = new ROSLIB.Topic({
+    radioRudderTopicGlobal = new ROSLIB.Topic({
         ros: ros,
         name: '/sailbot/radio_rudder',
         messageType: 'std_msgs/Int32',
         throttle_rate: BASE_THROTTLE_RATE,
     });
-    radioRudderTopic.subscribe(function (message) {
+    radioRudderTopicGlobal.subscribe(function (message) {
         updateValue('radio-rudder-value', message.data);
     });
     // Subscribe to /sailbot/radio_sail
-    const radioSailTopic = new ROSLIB.Topic({
+    radioSailTopicGlobal = new ROSLIB.Topic({
         ros: ros,
         name: '/sailbot/radio_sail',
         messageType: 'std_msgs/Int32',
         throttle_rate: BASE_THROTTLE_RATE,
     });
-    radioSailTopic.subscribe(function (message) {
+    radioSailTopicGlobal.subscribe(function (message) {
         updateValue('radio-sail-value', message.data);
     });
     // Subscribe to /sailbot/rudder_angle
@@ -349,7 +405,7 @@ function subscribeToTopics() {
         throttle_rate: BASE_THROTTLE_RATE,
     });
     algoDebugTopic.subscribe(function (message) {
-        console.log("Algo debug")
+        // console.log("Algo debug")
         // Extract and log the received data
         const tacking = message.tacking;
         const tackingPoint = message.tacking_point;
@@ -357,6 +413,7 @@ function subscribeToTopics() {
         const currDest = message.curr_dest;
         const diff = message.diff.data;
         const dist = message.dist_to_dest.data;
+
 
         document.getElementById('tacking-value').innerText = tacking;
         document.getElementById('tacking-point-value').innerText = `${tackingPoint.latitude.toFixed(6)}, ${tackingPoint.longitude.toFixed(6)}`;
@@ -371,20 +428,45 @@ function subscribeToTopics() {
         name: '/sailbot/mutate_waypoint_queue',
         serviceType: 'sailboat_interface/srv/Waypoint'
     });
-    waypointService = new ROSLIB.Service({
-        ros: ros,
-        name: '/sailbot/mutate_waypoint_queue',
-        serviceType: 'sailboat_interface/srv/Waypoint'
-    });
     const droppedPacketsTopic = new ROSLIB.Topic({
         ros: ros,
         name: '/sailbot/dropped_packets',
-        messageType: 'std_msgs/Int32'
+        messageType: 'std_msgs/Int32',
+        throttle_rate: BASE_THROTTLE_RATE
     });
     droppedPacketsTopic.subscribe(function (message) {
         updateValue('dropped-packets-value', message.data);
     });
+    const currentWaypoint = new ROSLIB.Topic({
+        ros,
+        name: 'sailbot/current_waypoint',
+        messageType: 'sensor_msgs/NavSatFix',
+        throttle_rate: BASE_THROTTLE_RATE
+    });
+
+    currentWaypoint.subscribe((_) => {
+        syncWaypointQueueFromBackend();
+    })
+
+    syncWaypointQueueFromBackend();
 }
+
+// Publisher topic initializations for webserver sail and rudder angles
+function initializePublishers() {
+    webserverRudderTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: '/sailbot/webserver_rudder',
+        messageType: 'std_msgs/Int32',
+        throttle_rate: BASE_THROTTLE_RATE
+    });
+    webserverSailTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: '/sailbot/webserver_sail',
+        messageType: 'std_msgs/Int32',
+        throttle_rate: BASE_THROTTLE_RATE
+    });
+}
+
 // Connect to ROS when the page loads
 window.onload = function () {
     connectToROS();
@@ -455,6 +537,8 @@ document.getElementById('submit-waypoint').addEventListener('click', function ()
         alert('Please enter both latitude and longitude.');
     }
 });
+
+
 function addWaypointToQueue(waypoint) {
     const waypointsString = waypoints.join(';');
 
@@ -471,8 +555,65 @@ function addWaypointToQueue(waypoint) {
         }
     });
 
-    getWaypointQueue();
+    syncWaypointQueueFromBackend();
 }
+
+function syncWaypointQueueFromBackend() {
+    const getRequest = new ROSLIB.ServiceRequest({
+        command: "get",
+        argument: ""
+    });
+
+    waypointService.callService(getRequest, function (getResult) {
+        if (getResult.success) {
+            console.log("Synced waypoint queue from backend:", getResult.message);
+
+            const formatted = getResult.message
+                .replace(/\(/g, '[')
+                .replace(/\)/g, ']')
+                .replace(/'/g, '"');
+
+            const parsed = JSON.parse(formatted);
+
+            waypoints = parsed.map(pair => `${pair[0]},${pair[1]}`);
+            waypointPlanCoordinates = parsed.map(pair => ({ lat: pair[0], lng: pair[1] }));
+
+            // Clear existing markers
+            for (const key in waypointMarkers) {
+                waypointMarkers[key].setMap(null);
+            }
+            Object.keys(waypointMarkers).forEach(key => delete waypointMarkers[key]);
+
+            // Add new markers
+            parsed.forEach(([lat, lng]) => {
+                const key = `${lat},${lng}`;
+                const marker = new google.maps.Marker({
+                    position: { lat, lng },
+                    map: map,
+                    title: `Waypoint (${lat}, ${lng})`,
+                });
+
+                marker.addListener("click", function () {
+                    console.log("Clicked on waypoint marker");
+                    const index = waypoints.indexOf(key);
+                    if (index !== -1) {
+                        deleteWaypoint(index);
+                    } else {
+                        console.warn(`Waypoint ${key} not found in list`);
+                    }
+                });
+
+                waypointMarkers[key] = marker;
+            });
+
+            displayWaypoints();
+            waypointPath.setPath(waypointPlanCoordinates);
+        } else {
+            console.error("Failed to sync waypoint queue from backend:", getResult.message);
+        }
+    });
+}
+
 function displayWaypoints() {
     const waypointListElement = document.getElementById('waypoint-list');
     waypointListElement.innerHTML = ''; // Clear existing list
@@ -483,12 +624,24 @@ function displayWaypoints() {
         waypointElement.setAttribute('draggable', true);
         waypointElement.setAttribute('data-index', index);
 
-        // Create the text for the waypoint
-        const waypointText = document.createElement('span');
-        waypointText.textContent = waypoint;
+        const waypointText = document.createElement('div');
+        waypointText.classList.add('waypoint-coord');
+
+        const [lat, lng] = waypoint.split(',');
+
+        const latSpan = document.createElement('span');
+        latSpan.classList.add('lat');
+        latSpan.textContent = lat;
+
+        const lngSpan = document.createElement('span');
+        lngSpan.classList.add('lng');
+        lngSpan.textContent = lng;
+
+        waypointText.appendChild(latSpan);
+        waypointText.appendChild(document.createTextNode(', '));
+        waypointText.appendChild(lngSpan);
         waypointElement.appendChild(waypointText);
 
-        // Create the delete button
         const deleteButton = document.createElement('button');
         deleteButton.textContent = 'Delete';
         deleteButton.classList.add('delete-button');
@@ -521,7 +674,7 @@ document.getElementById('submit-buoy').addEventListener('click', function () {
             lng: parseFloat(longitude),
         };
 
-        // Add a marker for the new waypoint on the map
+        // Add a marker for the new buoy on the map
         const marker = new google.maps.Marker({
             position: latLng,
             map: map,
@@ -533,6 +686,16 @@ document.getElementById('submit-buoy').addEventListener('click', function () {
                 fillOpacity: 1,
                 strokeWeight: 1,
                 strokeColor: "#FFFFFF" // Optional: border color
+            }
+        });
+
+        marker.addListener("click", function () {
+            console.log(`Buoy clicked and removed: ${buoy}`);
+            marker.setMap(null); // Remove from map
+            delete buoyMarkers[buoy]; // Remove from marker tracking
+            const index = buoys.indexOf(buoy);
+            if (index !== -1) {
+                buoys.splice(index, 1);
             }
         });
 
@@ -591,8 +754,7 @@ function handleDragEnd(event) {
             console.error(result.message);
         }
     });
-
-    getWaypointQueue()
+    syncWaypointQueueFromBackend();
 }
 function deleteWaypoint(index) {
     // Remove the waypoint from the local array
@@ -641,23 +803,10 @@ function deleteWaypoint(index) {
     });
 
     // Update the display
-    getWaypointQueue();
+    syncWaypointQueueFromBackend();
     displayWaypoints();
 }
-function getWaypointQueue() {
-    const getRequest = new ROSLIB.ServiceRequest({
-        command: "get",
-        argument: ""
-    });
 
-    waypointService.callService(getRequest, function (getResult) {
-        if (getResult.success) {
-            console.log("Current ROS waypoint queue:", getResult.message);
-        } else {
-            console.error("Failed to fetch waypoint queue:", getResult.message);
-        }
-    });
-}
 // Function to toggle dropdown visibility
 function toggleDropdown() {
     const dropdownContent = document.getElementById("dropdown-content");
@@ -917,3 +1066,24 @@ function toggleSection(headerElement) {
         icon.textContent = "+"; // plus sign
     }
 }
+
+// ====================== BEGIN: Sail/Rudder Handling ==========================
+
+document.getElementById('sail-rudder-button').addEventListener('click', function (event) {
+    console.log("Button clicked!");
+    const sailAngle = document.getElementById('sail-input');
+    const rudderAngle = document.getElementById('rudder-input');
+
+    const sailMessage = new ROSLIB.Message({
+        data: parseInt(sailAngle.value, 10)
+    });
+
+    const rudderMessage = new ROSLIB.Message({
+        data: parseInt(rudderAngle.value, 10)
+    });
+    webserverRudderTopic.publish(rudderMessage);
+    webserverSailTopic.publish(sailMessage);
+})
+
+
+// ====================== END: Sail/Rudder Handling ============================

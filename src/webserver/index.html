@@ -129,6 +129,29 @@
                 <div class="table-heading" onclick="toggleSection(this)">
                     <h1>Waypoint & Buoy Input <span class="toggle-icon">+</span></h1>
                 </div>
+            </div>
+            <div class="table-container">
+                <h1>Sail/Rudder Input</h1>
+                <div class="table">
+                    <div class="status-row">
+                        <span class="status-label">Sail Input:</span>
+                        <div class="input-group">
+                            <input type="number" id="sail-input" name="sail-input" placeholder="Enter sail input"
+                                required>
+                        </div>
+                        <span class="status-label">Rudder Input:</span>
+                        <div class="input-group">
+                            <input type="number" id="rudder-input" name="rudder-input" placeholder="Enter rudder input"
+                                required>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button type="button" id="sail-rudder-button">Submit</button>
+                    </div>
+                </div>
+            </div>
+            <div class="table-container">
+                <h1>Waypoint & Buoy Input</h1>
                 <div class="waypoint-buoy-container">
                     <div class="waypoint-buoy-table">
                         <div class="status-row-input second">
@@ -184,6 +207,7 @@
                         <div id="dropdown-content" class="dropdown-content">
                             <a href="#" onclick="selectMode('Algorithm')">Algorithm</a>
                             <a href="#" onclick="selectMode('Radio')">Radio</a>
+                            <a href="#" onclick="selectMode('Webserver')">Webserver</a>
                         </div>
                     </div>
                 </div>

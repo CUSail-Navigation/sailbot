@@ -12,20 +12,27 @@ class Radio(Node):
             # Declare "simulated" parameter
             self.declare_parameter('simulated', False)
             self.simulated = self.get_parameter('simulated').value  # gets from config file
-            
+
+            # Declare "source" parameter. Determines whether to use XBee or Webserver comms
+            self.declare_parameter('source', 'webserver')
+            self.source = self.get_parameter('source').value
+
             # Create publisher for SailTail.msg
             self.publisher_rudder = self.create_publisher(Int32, 'radio_rudder', 10)
             self.publisher_sail = self.create_publisher(Int32, 'radio_sail', 10)
 
-            # Depending on simulation flag, instantiate RadioHardware or FakeRadio
-            if self.simulated:
-                self.radio_interface = FakeRadio()
-            else:
-                self.radio_interface = RadioHardware(self.get_logger())
-
-            # Timer callback to check and read data periodically
-            self.timer = self.create_timer(0.1, self.timer_callback)  # Check every 100ms
-            self.get_logger().info(f"Starting up radio module in {'simulated' if self.simulated else 'hardware'} mode")
+            # If we are using the webserver, the webserver will automatically publish the data 
+            # to radio_rudder and radio_sail so we don't need to do anything here.
+            if self.source != 'webserver':            
+                # Depending on simulation flag, instantiate RadioHardware or FakeRadio
+                if self.simulated:
+                    self.radio_interface = FakeRadio()
+                else:
+                    self.radio_interface = RadioHardware(self.get_logger())
+                
+                # Timer callback to check and read data periodically
+                self.timer = self.create_timer(0.1, self.timer_callback)  # Check every 100ms
+                self.get_logger().info(f"Starting up radio module in {'simulated' if self.simulated else 'hardware'} mode")
 
     def timer_callback(self):
         a, b = self.radio_interface.read_data()
