@@ -16,19 +16,21 @@
             <div class="map-container">
                 <div class="map-content">
                     <div id="map"></div>
+                    <div class="mouse-position">
+                        <div id="mouse-pos">Mouse position</div>
+                    </div>
                 </div>
                 <div class="waypoint-list">
                     <span class="status-label">Waypoints:</span>
                     <span class="status-value" id="waypoint-list"></span>
                 </div>
-                <div class="mouse-position">
-                    <div id="mouse-pos">Mouse position</div>
-                </div>
             </div>
         </div>
         <div class="right-column">
             <div class="table-container">
-                <h1>Sailbot Status Dashboard</h1>
+                <div class="table-heading" onclick="toggleSection(this)">
+                    <h1>Sailbot Status Dashboard <span class="toggle-icon">+</span></h1>
+                </div>
                 <div class="table status">
                     <div class="status-row">
                         <span class="status-label">Control Mode:</span>
@@ -43,74 +45,60 @@
                         <span class="status-value" id="rudder-angle-value">N/A</span>
                     </div>
 
-                    <details>
-                        <summary>Algo View</summary>
-                        <div class="status-row algo-mode">
-                            <span class="status-label">Algo Rudder:</span>
-                            <span class="status-value" id="algo-rudder-value">N/A</span>
-                        </div>
-                        <div class="status-row algo-mode">
-                            <span class="status-label">Algo Sail:</span>
-                            <span class="status-value" id="algo-sail-value">N/A</span>
-                        </div>
-                        <div class="status-row algo-mode">
-                            <span class="status-label">Tacking Point:</span>
-                            <span class="status-value" id="algo-sail-value">N/A</span>
-                        </div>
-                    </details>
+                    <div class="status-row algo-mode">
+                        <span class="status-label">Algo Rudder:</span>
+                        <span class="status-value" id="algo-rudder-value">N/A</span>
+                    </div>
+                    <div class="status-row algo-mode">
+                        <span class="status-label">Algo Sail:</span>
+                        <span class="status-value" id="algo-sail-value">N/A</span>
+                    </div>
 
-                    <details>
-                        <summary>RC View</summary>
-                        <div class="status-row rc-mode">
-                            <span class="status-label">Radio Rudder:</span>
-                            <span class="status-value" id="radio-rudder-value">N/A</span>
-                        </div>
-                        <div class="status-row rc-mode">
-                            <span class="status-label">Radio Sail:</span>
-                            <span class="status-value" id="radio-sail-value">N/A</span>
-                        </div>
-                    </details>
+                    <div class="status-row rc-mode">
+                        <span class="status-label">Radio Rudder:</span>
+                        <span class="status-value" id="radio-rudder-value">N/A</span>
+                    </div>
+                    <div class="status-row rc-mode">
+                        <span class="status-label">Radio Sail:</span>
+                        <span class="status-value" id="radio-sail-value">N/A</span>
+                    </div>
 
-                    <details>
-                        <summary>Sensor View</summary>
-                        <div class="status-row">
-                            <span class="status-label">Wind Angle: </span>
-                            <span class="status-value" id="wind-angle-value">N/A</span>
-                        </div>
-                        <div class="status-row">
-                            <span class="status-label">Heading Angle: </span>
-                            <span class="status-value" id="heading-value">N/A</span>
-                        </div>
-                        <div class="status-row">
-                            <span class="status-label">Sailboat Latitude: </span>
-                            <span class="status-value" id="latitude-value">N/A</span>
-                        </div>
-                        <div class="status-row">
-                            <span class="status-label">Sailboat Longitude: </span>
-                            <span class="status-value" id="longitude-value">N/A</span>
-                        </div>
-                    </details>
+                    <div class="status-row">
+                        <span class="status-label">Wind Angle: </span>
+                        <span class="status-value" id="wind-angle-value">N/A</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Heading Angle: </span>
+                        <span class="status-value" id="heading-value">N/A</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Sailboat Latitude: </span>
+                        <span class="status-value" id="latitude-value">N/A</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Sailboat Longitude: </span>
+                        <span class="status-value" id="longitude-value">N/A</span>
+                    </div>
 
-                    <details>
-                        <summary>Teensy View</summary>
-                        <div class="status-row">
-                            <span class="status-label">Actual Sail Angle: </span>
-                            <span class="status-value" id="actual-sail-angle-value">N/A</span>
-                        </div>
-                        <div class="status-row">
-                            <span class="status-label">Actual Tail Angle: </span>
-                            <span class="status-value" id="actual-tail-angle-value">N/A</span>
-                        </div>
-                        <div class="status-row">
-                            <span class="status-label">Dropped Packets: </span>
-                            <span class="status-value" id="dropped-packets-value">N/A</span>
-                        </div>
-                    </details>
+                    <div class="status-row">
+                        <span class="status-label">Actual Sail Angle: </span>
+                        <span class="status-value" id="actual-sail-angle-value">N/A</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Actual Tail Angle: </span>
+                        <span class="status-value" id="actual-tail-angle-value">N/A</span>
+                    </div>
+                    <div class="status-row">
+                        <span class="status-label">Dropped Packets: </span>
+                        <span class="status-value" id="dropped-packets-value">N/A</span>
+                    </div>
                 </div>
             </div>
             <div class="table-container">
-                <h1>Algo Debugger</h1>
-                <div class="table">
+                <div class="table-heading" onclick="toggleSection(this)">
+                    <h1>Algo Debugger <span class="toggle-icon">+</span></h1>
+                </div>
+                <div class="status table">
                     <div class="status-row">
                         <span class="status-label">Tacking:</span>
                         <span class="status-value" id="tacking-value">N/A</span>
@@ -138,22 +126,9 @@
                 </div>
             </div>
             <div class="table-container">
-                <h1>Connect to ROS</h1>
-                <div class="table">
-                    <div class="status-row">
-                        <span class="status-label">ROS URL:</span>
-                        <div class="input-group">
-                            <input type="url" id="ros-url" name="ros-url" inputmode="url" placeholder="Enter ROS URL"
-                                required>
-                        </div>
-                    </div>
-                    <div class="button-group">
-                        <button type="button" id="connect-to-ros">Submit</button>
-                    </div>
+                <div class="table-heading" onclick="toggleSection(this)">
+                    <h1>Waypoint & Buoy Input <span class="toggle-icon">+</span></h1>
                 </div>
-            </div>
-            <div class="table-container">
-                <h1>Waypoint & Buoy Input</h1>
                 <div class="waypoint-buoy-container">
                     <div class="waypoint-buoy-table">
                         <div class="status-row-input second">
@@ -196,13 +171,16 @@
                 </div>
             </div>
             <div class="table-container">
-                <h1>Algo/RC Chooser</h1>
+                <div class="table-heading" onclick="toggleSection(this)">
+                    <h1>Algo/RC Chooser <span class="toggle-icon">+</span></h1>
+                </div>
                 <div class="table">
                     <div class="status-row second">
                         <span class="status-label">Options: </span>
                     </div>
                     <div class="dropdown">
-                        <button class="dropdown-button" id="mode-button" onclick="toggleDropdown()">Select Mode</button>
+                        <button class="dropdown-button" id="mode-button" onclick="toggleDropdown()">Select
+                            Mode</button>
                         <div id="dropdown-content" class="dropdown-content">
                             <a href="#" onclick="selectMode('Algorithm')">Algorithm</a>
                             <a href="#" onclick="selectMode('Radio')">Radio</a>
@@ -210,7 +188,23 @@
                     </div>
                 </div>
             </div>
-
+            <div class="table-container">
+                <div class="table-heading" onclick="toggleSection(this)">
+                    <h1>Connect to ROS <span class="toggle-icon">+</span></h1>
+                </div>
+                <div class="table">
+                    <div class="status-row">
+                        <span class="status-label">ROS URL:</span>
+                        <div class="input-group">
+                            <input type="url" id="ros-url" name="ros-url" inputmode="url" placeholder="Enter ROS URL"
+                                required>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button type="button" id="connect-to-ros">Submit</button>
+                    </div>
+                </div>
+            </div>
             <div id="sailboat-angle-dashboard">
                 <div class="dial">
                     <h3>Sail Angle</h3>

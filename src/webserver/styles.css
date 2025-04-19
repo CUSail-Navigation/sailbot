@@ -1,25 +1,30 @@
 body {
     font-family: Arial, sans-serif;
     margin: 0;
-    padding: 20px;
+    padding: 20px 20px 80px 20px;
     background-color: #F0F0F0;
 }
 
 .main-container {
     display: flex;
-    gap: 20px;
+    gap: 10px;
+    align-items: flex-start;
+    height: 95vh;
 }
 
 .left-column {
     flex: 1;
     display: flex;
-    padding: 20px;
-    max-height: 874px;
+    padding: 10px;
+    height: 100%;
+    max-height: 100%;
 }
 
 .right-column {
-    max-width: 400px;
-    padding: 20px;
+    max-width: 450px;
+    height: 100%;
+    padding: 20px 40px 20px 20px;
+    overflow-y: auto;
 }
 
 .map-container {
@@ -43,29 +48,37 @@ body {
     height: 100%;
 }
 
+.table-heading {
+    max-width: 620px;
+    width: 100%;
+    margin: 0 auto;
+    text-align: center;
+    padding: 0 20px;
+}
+
 .table-container {
     width: 100%;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
 }
 
 .waypoint-buoy-container {
     width: 100%;
+    max-width: 620px;
     display: flex;
-    flex-direction: row;
-    align-items: center;
+    justify-content: space-between;
+    align-items: stretch;
     gap: 10px;
-    max-width: 400px;
+    margin: 0 auto;
 }
 
 .waypoint-buoy-table {
-    min-width: 160px;
+    flex: 1;
+    padding: 20px;
     background-color: #fff;
     border-radius: 10px;
-    padding: 20px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
 }
 
 .waypoint-list {
@@ -79,6 +92,7 @@ body {
 
 h1 {
     margin-bottom: 10px;
+    align-items: center;
 }
 
 .table {
@@ -88,7 +102,6 @@ h1 {
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    float: right;
 }
 
 .table.status {
@@ -111,17 +124,40 @@ input[type="number"] {
     border-radius: 5px;
     width: 80px;
     text-align: left;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+
+.input-group input[type="url"] {
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 100%;
+    text-align: left;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .status-row {
     display: flex;
     justify-content: space-between;
+}
 
+.table.status .status-row {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    width: 100%;
+}
+
+.table.status .status-row:last-child {
+    border-bottom: none;
+    /* clean bottom */
 }
 
 .status-row-input {
     display: flex;
-    margin-bottom: 10px;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 15px;
 }
 
 .status-row.second {
@@ -224,4 +260,20 @@ details summary {
 
 details div {
     margin-top: 10px;
+}
+
+
+.toggle-icon {
+    display: inline-block;
+    font-weight: bold;
+    font-size: 1.2rem;
+    width: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s, color 0.2s;
+}
+
+.toggle-icon:hover {
+    color: #007bff;
+    transform: scale(1.2);
 }

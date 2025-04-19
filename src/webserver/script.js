@@ -904,3 +904,16 @@ function updateHeadAngle(angle, id) {
     // Update Text Display
     document.getElementById(id).innerText = "Angle: " + angle;
 }
+
+function toggleSection(headerElement) {
+    const content = headerElement.nextElementSibling;
+    const icon = headerElement.querySelector(".toggle-icon");
+
+    if (content.style.display === "none" || !content.style.display) {
+        content.style.display = "block";
+        icon.textContent = "−"; // minus sign
+    } else {
+        content.style.display = "none";
+        icon.textContent = "+"; // plus sign
+    }
+}
