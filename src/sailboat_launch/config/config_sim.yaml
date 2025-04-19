@@ -6,11 +6,6 @@ sailbot: #Namespace
    vectornav:
       ros__parameters:
          use_fake_data: true
-
-   vectornav:
-      ros__parameters:
-         vectornav_port: "/dev/ttyUSB0"
-         use_fake_data: true
    
    teensy:
       ros__parameters:

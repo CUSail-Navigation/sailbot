@@ -17,27 +17,7 @@ def generate_launch_description():
       'config',
       'config_sim.yaml'
       )
-<<<<<<< HEAD:src/sailboat_launch/launch/sailboat_vn.launch.py
-      
-   gps_cmd = Node(
-      package='sailboat_sensors',
-      executable='vectornav',
-      name='vectornav',
-      namespace='sailbot',
-      parameters=[config]
-   )
-
-   teensy_cmd = Node(
-         package='sailboat_main',
-         executable='teensy',
-         name='teensy',
-         namespace='sailbot',
-         parameters=[config]
-      )
-
-=======
    
->>>>>>> main:src/sailboat_launch/launch/sailboat_algo_sim.launch.py
    mux_cmd = Node(
       package='sailboat_main',
       executable='mux',
