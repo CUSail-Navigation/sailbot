@@ -159,20 +159,11 @@ function parseGpsData(message) {
 
     if (!sailboatMarker) {
         // Create a new arrow marker if it doesn't exist
-        // Create a new arrow marker if it doesn't exist
         sailboatMarker = new google.maps.Marker({
             position: sailboatLocation,
             map: map,
             title: "Sailboat Location",
             icon: {
-                path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-                scale: 5,
-                fillColor: "#007bff",  // Blue
-                fillOpacity: 1,
-                strokeWeight: 1,
-                strokeColor: "#ffffff",
-                rotation: 0, // Default heading (will update in parseHeading)
-                anchor: new google.maps.Point(0, 2), // Helps center arrow tip
                 path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
                 scale: 5,
                 fillColor: "#007bff",  // Blue
@@ -208,16 +199,6 @@ function parseHeading(message) {
     let googleHeading = (90 - heading + 360) % 360;
 
     if (sailboatMarker) {
-        sailboatMarker.setIcon({
-            path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-            scale: 5,
-            fillColor: "#007bff",
-            fillOpacity: 1,
-            strokeWeight: 1,
-            strokeColor: "#ffffff",
-            rotation: googleHeading,
-            anchor: new google.maps.Point(0, 2)
-        });
         sailboatMarker.setIcon({
             path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
             scale: 5,
@@ -413,7 +394,6 @@ function subscribeToTopics() {
         const currDest = message.curr_dest;
         const diff = message.diff.data;
         const dist = message.dist_to_dest.data;
-
 
         document.getElementById('tacking-value').innerText = tacking;
         document.getElementById('tacking-point-value').innerText = `${tackingPoint.latitude.toFixed(6)}, ${tackingPoint.longitude.toFixed(6)}`;
@@ -1054,19 +1034,6 @@ function updateHeadAngle(angle, id) {
     document.getElementById(id).innerText = "Angle: " + angle;
 }
 
-function toggleSection(headerElement) {
-    const content = headerElement.nextElementSibling;
-    const icon = headerElement.querySelector(".toggle-icon");
-
-    if (content.style.display === "none" || !content.style.display) {
-        content.style.display = "block";
-        icon.textContent = "−"; // minus sign
-    } else {
-        content.style.display = "none";
-        icon.textContent = "+"; // plus sign
-    }
-}
-
 // ====================== BEGIN: Sail/Rudder Handling ==========================
 
 document.getElementById('sail-rudder-button').addEventListener('click', function (event) {
@@ -1087,3 +1054,17 @@ document.getElementById('sail-rudder-button').addEventListener('click', function
 
 
 // ====================== END: Sail/Rudder Handling ============================
+
+
+function toggleSection(headerElement) {
+    const content = headerElement.nextElementSibling;
+    const icon = headerElement.querySelector(".toggle-icon");
+
+    if (content.style.display === "none" || !content.style.display) {
+        content.style.display = "block";
+        icon.textContent = "−"; // minus sign
+    } else {
+        content.style.display = "none";
+        icon.textContent = "+"; // plus sign
+    }
+}
