@@ -2,8 +2,6 @@ import rclpy
 from rclpy.node import Node
 from sailboat_interface.msg import SailTail
 from std_msgs.msg import Int32
-#import statement may or may not be necessary
-from geometry_msgs.msg import Point
 from . import teensy
 from . import teensy_fake
 

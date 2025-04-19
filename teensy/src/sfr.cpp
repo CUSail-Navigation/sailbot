@@ -16,8 +16,7 @@ namespace sfr
     namespace serial
     {
         bool update_servos = false;
-        //int8_t buoy_displacement = 0;
-        int8_t servo_angle = 0; //what should the default value be
+        int8_t servo_angle = 90; 
         uint8_t dropped_packets = 0;
         int8_t buoy_angle = 0;
 

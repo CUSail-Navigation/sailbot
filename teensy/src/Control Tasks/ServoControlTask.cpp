@@ -4,6 +4,7 @@ ServoControlTask::ServoControlTask()
 {
     sail_servo.attach(constants::servo::SAIL_PIN);
     rudder_servo.attach(constants::servo::RUDDER_PIN);
+    tracker_servo.attach(constants::servo::TRACKER_PIN);
     // Set initial servo positions to 0-degrees
     actuate_servo(sail_servo, 1050);
     actuate_servo(rudder_servo, 1050);
@@ -35,6 +36,13 @@ void ServoControlTask::execute()
             // actuate rudder servo
             actuate_servo(rudder_servo, sfr::servo::rudder_pwm);
         }
+
+        // Directly set servo to the commanded angle
+        actuate_servo(tracker_servo, sfr::serial::servo_angle);
+
+        // Update the buoy angle to reflect the current servo position
+        sfr::serial::buoy_angle = sfr::serial::servo_angle;
+        
         sfr::serial::update_servos = false; // reset flag for next update
     }
 }

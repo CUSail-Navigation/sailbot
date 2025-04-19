@@ -18,7 +18,7 @@ namespace constants
         constexpr uint8_t RUDDER_MIN_ANGLE = 0;
         constexpr uint8_t RUDDER_MAX_ANGLE = 90;
 
-        constexpr uint8_t TRACKER_PIN = 5; //TODO: change to correct pin number
+        constexpr uint8_t TRACKER_PIN = 5;
         constexpr uint8_t TRACKER_MIN_ANGLE = 0;
         constexpr uint8_t TRACKER_MAX_ANGLE = 90;
         
