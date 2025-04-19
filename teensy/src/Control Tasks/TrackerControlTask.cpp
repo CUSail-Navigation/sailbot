@@ -11,7 +11,6 @@ void TrackerControlTask::execute()
 
     if (sfr::serial::update_servos)
     {
-        Serial.println("SDJFOIWEJFOIWEJFOEWIJF");
         // Directly set servo to the commanded angle
         actuate_servo(tracker_servo, angle_to_pwm(sfr::serial::servo_angle));
         

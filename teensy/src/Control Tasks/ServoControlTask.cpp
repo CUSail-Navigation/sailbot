@@ -17,6 +17,7 @@ void ServoControlTask::execute()
     {
         uint8_t sail_angle = sfr::serial::buffer[0];
         uint8_t rudder_angle = sfr::serial::buffer[1];
+        uint8_t servo_angle = sfr::serial::buffer[2]
 
         // update sfr values based on incoming serial data if checks pass
         if (sail_angle >= constants::servo::SAIL_MIN_ANGLE && sail_angle <= constants::servo::SAIL_MAX_ANGLE)
@@ -37,11 +38,12 @@ void ServoControlTask::execute()
             actuate_servo(rudder_servo, sfr::servo::rudder_pwm);
         }
 
-        // Directly set servo to the commanded angle
-        actuate_servo(tracker_servo, sfr::serial::servo_angle);
+        if (servo_angle >= constants:servo::TRACKER_MIN_ANGLE && servo_angle <= constans::servo::TRACKER_MAX_ANGLE)
+        {
 
-        // Update the buoy angle to reflect the current servo position
-        sfr::serial::buoy_angle = sfr::serial::servo_angle;
+            sfr::serial::buoy_angle = servo_angle;
+            actuate_servo(tracker_servo, sfr::serial::servo_angle);
+        }
         
         sfr::serial::update_servos = false; // reset flag for next update
     }
@@ -55,7 +57,7 @@ void ServoControlTask::execute()
 
 uint32_t ServoControlTask::tail_to_pwm(uint8_t angle)
 {
-    return angle * 2;
+    return map(angle, 0, 50, 45, 55);
 }
 
 uint32_t ServoControlTask::sail_to_pwm(uint8_t angle)

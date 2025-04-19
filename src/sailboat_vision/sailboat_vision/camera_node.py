@@ -84,7 +84,6 @@ class BuoyDetectorNode(Node):
             angle_msg.data = servo_angle
             self.servo_angle_publisher.publish(angle_msg)
             self.get_logger().info(f'Detected buoy displacement: {displacement}')
-            self.get_logger().info(f'Servo angle: {servo_angle}')
         else:
             depth = depth_image[buoy_center[0], buoy_center[1]] / 1000
             point_msg = Point()
