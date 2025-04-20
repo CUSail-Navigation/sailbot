@@ -336,12 +336,15 @@ class MainAlgo(Node):
 
         dist2dest = self.curr_loc.distance_to(self.curr_dest) 
 
+        #easting_dir 
+        easting_dir = np.sign(self.curr_dest.easting - self.curr_loc.easting)
+
         if self.wind_dir >= 180 and self.wind_dir <= 210:
-            easting_tp = self.curr_loc.easting + dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.sin(np.deg2rad(45+self.wind_dir))
+            easting_tp = self.curr_loc.easting + easting_dir*dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.sin(np.deg2rad(45+self.wind_dir))
             northing_tp = self.curr_loc.northing - dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.cos(np.deg2rad(45+self.wind_dir))
         elif self.wind_dir >= 150 and self.wind_dir <= 180:
             self.wind_dir = 360 - self.wind_dir
-            easting_tp = self.curr_loc.easting + dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.sin(np.deg2rad(45+self.wind_dir))
+            easting_tp = self.curr_loc.easting + easting_dir*dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.sin(np.deg2rad(45+self.wind_dir))
             northing_tp =  self.curr_loc.northing + dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.cos(np.deg2rad(45+self.wind_dir))
 
         tp = UTMPoint(easting=easting_tp, northing=northing_tp, zone_number=self.curr_loc.zone_number, zone_letter=self.curr_loc.zone_letter)
