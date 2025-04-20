@@ -17,6 +17,9 @@ namespace constants
 
         constexpr uint8_t RUDDER_MIN_ANGLE = 0;
         constexpr uint8_t RUDDER_MAX_ANGLE = 90;
+
+        constexpr uint32_t SAIL_MIN_PULSE = 600;  // 1ms pulse width
+        constexpr uint32_t SAIL_MAX_PULSE = 2400; // 2ms pulse width
     }
     namespace serial
     {
