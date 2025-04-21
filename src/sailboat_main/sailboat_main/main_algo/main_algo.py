@@ -103,6 +103,9 @@ class MainAlgo(Node):
         self.declare_parameter("debug", False)
         self.debug = self.get_parameter("debug").value
 
+        self.declare_parameter("no_go_zone", 45) # defined as no-go-zone on ONE SIDE
+        self.no_go_zone = self.get_parameter("no_go_zone").value
+
         self.tack_time_tracker = 0
 
         #Subscription for current location
@@ -337,17 +340,58 @@ class MainAlgo(Node):
         dist2dest = self.curr_loc.distance_to(self.curr_dest) 
 
         #easting_dir 
-        easting_dir = np.sign(self.curr_dest.easting - self.curr_loc.easting)
+        # easting_dir = np.sign(self.curr_dest.easting - self.curr_loc.easting)
 
-        if self.wind_dir >= 180 and self.wind_dir <= 210:
-            easting_tp = self.curr_loc.easting + easting_dir*dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.sin(np.deg2rad(45+self.wind_dir))
-            northing_tp = self.curr_loc.northing - dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.cos(np.deg2rad(45+self.wind_dir))
-        elif self.wind_dir >= 150 and self.wind_dir <= 180:
-            self.wind_dir = 360 - self.wind_dir
-            easting_tp = self.curr_loc.easting + easting_dir*dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.sin(np.deg2rad(45+self.wind_dir))
-            northing_tp =  self.curr_loc.northing + dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.cos(np.deg2rad(45+self.wind_dir))
+        # if self.wind_dir >= 180 and self.wind_dir <= 210:
+        #     easting_tp = self.curr_loc.easting + easting_dir*dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.sin(np.deg2rad(45+self.wind_dir))
+        #     northing_tp = self.curr_loc.northing - dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.cos(np.deg2rad(45+self.wind_dir))
+        # elif self.wind_dir >= 150 and self.wind_dir <= 180:
+        #     self.wind_dir = 360 - self.wind_dir
+        #     easting_tp = self.curr_loc.easting + easting_dir*dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.sin(np.deg2rad(45+self.wind_dir))
+        #     northing_tp =  self.curr_loc.northing + dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.cos(np.deg2rad(45+self.wind_dir))
 
-        tp = UTMPoint(easting=easting_tp, northing=northing_tp, zone_number=self.curr_loc.zone_number, zone_letter=self.curr_loc.zone_letter)
+        x_distance = self.curr_dest.easting - self.curr_loc.easting
+        y_distance = self.curr_dest.northing - self.curr_loc.northing
+
+        heading_to_dest = np.arctan2(y_distance, x_distance) * 180 / np.pi
+        tack_diff = np.mod(self.heading_dir - heading_to_dest + 180, 360) - 180
+
+
+        if(abs(tack_diff) > self.no_go_zone):
+            return self.curr_dest
+
+        if(tack_diff > 0):
+            #tack on right
+            tack_angle = (self.heading_dir - self.no_go_zone) % 360
+            approach_angle = (self.no_go_zone + self.heading_dir) % 360
+
+        else:
+            #tack on left
+            tack_angle = (self.no_go_zone + self.heading_dir) % 360
+            approach_angle = (self.heading_dir - self.no_go_zone) % 360
+
+        
+        vec1 = np.array([np.cos(np.deg2rad(tack_angle)), np.sin(np.deg2rad(tack_angle))])
+        vec2 = -np.array([np.cos(np.deg2rad(approach_angle)), np.sin(np.deg2rad(approach_angle))])
+
+        self.get_logger().info(f'Vector 1: {vec1}')
+        self.get_logger().info(f'Vector 2: {vec2}')
+
+        P1 = np.array([self.curr_loc.easting, self.curr_loc.northing])
+        P2 = np.array([self.curr_dest.easting, self.curr_dest.northing])
+
+        # intersection of two lines
+        A = np.column_stack((vec1, -vec2))
+        b = P2 - P1
+
+        t_vals = np.linalg.solve(A, b)
+
+        tacking_point = P1 + t_vals[0] * vec1
+        self.get_logger().info(f'Tacking Point: {tacking_point}')
+
+        tp = UTMPoint(easting=tacking_point[0], northing=tacking_point[1], zone_number=self.curr_loc.zone_number, zone_letter=self.curr_loc.zone_letter)
+
+       # tp = UTMPoint(easting=easting_tp, northing=northing_tp, zone_number=self.curr_loc.zone_number, zone_letter=self.curr_loc.zone_letter)
 
         assert tp.easting > 100000 and tp.easting < 900000, "Easting out of range"
 
