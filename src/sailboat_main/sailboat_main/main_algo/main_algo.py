@@ -3,7 +3,6 @@ import rclpy
 
 from rclpy.node import Node
 
-import utm
 from sensor_msgs.msg import NavSatFix
 from geometry_msgs.msg import Vector3
 from std_msgs.msg import Int32
@@ -12,70 +11,8 @@ from typing import Optional
 
 from sailboat_interface.srv import Waypoint
 from sailboat_interface.msg import AlgoDebug
-
-import math
-
-class LatLongPoint():
-    """
-    A class to represent a point in latitude and longitude coordinates.
-    """
-    latitude : float
-    longitude : float
-    def __init__(self, latitude, longitude):
-        self.latitude = latitude
-        self.longitude = longitude
-
-    def to_utm(self) -> 'UTMPoint':
-        """
-        Convert latitude and longitude to UTM coordinates.
-        """
-        x, y, zone_number, zone_letter = utm.from_latlon(self.latitude, self.longitude)
-        return UTMPoint(x, y, zone_number, zone_letter) 
-
-    def __repr__(self):
-        return f"latitude={self.latitude}, longitude={self.longitude}"
-
-class UTMPoint():
-    """
-    A class to represent a point in UTM coordinates.
-    """
-    easting : float
-    northing : float
-    zone_number : int
-    zone_letter : str
-
-    def __init__(self, easting, northing, zone_number, zone_letter):
-        self.easting = easting
-        self.northing = northing
-        self.zone_number = zone_number
-        self.zone_letter = zone_letter
-
-    def to_latlon(self) -> LatLongPoint:
-        """
-        Convert UTM coordinates to latitude and longitude.
-        """
-        latitude, longitude = utm.to_latlon(self.easting, self.northing, self.zone_number, self.zone_letter)
-        return LatLongPoint(latitude, longitude) 
-
-    def to_navsatfix_msg(self) -> NavSatFix:
-        """
-        Convert UTM coordinates to NavSatFix message.
-        """
-        lat_long = self.to_latlon()
-        msg = NavSatFix()
-        msg.latitude = lat_long.latitude
-        msg.longitude = lat_long.longitude
-        return msg
-    
-    def distance_to(self, other: 'UTMPoint') -> float:
-        """
-        Calculate the distance to another UTM point.
-        """
-        assert self.zone_number == other.zone_number, "Zone numbers must be the same for distance calculation"
-        return math.dist((self.easting, self.northing), (other.easting, other.northing))
-
-    def __repr__(self):
-        return f"UTMPoint(x={self.x}, y={self.y}, zone_number={self.zone_number}, zone_letter={self.zone_letter})"
+from UTMPoint import UTMPoint
+from LatLongPoint import LatLongPoint
 
 class MainAlgo(Node):
     """
@@ -86,6 +23,8 @@ class MainAlgo(Node):
     curr_loc : Optional[UTMPoint]
     tacking : bool
     tacking_point : Optional[UTMPoint]
+    tacking_buffer : int
+    no_go_zone : int # anglular size of the no-go-zone on one side of the boat's centerline
     heading_dir : Optional[float]
     curr_dest : Optional[UTMPoint]
     diff : Optional[float]
@@ -102,8 +41,8 @@ class MainAlgo(Node):
 
         self.declare_parameter("debug", False)
         self.debug = self.get_parameter("debug").value
-
-        self.declare_parameter("no_go_zone", 45) # defined as no-go-zone on ONE SIDE
+    
+        self.declare_parameter("no_go_zone", 45)
         self.no_go_zone = self.get_parameter("no_go_zone").value
 
         self.tack_time_tracker = 0
@@ -341,29 +280,17 @@ class MainAlgo(Node):
         except Exception as e:
             self.get_logger().error(f'Error in Lat Long: {str(e)}') 
 
-        dist2dest = self.curr_loc.distance_to(self.curr_dest) 
-
-        #easting_dir 
-        # easting_dir = np.sign(self.curr_dest.easting - self.curr_loc.easting)
-
-        # if self.wind_dir >= 180 and self.wind_dir <= 210:
-        #     easting_tp = self.curr_loc.easting + easting_dir*dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.sin(np.deg2rad(45+self.wind_dir))
-        #     northing_tp = self.curr_loc.northing - dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.cos(np.deg2rad(45+self.wind_dir))
-        # elif self.wind_dir >= 150 and self.wind_dir <= 180:
-        #     self.wind_dir = 360 - self.wind_dir
-        #     easting_tp = self.curr_loc.easting + easting_dir*dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.sin(np.deg2rad(45+self.wind_dir))
-        #     northing_tp =  self.curr_loc.northing + dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.cos(np.deg2rad(45+self.wind_dir))
-
         x_distance = self.curr_dest.easting - self.curr_loc.easting
         y_distance = self.curr_dest.northing - self.curr_loc.northing
 
         heading_to_dest = np.arctan2(y_distance, x_distance) * 180 / np.pi
         tack_diff = np.mod(self.heading_dir - heading_to_dest + 180, 360) - 180
 
-
+        # if we're out of the no-go-zone, don't tack at all
         if(abs(tack_diff) > self.no_go_zone):
             return self.curr_dest
 
+        # tack left or right depending on the angle from the middling line
         if(tack_diff > 0):
             #tack on right
             tack_angle = (self.heading_dir - self.no_go_zone) % 360
@@ -374,7 +301,7 @@ class MainAlgo(Node):
             tack_angle = (self.no_go_zone + self.heading_dir) % 360
             approach_angle = (self.heading_dir - self.no_go_zone) % 360
 
-        
+        # calculate tacking point as intersection of the tack vector and the approach vector
         vec1 = np.array([np.cos(np.deg2rad(tack_angle)), np.sin(np.deg2rad(tack_angle))])
         vec2 = -np.array([np.cos(np.deg2rad(approach_angle)), np.sin(np.deg2rad(approach_angle))])
 
@@ -394,9 +321,6 @@ class MainAlgo(Node):
         self.get_logger().info(f'Tacking Point: {tacking_point}')
 
         tp = UTMPoint(easting=tacking_point[0], northing=tacking_point[1], zone_number=self.curr_loc.zone_number, zone_letter=self.curr_loc.zone_letter)
-
-       # tp = UTMPoint(easting=easting_tp, northing=northing_tp, zone_number=self.curr_loc.zone_number, zone_letter=self.curr_loc.zone_letter)
-
         assert tp.easting > 100000 and tp.easting < 900000, "Easting out of range"
 
         # publish new TP if we do not encounter an exception
@@ -418,7 +342,6 @@ class MainAlgo(Node):
         if self.curr_loc is None or (self.tacking and self.tacking_point is None) or self.curr_dest is None:
             # Not enough information to calculate rudder angle yet
             return
-
 
         if self.in_nogo() and not self.tacking:
             self.get_logger().info("Beginning Tacking")
