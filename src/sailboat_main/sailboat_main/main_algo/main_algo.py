@@ -292,7 +292,11 @@ class MainAlgo(Node):
         self.get_logger().info(f'Heading Difference: {diff}')
         self.diff = diff
 
-        rudder_angle = (diff / 180.0) * 25
+        if(not self.in_nogo()):
+            rudder_angle = (diff / 180.0) * 25
+        else:
+            rudder_angle = np.sign(diff) * 25 # max rudder angle if we are in nogo zone
+
         self.get_logger().info(f'Rudder Angle Raw: {rudder_angle}')
 
         # Assuming rudder_angle is a floating-point number and you want it to be an Int32 message
@@ -414,6 +418,7 @@ class MainAlgo(Node):
         if self.curr_loc is None or (self.tacking and self.tacking_point is None) or self.curr_dest is None:
             # Not enough information to calculate rudder angle yet
             return
+
 
         if self.in_nogo() and not self.tacking:
             self.get_logger().info("Beginning Tacking")
