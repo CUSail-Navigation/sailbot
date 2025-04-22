@@ -11,8 +11,8 @@ from typing import Optional
 
 from sailboat_interface.srv import Waypoint
 from sailboat_interface.msg import AlgoDebug
-from UTMPoint import UTMPoint
-from LatLongPoint import LatLongPoint
+from .Points import LatLongPoint
+from .Points import UTMPoint
 
 class MainAlgo(Node):
     """
