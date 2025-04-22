@@ -41,7 +41,7 @@ void ServoControlTask::execute()
 
 uint32_t ServoControlTask::tail_to_pwm(uint8_t angle)
 {
-    return map(angle, 0, 50, 55, 45);
+    return map(angle, 0, 50, 45, 55);
 }
 
 uint32_t ServoControlTask::sail_to_pwm(uint8_t angle)
