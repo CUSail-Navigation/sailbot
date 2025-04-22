@@ -11,8 +11,7 @@ from typing import Optional
 
 from sailboat_interface.srv import Waypoint
 from sailboat_interface.msg import AlgoDebug
-from .Points import LatLongPoint
-from .Points import UTMPoint
+from .points import LatLongPoint, UTMPoint
 
 class MainAlgo(Node):
     """
@@ -23,7 +22,7 @@ class MainAlgo(Node):
     curr_loc : Optional[UTMPoint]
     tacking : bool
     tacking_point : Optional[UTMPoint]
-    tacking_buffer : int
+    tacking_buffer : int # cooldown between calculating tacking points
     no_go_zone : int # anglular size of the no-go-zone on one side of the boat's centerline
     heading_dir : Optional[float]
     curr_dest : Optional[UTMPoint]
