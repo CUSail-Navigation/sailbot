@@ -85,7 +85,9 @@ class MainAlgo(Node):
     wind_dir : Optional[float]
     curr_loc : Optional[UTMPoint]
     tacking : bool
+    gybing : bool
     tacking_point : Optional[UTMPoint]
+    gybing_point : Optional[UTMPoint]
     heading_dir : Optional[float]
     curr_dest : Optional[UTMPoint]
     diff : Optional[float]
@@ -144,6 +146,7 @@ class MainAlgo(Node):
         self.wind_dir = None
         self.curr_loc = None
         self.tacking = False
+        self.gybing = False
         self.tacking_point = None
         self.heading_dir = None
         self.curr_dest = None
@@ -160,6 +163,7 @@ class MainAlgo(Node):
         self.tacking_point_pub = self.create_publisher(NavSatFix, 'tacking_point', 10)
 
         self.get_logger().info('Main-algo started successfully')  # Check if this line prints
+
 
     def update_current_waypoint(self, msg):
         """
@@ -313,6 +317,15 @@ class MainAlgo(Node):
             return False
         return (150 < self.wind_dir < 210)
 
+    def in_danger(self):
+        """
+        Check if the boat is in danger zone based on the wind direction
+        """
+        self.get_logger().info(f'Wind Direction: {self.wind_dir}')
+        if self.wind_dir is None:
+            return False
+        return (340 > self.wind_dir and 20 < self.wind_dir)
+
     def calculateTP(self) -> UTMPoint:
         """
         Calcualte tacking point to begin tacking. uses winddir + dest
@@ -323,6 +336,54 @@ class MainAlgo(Node):
 
         assert self.in_nogo(), "Not in nogo zone"
         assert self.tacking, "Already tacking"
+        assert self.curr_loc is not None, "Current location is None"
+        assert self.curr_dest is not None, "Current destination is None"
+        assert self.wind_dir is not None, "Wind direction is None"
+
+        try:
+            latlong = self.curr_loc.to_latlon()
+            lat,long = latlong.latitude, latlong.longitude
+            self.get_logger().info(f'Current Location: ({lat}, {long})')
+        except Exception as e:
+            self.get_logger().error(f'Error in Lat Long: {str(e)}') 
+
+        dist2dest = self.curr_loc.distance_to(self.curr_dest) 
+
+        if self.wind_dir >= 180 and self.wind_dir <= 210:
+            easting_tp = self.curr_loc.easting + dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.sin(np.deg2rad(45+self.wind_dir))
+            northing_tp = self.curr_loc.northing - dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.cos(np.deg2rad(45+self.wind_dir))
+        elif self.wind_dir >= 150 and self.wind_dir <= 180:
+            self.wind_dir = 360 - self.wind_dir
+            easting_tp = self.curr_loc.easting + dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.sin(np.deg2rad(45+self.wind_dir))
+            northing_tp =  self.curr_loc.northing + dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.cos(np.deg2rad(45+self.wind_dir))
+
+        tp = UTMPoint(easting=easting_tp, northing=northing_tp, zone_number=self.curr_loc.zone_number, zone_letter=self.curr_loc.zone_letter)
+
+        assert tp.easting > 100000 and tp.easting < 900000, "Easting out of range"
+
+        # publish new TP if we do not encounter an exception
+        try:
+            tacking_point_msg = tp.to_navsatfix_msg()
+            self.tacking_point_pub.publish(tacking_point_msg)
+        except Exception as e: 
+            self.get_logger().error(f'Tacking point easting: {tp.easting}, northing: {tp.northing}')
+            self.get_logger().error(f'Error in calculateTP: {str(e)}') 
+
+        self.get_logger().info(f'Tacking Point: {str(tp.to_latlon())}')
+
+        return tp
+    
+    def calculateGP(self) -> UTMPoint: 
+        FIX
+        """
+        Calcualte gybing point to begin tacking. uses winddir + dest
+        Assuming that the boat is heading towards the positive x-axis and the destination
+
+        Precondition: self.in_nogo() is true. self.gybing is false. self.curr_loc is not None. self.curr_dest is not None. self.wind_dir is not None.
+        """
+
+        assert self.in_nogo(), "Not in nogo zone"
+        assert self.gybing, "Already tacking"
         assert self.curr_loc is not None, "Current location is None"
         assert self.curr_dest is not None, "Current destination is None"
         assert self.wind_dir is not None, "Wind direction is None"
@@ -380,6 +441,19 @@ class MainAlgo(Node):
 
                 self.tacking = False
                 self.tacking_point = None
+        elif self.in_danger() and not self.gybing:
+            self.get_logger().info("Beginning Gybing")
+            self.gybing = True
+            self.gybing_point = self.calculateGP()
+            self.gybe_time_tracker = 0
+        elif self.gybing:
+            self.gybe_time_tracker += self.timer_period
+            if self.gybe_time_tracker >= self.gybing_buffer:
+                self.get_logger().info("End Gybe")
+
+                self.gybing = False
+                self.gybing_point = None
+            
         self.calculate_rudder_angle()
 
         self.get_logger().info("Sailing")
