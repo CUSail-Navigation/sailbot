@@ -21,10 +21,11 @@ body {
 }
 
 .right-column {
-    max-width: 450px;
+    max-width: 440px;
     height: 100%;
     padding: 20px 40px 20px 20px;
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .map-container {
@@ -49,7 +50,6 @@ body {
 }
 
 .table-heading {
-    max-width: 620px;
     width: 100%;
     margin: 0 auto;
     text-align: center;
@@ -61,16 +61,19 @@ body {
     display: flex;
     flex-direction: column;
     align-items: stretch;
+    box-sizing: border-box;
 }
 
 .waypoint-buoy-container {
-    width: 100%;
-    max-width: 620px;
+    width: 109%;
     display: flex;
     justify-content: space-between;
-    align-items: stretch;
+    align-items: center;
     gap: 10px;
-    margin: 0 auto;
+}
+
+.new-table {
+    width: 100%;
 }
 
 .waypoint-buoy-table {
@@ -82,7 +85,7 @@ body {
 }
 
 .waypoint-list {
-    width: 300px;
+    width: 200px;
     top: 20px;
     right: 20px;
     padding: 10px;
@@ -97,7 +100,6 @@ h1 {
 
 .table {
     width: 100%;
-    max-width: 620px;
     background-color: #fff;
     padding: 20px;
     border-radius: 10px;
@@ -112,7 +114,7 @@ h1 {
 
 .input-group {
     display: flex;
-    align-items: center;
+    align-items: right;
     gap: 10px;
     /* max-width: 20px; */
     width: 70%;
@@ -166,6 +168,7 @@ input[type="number"] {
 
 .status-label {
     font-weight: bold;
+    text-wrap: nowrap;
 }
 
 .status-value {
@@ -173,8 +176,9 @@ input[type="number"] {
 }
 
 .button-group {
-    float: left;
-    margin-top: 0px;
+    margin-top: 10px;
+    display: flex;
+    justify-content: flex-start;
 }
 
 button {
@@ -222,6 +226,7 @@ button:hover {
     display: flex;
     justify-content: space-evenly;
     align-items: center;
+    width: 109%;
 }
 
 .dial {
@@ -248,7 +253,8 @@ button:hover {
     overflow: hidden;
 }
 
-.lat, .lng {
+.lat,
+.lng {
     flex: 1;
     white-space: nowrap;
     overflow: hidden;
@@ -309,4 +315,14 @@ details div {
 .toggle-icon:hover {
     color: #007bff;
     transform: scale(1.2);
+}
+
+.collapsible-section {
+    transition: max-height 0.3s ease;
+    visibility: visible;
+}
+
+.collapsible-section.hidden {
+    max-height: 0;
+    visibility: hidden;
 }
