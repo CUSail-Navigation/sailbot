@@ -3,7 +3,6 @@ import rclpy
 
 from rclpy.node import Node
 
-import utm
 from sensor_msgs.msg import NavSatFix
 from geometry_msgs.msg import Vector3
 from std_msgs.msg import Int32
@@ -13,27 +12,8 @@ from typing import Optional
 from sailboat_interface.srv import Waypoint
 from sailboat_interface.msg import AlgoDebug
 
+import utm
 import math
-
-class LatLongPoint():
-    """
-    A class to represent a point in latitude and longitude coordinates.
-    """
-    latitude : float
-    longitude : float
-    def __init__(self, latitude, longitude):
-        self.latitude = latitude
-        self.longitude = longitude
-
-    def to_utm(self) -> 'UTMPoint':
-        """
-        Convert latitude and longitude to UTM coordinates.
-        """
-        x, y, zone_number, zone_letter = utm.from_latlon(self.latitude, self.longitude)
-        return UTMPoint(x, y, zone_number, zone_letter) 
-
-    def __repr__(self):
-        return f"latitude={self.latitude}, longitude={self.longitude}"
 
 class UTMPoint():
     """
@@ -50,7 +30,7 @@ class UTMPoint():
         self.zone_number = zone_number
         self.zone_letter = zone_letter
 
-    def to_latlon(self) -> LatLongPoint:
+    def to_latlon(self) -> 'LatLongPoint':
         """
         Convert UTM coordinates to latitude and longitude.
         """
@@ -77,6 +57,26 @@ class UTMPoint():
     def __repr__(self):
         return f"UTMPoint(x={self.x}, y={self.y}, zone_number={self.zone_number}, zone_letter={self.zone_letter})"
 
+class LatLongPoint():
+    """
+    A class to represent a point in latitude and longitude coordinates.
+    """
+    latitude : float
+    longitude : float
+    def __init__(self, latitude, longitude):
+        self.latitude = latitude
+        self.longitude = longitude
+
+    def to_utm(self) -> 'UTMPoint':
+        """
+        Convert latitude and longitude to UTM coordinates.
+        """
+        x, y, zone_number, zone_letter = utm.from_latlon(self.latitude, self.longitude)
+        return UTMPoint(x, y, zone_number, zone_letter) 
+
+    def __repr__(self):
+        return f"latitude={self.latitude}, longitude={self.longitude}"
+
 class MainAlgo(Node):
     """
     The sailing algorithm responsible for changing the rudder angle based on the 
@@ -86,6 +86,8 @@ class MainAlgo(Node):
     curr_loc : Optional[UTMPoint]
     tacking : bool
     tacking_point : Optional[UTMPoint]
+    tacking_buffer : int # cooldown between calculating tacking points
+    no_go_zone : int # anglular size of the no-go-zone on one side of the boat's centerline
     heading_dir : Optional[float]
     curr_dest : Optional[UTMPoint]
     diff : Optional[float]
@@ -102,6 +104,9 @@ class MainAlgo(Node):
 
         self.declare_parameter("debug", False)
         self.debug = self.get_parameter("debug").value
+    
+        self.declare_parameter("no_go_zone", 45)
+        self.no_go_zone = self.get_parameter("no_go_zone").value
 
         self.tack_time_tracker = 0
 
@@ -289,7 +294,11 @@ class MainAlgo(Node):
         self.get_logger().info(f'Heading Difference: {diff}')
         self.diff = diff
 
-        rudder_angle = (diff / 180.0) * 25
+        if(not self.in_nogo()):
+            rudder_angle = (diff / 180.0) * 25
+        else:
+            rudder_angle = np.sign(diff) * 25 # max rudder angle if we are in nogo zone
+
         self.get_logger().info(f'Rudder Angle Raw: {rudder_angle}')
 
         # Assuming rudder_angle is a floating-point number and you want it to be an Int32 message
@@ -334,18 +343,47 @@ class MainAlgo(Node):
         except Exception as e:
             self.get_logger().error(f'Error in Lat Long: {str(e)}') 
 
-        dist2dest = self.curr_loc.distance_to(self.curr_dest) 
+        x_distance = self.curr_dest.easting - self.curr_loc.easting
+        y_distance = self.curr_dest.northing - self.curr_loc.northing
 
-        if self.wind_dir >= 180 and self.wind_dir <= 210:
-            easting_tp = self.curr_loc.easting + dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.sin(np.deg2rad(45+self.wind_dir))
-            northing_tp = self.curr_loc.northing - dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.cos(np.deg2rad(45+self.wind_dir))
-        elif self.wind_dir >= 150 and self.wind_dir <= 180:
-            self.wind_dir = 360 - self.wind_dir
-            easting_tp = self.curr_loc.easting + dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.sin(np.deg2rad(45+self.wind_dir))
-            northing_tp =  self.curr_loc.northing + dist2dest*np.cos(np.deg2rad(45-self.wind_dir))*np.cos(np.deg2rad(45+self.wind_dir))
+        heading_to_dest = np.arctan2(y_distance, x_distance) * 180 / np.pi
+        tack_diff = np.mod(self.heading_dir - heading_to_dest + 180, 360) - 180
 
-        tp = UTMPoint(easting=easting_tp, northing=northing_tp, zone_number=self.curr_loc.zone_number, zone_letter=self.curr_loc.zone_letter)
+        # if we're out of the no-go-zone, don't tack at all
+        if(abs(tack_diff) > self.no_go_zone):
+            return self.curr_dest
 
+        # tack left or right depending on the angle from the middling line
+        if(tack_diff > 0):
+            #tack on right
+            tack_angle = (self.heading_dir - self.no_go_zone) % 360
+            approach_angle = (self.no_go_zone + self.heading_dir) % 360
+
+        else:
+            #tack on left
+            tack_angle = (self.no_go_zone + self.heading_dir) % 360
+            approach_angle = (self.heading_dir - self.no_go_zone) % 360
+
+        # calculate tacking point as intersection of the tack vector and the approach vector
+        vec1 = np.array([np.cos(np.deg2rad(tack_angle)), np.sin(np.deg2rad(tack_angle))])
+        vec2 = -np.array([np.cos(np.deg2rad(approach_angle)), np.sin(np.deg2rad(approach_angle))])
+
+        self.get_logger().info(f'Vector 1: {vec1}')
+        self.get_logger().info(f'Vector 2: {vec2}')
+
+        P1 = np.array([self.curr_loc.easting, self.curr_loc.northing])
+        P2 = np.array([self.curr_dest.easting, self.curr_dest.northing])
+
+        # intersection of two lines
+        A = np.column_stack((vec1, -vec2))
+        b = P2 - P1
+
+        t_vals = np.linalg.solve(A, b)
+
+        tacking_point = P1 + t_vals[0] * vec1
+        self.get_logger().info(f'Tacking Point: {tacking_point}')
+
+        tp = UTMPoint(easting=tacking_point[0], northing=tacking_point[1], zone_number=self.curr_loc.zone_number, zone_letter=self.curr_loc.zone_letter)
         assert tp.easting > 100000 and tp.easting < 900000, "Easting out of range"
 
         # publish new TP if we do not encounter an exception

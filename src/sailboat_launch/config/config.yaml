@@ -19,7 +19,7 @@ sailbot: #Namespace
 
    main_algo:
       ros__parameters:
-         tacking_buffer: 15
+         tacking_buffer: 10
          debug: True
    
 
