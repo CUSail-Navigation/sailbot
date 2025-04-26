@@ -213,34 +213,42 @@ function parseHeading(message) {
 }
 
 // Updates the tacking point on the map and UI
-function parseTackingPoint(message) {
-    // Update the UI with the tacking point lat/long
-    const formattedLatitude = message.latitude.toFixed(6);
-    const formattedLongitude = message.longitude.toFixed(6);
-
-    document.getElementById('tacking-point-value').innerText = `${formattedLatitude}, ${formattedLongitude}`;
-
-    // Update the tacking point marker on the map
-    const tackingPointLocation = { lat: message.latitude, lng: message.longitude };
-    if (!tackingPointMarker) {
-        // Create a new marker if it doesn't exist
-        tackingPointMarker = new google.maps.Marker({
-            position: tackingPointLocation,
-            map: map,
-            title: "Tacking Point Location",
-            icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 8,
-                fillColor: "#0000FF",
-                fillOpacity: 1,
-                strokeWeight: 1,
-                strokeColor: "#FFFFFF"
-            }
-        });
-    } else {
-        tackingPointMarker.setPosition(tackingPointLocation);
+function parseTackingPoint(tacking, message) {
+    if (!tacking) {
+        document.getElementById('tacking-point-value').innerText = "N/A";
+        if (tackingPointMarker) {
+            tackingPointMarker.setMap(null);
+        }
+        return;
     }
+    else {
 
+        const formattedLatitude = message.latitude.toFixed(6);
+        const formattedLongitude = message.longitude.toFixed(6);
+
+        console.log(formattedLatitude);
+        console.log(formattedLongitude);
+
+        const tackingPointLocation = { lat: message.latitude, lng: message.longitude };
+        if (!tackingPointMarker) {
+            tackingPointMarker = new google.maps.Marker({
+                position: tackingPointLocation,
+                map: map,
+                title: "Tacking Point Location",
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 8,
+                    fillColor: "#0000FF",
+                    fillOpacity: 1,
+                    strokeWeight: 1,
+                    strokeColor: "#FFFFFF"
+                }
+            });
+        } else {
+            tackingPointMarker.setPosition(tackingPointLocation);
+            tackingPointMarker.setMap(map); // Make sure it's visible
+        }
+    }
 }
 
 let waypointService;
@@ -377,7 +385,7 @@ function subscribeToTopics() {
         messageType: 'sensor_msgs/NavSatFix',
         throttle_rate: BASE_THROTTLE_RATE,
     })
-    tackingPointTopic.subscribe(parseTackingPoint);
+    // tackingPointTopic.subscribe(parseTackingPoint);
 
     const algoDebugTopic = new ROSLIB.Topic({
         ros: ros,
@@ -401,6 +409,8 @@ function subscribeToTopics() {
         document.getElementById('curr-dest-value').innerText = `${currDest.latitude.toFixed(6)}, ${currDest.longitude.toFixed(6)}`;
         document.getElementById('diff-value').innerText = diff;
         document.getElementById('dist-value').innerText = dist;
+
+        parseTackingPoint(tacking, tackingPoint);
     });
 
     waypointService = new ROSLIB.Service({
