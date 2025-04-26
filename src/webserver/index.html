@@ -16,7 +16,9 @@
             <div class="map-container">
                 <div class="map-content">
                     <div id="map"></div>
-                    <div id="mouse-pos">Mouse position</div>
+                    <div class="mouse-position">
+                        <div id="mouse-pos">Mouse position</div>
+                    </div>
                 </div>
                 <div class="waypoint-list">
                     <span class="status-label">Waypoints:</span>
@@ -26,23 +28,24 @@
         </div>
         <div class="right-column">
             <div class="table-container">
-                <h1>Sailbot Status Dashboard</h1>
-                <div class="table status">
-                    <div class="status-row">
-                        <span class="status-label">Control Mode:</span>
-                        <span class="status-value" id="control-mode-value">N/A</span>
-                    </div>
-                    <div class="status-row">
-                        <span class="status-label">Sail Angle:</span>
-                        <span class="status-value" id="sail-value">N/A</span>
-                    </div>
-                    <div class="status-row">
-                        <span class="status-label">Rudder Angle:</span>
-                        <span class="status-value" id="rudder-angle-value">N/A</span>
-                    </div>
+                <div class="table-heading" onclick="toggleSection(this)">
+                    <h1>Sailbot Status Dashboard <span class="toggle-icon">+</span></h1>
+                </div>
+                <div class="collapsible-section hidden">
+                    <div class="table status">
+                        <div class="status-row">
+                            <span class="status-label">Control Mode:</span>
+                            <span class="status-value" id="control-mode-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Sail Angle:</span>
+                            <span class="status-value" id="sail-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Rudder Angle:</span>
+                            <span class="status-value" id="rudder-angle-value">N/A</span>
+                        </div>
 
-                    <details>
-                        <summary>Algo View</summary>
                         <div class="status-row algo-mode">
                             <span class="status-label">Algo Rudder:</span>
                             <span class="status-value" id="algo-rudder-value">N/A</span>
@@ -51,14 +54,7 @@
                             <span class="status-label">Algo Sail:</span>
                             <span class="status-value" id="algo-sail-value">N/A</span>
                         </div>
-                        <div class="status-row algo-mode">
-                            <span class="status-label">Tacking Point:</span>
-                            <span class="status-value" id="algo-sail-value">N/A</span>
-                        </div>
-                    </details>
 
-                    <details>
-                        <summary>RC View</summary>
                         <div class="status-row rc-mode">
                             <span class="status-label">Radio Rudder:</span>
                             <span class="status-value" id="radio-rudder-value">N/A</span>
@@ -67,10 +63,7 @@
                             <span class="status-label">Radio Sail:</span>
                             <span class="status-value" id="radio-sail-value">N/A</span>
                         </div>
-                    </details>
 
-                    <details>
-                        <summary>Sensor View</summary>
                         <div class="status-row">
                             <span class="status-label">Wind Angle: </span>
                             <span class="status-value" id="wind-angle-value">N/A</span>
@@ -87,10 +80,7 @@
                             <span class="status-label">Sailboat Longitude: </span>
                             <span class="status-value" id="longitude-value">N/A</span>
                         </div>
-                    </details>
 
-                    <details>
-                        <summary>Teensy View</summary>
                         <div class="status-row">
                             <span class="status-label">Actual Sail Angle: </span>
                             <span class="status-value" id="actual-sail-angle-value">N/A</span>
@@ -103,134 +93,168 @@
                             <span class="status-label">Dropped Packets: </span>
                             <span class="status-value" id="dropped-packets-value">N/A</span>
                         </div>
-                    </details>
-                </div>
-            </div>
-            <div class="table-container">
-                <h1>Algo Debugger</h1>
-                <div class="table">
-                    <div class="status-row">
-                        <span class="status-label">Tacking:</span>
-                        <span class="status-value" id="tacking-value">N/A</span>
-                    </div>
-                    <div class="status-row">
-                        <span class="status-label">Tacking Point:</span>
-                        <span class="status-value" id="tacking-point-value">N/A</span>
-                    </div>
-                    <div class="status-row">
-                        <span class="status-label">Heading Direction:</span>
-                        <span class="status-value" id="heading-dir-value">N/A</span>
-                    </div>
-                    <div class="status-row">
-                        <span class="status-label">Current Destination:</span>
-                        <span class="status-value" id="curr-dest-value">N/A</span>
-                    </div>
-                    <div class="status-row">
-                        <span class="status-label">Difference:</span>
-                        <span class="status-value" id="diff-value">N/A</span>
-                    </div>
-                    <div class="status-row">
-                        <span class="status-label">Distance to Destination:</span>
-                        <span class="status-value" id="dist-value">N/A</span>
                     </div>
                 </div>
             </div>
             <div class="table-container">
-                <h1>Connect to ROS</h1>
-                <div class="table">
-                    <div class="status-row">
-                        <span class="status-label">ROS URL:</span>
-                        <div class="input-group">
-                            <input type="url" id="ros-url" name="ros-url" inputmode="url" placeholder="Enter ROS URL"
-                                required>
+                <div class="table-heading" onclick="toggleSection(this)">
+                    <h1>Algo Debugger <span class="toggle-icon">+</span></h1>
+                </div>
+                <div class="collapsible-section hidden">
+                    <div class="status table">
+                        <div class="status-row">
+                            <span class="status-label">Tacking:</span>
+                            <span class="status-value" id="tacking-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Tacking Point:</span>
+                            <span class="status-value" id="tacking-point-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Heading Direction:</span>
+                            <span class="status-value" id="heading-dir-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Current Destination:</span>
+                            <span class="status-value" id="curr-dest-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Difference:</span>
+                            <span class="status-value" id="diff-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Distance to Destination:</span>
+                            <span class="status-value" id="dist-value">N/A</span>
                         </div>
                     </div>
-                    <div class="button-group">
-                        <button type="button" id="connect-to-ros">Submit</button>
-                    </div>
                 </div>
             </div>
             <div class="table-container">
-                <h1>Sail/Rudder Input</h1>
-                <div class="table">
-                    <div class="status-row">
-                        <span class="status-label">Sail Input:</span>
-                        <div class="input-group">
-                            <input type="number" id="sail-input" name="sail-input" placeholder="Enter sail input"
-                                required>
-                        </div>
-                        <span class="status-label">Rudder Input:</span>
-                        <div class="input-group">
-                            <input type="number" id="rudder-input" name="rudder-input" placeholder="Enter rudder input"
-                                required>
-                        </div>
-                    </div>
-                    <div class="button-group">
-                        <button type="button" id="sail-rudder-button">Submit</button>
-                    </div>
+                <div class="table-heading" onclick="toggleSection(this)">
+                    <h1>Sail & Rudder Input <span class="toggle-icon">+</span></h1>
                 </div>
-            </div>
-            <div class="table-container">
-                <h1>Waypoint & Buoy Input</h1>
-                <div class="waypoint-buoy-container">
-                    <div class="waypoint-buoy-table">
-                        <div class="status-row-input second">
-                            <span class="status-label">Latitude:</span>
-                            <div class="input-group">
-                                <input type="number" id="waypoint-latitude" name="latitude" inputmode="decimal"
-                                    placeholder="Enter latitude" required>
+                <div class="collapsible-section hidden">
+                    <div class="waypoint-buoy-container">
+                        <!-- Sail Box -->
+                        <div class="waypoint-buoy-table">
+                            <div class="status-row-input second">
+                                <span class="status-label">Sail Input:</span>
+                                <div class="input-group">
+                                    <input type="number" id="sail-input" name="sail-input"
+                                        placeholder="Enter sail input" required>
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button type="button" id="sail-submit">Submit Sail</button>
                             </div>
                         </div>
-                        <div class="status-row-input second">
-                            <span class="status-label">Longitude:</span>
-                            <div class="input-group">
-                                <input type="number" id="waypoint-longitude" name="longitude" inputmode="decimal"
-                                    placeholder="Enter longitude" required>
-                            </div>
-                        </div>
-                        <div class="button-group">
-                            <button type="button" id="submit-waypoint">Submit Waypoint</button>
-                        </div>
-                    </div>
-                    <div class="waypoint-buoy-table">
-                        <div class="status-row-input second">
-                            <span class="status-label">Latitude:</span>
-                            <div class="input-group">
-                                <input type="number" id="buoy-latitude" name="latitude" inputmode="decimal"
-                                    placeholder="Enter latitude" required>
-                            </div>
-                        </div>
-                        <div class="status-row-input second">
-                            <span class="status-label">Longitude:</span>
-                            <div class="input-group">
-                                <input type="number" id="buoy-longitude" name="longitude" inputmode="decimal"
-                                    placeholder="Enter longitude" required>
-                            </div>
-                        </div>
-                        <div class="button-group">
-                            <button type="button" id="submit-buoy">Submit Buoy</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="table-container">
-                <h1>Algo/RC Chooser</h1>
-                <div class="table">
-                    <div class="status-row second">
-                        <span class="status-label">Options: </span>
-                    </div>
-                    <div class="dropdown">
-                        <button class="dropdown-button" id="mode-button" onclick="toggleDropdown()">Select Mode</button>
-                        <div id="dropdown-content" class="dropdown-content">
-                            <a href="#" onclick="selectMode('algo')">Algorithm</a>
-                            <a href="#" onclick="selectMode('Radio')">Radio</a>
-                            <a href="#" onclick="selectMode('Webserver')">Webserver</a>
-                            <a href="#" onclick="selectMode('Controller_App')">Controller App</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
+                        <!-- Rudder Box -->
+                        <div class="waypoint-buoy-table">
+                            <div class="status-row-input second">
+                                <span class="status-label">Rudder Input:</span>
+                                <div class="input-group">
+                                    <input type="number" id="rudder-input" name="rudder-input"
+                                        placeholder="Enter rudder input" required>
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button type="button" id="rudder-submit">Submit Rudder</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-container">
+                <div class="table-heading" onclick="toggleSection(this)">
+                    <h1>Waypoint & Buoy Input <span class="toggle-icon">+</span></h1>
+                </div>
+                <div class="collapsible-section hidden">
+                    <div class="new-table">
+                        <div class="waypoint-buoy-container">
+                            <div class="waypoint-buoy-table">
+                                <div class="status-row-input second">
+                                    <span class="status-label">Latitude:</span>
+                                    <div class="input-group">
+                                        <input type="number" id="waypoint-latitude" name="latitude" inputmode="decimal"
+                                            placeholder="Enter latitude" required>
+                                    </div>
+                                </div>
+                                <div class="status-row-input second">
+                                    <span class="status-label">Longitude:</span>
+                                    <div class="input-group">
+                                        <input type="number" id="waypoint-longitude" name="longitude"
+                                            inputmode="decimal" placeholder="Enter longitude" required>
+                                    </div>
+                                </div>
+                                <div class="button-group">
+                                    <button type="button" id="submit-waypoint">Submit Waypoint</button>
+                                </div>
+                            </div>
+                            <div class="waypoint-buoy-table">
+                                <div class="status-row-input second">
+                                    <span class="status-label">Latitude:</span>
+                                    <div class="input-group">
+                                        <input type="number" id="buoy-latitude" name="latitude" inputmode="decimal"
+                                            placeholder="Enter latitude" required>
+                                    </div>
+                                </div>
+                                <div class="status-row-input second">
+                                    <span class="status-label">Longitude:</span>
+                                    <div class="input-group">
+                                        <input type="number" id="buoy-longitude" name="longitude" inputmode="decimal"
+                                            placeholder="Enter longitude" required>
+                                    </div>
+                                </div>
+                                <div class="button-group">
+                                    <button type="button" id="submit-buoy">Submit Buoy</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-container">
+                <div class="table-heading" onclick="toggleSection(this)">
+                    <h1>Algo/RC Chooser <span class="toggle-icon">+</span></h1>
+                </div>
+                <div class="collapsible-section hidden">
+                    <div class="table">
+                        <div class="status-row second">
+                            <span class="status-label">Options: </span>
+                        </div>
+                        <div class="dropdown">
+                            <button class="dropdown-button" id="mode-button" onclick="toggleDropdown()">Select
+                                Mode</button>
+                            <div id="dropdown-content" class="dropdown-content">
+                                <a href="#" onclick="selectMode('algo')">Algorithm</a>
+                                <a href="#" onclick="selectMode('Radio')">Radio</a>
+                                <a href="#" onclick="selectMode('Webserver')">Webserver</a>
+                                <a href="#" onclick="selectMode('Controller_App')">Controller App</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-container">
+                <div class="table-heading" onclick="toggleSection(this)">
+                    <h1>Connect to ROS <span class="toggle-icon">+</span></h1>
+                </div>
+                <div class="collapsible-section hidden">
+                    <div class="table">
+                        <div class="status-row">
+                            <span class="status-label">ROS URL:</span>
+                            <div class="input-group">
+                                <input type="url" id="ros-url" name="ros-url" inputmode="url"
+                                    placeholder="Enter ROS URL" required>
+                            </div>
+                        </div>
+                        <div class="button-group">
+                            <button type="button" id="connect-to-ros">Submit</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div id="sailboat-angle-dashboard">
                 <div class="dial">
                     <h3>Sail Angle</h3>

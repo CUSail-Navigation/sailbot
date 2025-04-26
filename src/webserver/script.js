@@ -43,32 +43,32 @@ function initMap() {
         // const longitude = e.latLng.lng().toFixed(6);
         const latitude = e.latLng.lat();
         const longitude = e.latLng.lng();
-    
+
         if (latitude && longitude) {
             // Create a waypoint string for storage
             const waypoint = `${latitude},${longitude}`;
             waypoints.push(waypoint)
             addWaypointToQueue(waypoint); // Send the waypoint to ROS
             displayWaypoints(); // Update the waypoint list in the UI
-    
+
             // Parse latitude and longitude to create a LatLng object
             const latLng = {
                 lat: parseFloat(latitude),
                 lng: parseFloat(longitude),
             };
-    
+
             // Add a marker for the new waypoint on the map
             const marker = new google.maps.Marker({
                 position: latLng,
                 map: map,
                 title: `Waypoint (${latitude},${longitude})`,
             });
-    
+
             waypointMarkers[waypoint] = marker;
             waypointPlanCoordinates.push(latLng);
-    
+
             waypointPath.setPath(waypointPlanCoordinates);
-    
+
             console.log(`Waypoint added: ${waypoint}`);
         };
     });
@@ -1054,3 +1054,17 @@ document.getElementById('sail-rudder-button').addEventListener('click', function
 
 
 // ====================== END: Sail/Rudder Handling ============================
+
+
+function toggleSection(headerElement) {
+    const content = headerElement.nextElementSibling;
+    const icon = headerElement.querySelector(".toggle-icon");
+
+    if (content.classList.contains("hidden")) {
+        content.classList.remove("hidden");
+        icon.textContent = "−";
+    } else {
+        content.classList.add("hidden");
+        icon.textContent = "+";
+    }
+}
