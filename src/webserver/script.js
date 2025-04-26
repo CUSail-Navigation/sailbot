@@ -120,6 +120,15 @@ function connectToROS(url) {
         console.log('Connected to rosbridge server at:', url);
         subscribeToTopics();
         initializePublishers();
+
+        // make sure that when you re-connect to ROS the selected control mode is still being published
+        const modeButton = document.getElementById('mode-button');
+        currMode = modeButton.innerText;
+        if (controlModeTopic && currMode) {
+            const message = new ROSLIB.Message({ data: currMode.toLowerCase() });
+            controlModeTopic.publish(message);
+            console.log(`Published control mode on connect: ${currMode.toLowerCase()}`);
+        }
     });
 
     ros.on('error', function (error) {
