@@ -1,5 +1,6 @@
 import utm
 import math
+import numpy as np
 from sensor_msgs.msg import NavSatFix
 
 class UTMPoint():
@@ -40,6 +41,15 @@ class UTMPoint():
         """
         assert self.zone_number == other.zone_number, "Zone numbers must be the same for distance calculation"
         return math.dist((self.easting, self.northing), (other.easting, other.northing))
+    
+    def target_bearing_to(self, other: 'UTMPoint') -> float:
+        """
+        Calculate the bearing to another UTM point.
+        """
+        assert self.zone_number == other.zone_number, "Zone numbers must be the same for bearing calculation"
+        delta_easting = self.easting - other.easting
+        delta_northing = self.northing - other.northing
+        return np.arctan2(delta_northing, delta_easting) * 180 / np.pi
 
     def __repr__(self):
         return f"UTMPoint(x={self.x}, y={self.y}, zone_number={self.zone_number}, zone_letter={self.zone_letter})"
