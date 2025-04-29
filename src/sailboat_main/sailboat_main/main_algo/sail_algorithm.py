@@ -59,9 +59,6 @@ class MainAlgo(Node):
 
         self.declare_parameter('gybe_buffer', 15)
         self.gybe_buffer = self.get_parameter('gybe_buffer').value
-
-        self.declare_parameter("debug", False)
-        self.debug = self.get_parameter("debug").value
     
         self.declare_parameter("no_go_zone", 45)
         self.no_go_zone = self.get_parameter("no_go_zone").value
@@ -111,24 +108,13 @@ class MainAlgo(Node):
         # Setup primary loop for stepping through sailing algorithm
         self.timer = self.create_timer(self.timer_period, self.step)
 
-        # Internal state
-        self.wind_direction = None
-        self.current_location = None
-        self.tacking_point = None
-        self.heading_direction = None
-        self.current_waypoint = None
-        self.current_destination = None
-        self.heading_difference = None
-        self.dist_to_dest = None
-
-        if self.debug:
+        # Handle Debug Publishing
+        self.declare_parameter("debug", False)
+        if self.get_parameter("debug").value:
             # Publisher for internal state
             self.state_pub = self.create_publisher(AlgoDebug, 'main_algo_debug', 10)
             # Timer to publish state every 1 second
             self.state_timer = self.create_timer(1.0, self.publish_state_debug)
-
-        # Publisher for tacking point
-        self.tacking_point_pub = self.create_publisher(NavSatFix, 'tacking_point', 10)
 
         self.get_logger().info('Main-algo started successfully')
 
@@ -427,7 +413,17 @@ class MainAlgo(Node):
         Callback to update the current destination waypoint from the 'current_waypoint' topic.
         """
         self.current_waypoint = LatLongPoint(msg.latitude, msg.longitude).to_utm()
+        self.new_waypoint_flag = True
         self.get_logger().info(f'Updated current waypoint to: ({msg.latitude}, {msg.longitude})')
+
+        # reset entire state
+        self.get_logger().info("New waypoint received")
+        self.new_waypoint_flag = False
+        self.current_destination = self.current_waypoint
+        self.tack_time_tracker = 0
+        self.jibe_time_tracker = 0
+        self.sail_state = SailState.NORMAL
+        
 
     def publish_state_debug(self):
         """
@@ -491,7 +487,6 @@ class MainAlgo(Node):
                 self.get_logger().info('Failed to pop waypoint from the service.')
         except Exception as e:
             self.get_logger().error(f'Error in waypoint_response_callback: {str(e)}')
-
 
     def curr_gps_callback(self, msg):
         """
