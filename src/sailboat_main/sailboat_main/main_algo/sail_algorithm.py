@@ -6,13 +6,14 @@ from rclpy.node import Node
 from sensor_msgs.msg import NavSatFix
 from geometry_msgs.msg import Vector3
 from std_msgs.msg import Int32
+from std_msgs.msg import Bool
 from rclpy.task import Future
 from typing import Optional
 
 from sailboat_interface.srv import Waypoint
 from sailboat_interface.msg import AlgoDebug
-from Points import LatLongPoint, UTMPoint
-from states import SailState
+from .points import LatLongPoint, UTMPoint
+from .states import SailState
 
 class MainAlgo(Node):
     """
@@ -20,30 +21,32 @@ class MainAlgo(Node):
     current location, destination, and heading direction.
     """
     # Sensor Data
-    wind_direction : Optional[float]
-    current_location : Optional[UTMPoint]
-    current_waypoint : Optional[UTMPoint]
-    heading_direction : Optional[float]
-    heading_difference : Optional[float]
-    dist_to_dest : Optional[float]
+    wind_direction : Optional[float] = None
+    current_location : Optional[UTMPoint] = None
+    current_waypoint : Optional[UTMPoint] = None
+    heading_direction : Optional[float] = None
+    heading_difference : Optional[float] = None
+    dist_to_dest : Optional[float] = None
 
     # Algorithm State
-    state : SailState
-    current_destination : Optional[UTMPoint]
-    tacking_point : Optional[UTMPoint]
-    jibing_point : Optional[UTMPoint]
+    state : SailState = SailState.NORMAL
+    current_destination : Optional[UTMPoint] = None
+    tacking_point : Optional[UTMPoint] = None
+    jibing_point : Optional[UTMPoint] = None
 
     # Algorithm Parameters (angles calculated in degrees in one direction symmetric around the centerline)
-    tacking_buffer : int # cooldown between calculating tacking points
-    tack_no_go_zone : int # anglular size of the no-go-zone on one side of the boat's centerline
-    jibe_danger_zone: int # distance to the waypoint at which we should start jibing
-    jibe_angle : int
-    neutral_zone: int
-    dist_to_dest : Optional[float]
+    tacking_buffer : int = 30 # TODO: cooldown between calculating tacking points
+    tack_no_go_zone : int = 45 # anglular size of the no-go-zone on one side of the boat's centerline
+    jibe_danger_zone: int = 15 # distance to the waypoint at which we should start jibing
+    tack_time_limit : int = 60
+    jibe_time_limit : int = 60
+    jibe_angle : int = 10
+    neutral_zone: int = 10 
 
     # Physical Parameters
     MAX_RUDDER_ANGLE : int = 25 # max rudder angle in degrees
     NEUTRAL_RUDDER_ANGLE : int = 0 
+    POP_RADIUS : int = 5 # radius in meters to pop the waypoint
 
     def __init__(self):
         super().__init__('main_algo')
@@ -67,7 +70,7 @@ class MainAlgo(Node):
         self.danger_zone = self.get_parameter("danger_zone").value
 
         self.tack_time_tracker = 0
-        self.gybe_time_tracker = 0
+        self.jibe_time_tracker = 0
 
         self.sail_state = SailState.NORMAL
 
@@ -99,19 +102,22 @@ class MainAlgo(Node):
             self.current_waypoint_callback,
             10)
         
-        self.timer = self.create_timer(self.timer_period, self.step)
-
         # Publisher for rudder angle
         self.rudder_angle_pub = self.create_publisher(Int32, 'algo_rudder', 10)
 
-        self.tacking_point_pub = self.create_publisher(NavSatFix, 'tacking_point', 10)
+        # Publisher for danger zone notification
+        self.danger_zone_pub = self.create_publisher(Bool, 'danger_zone', 10)
+
+        # Setup primary loop for stepping through sailing algorithm
+        self.timer = self.create_timer(self.timer_period, self.step)
 
         # Internal state
         self.wind_direction = None
-        self.curr_loc = None
+        self.current_location = None
         self.tacking_point = None
         self.heading_direction = None
-        self.curr_dest = None
+        self.current_waypoint = None
+        self.current_destination = None
         self.heading_difference = None
         self.dist_to_dest = None
 
@@ -130,7 +136,7 @@ class MainAlgo(Node):
         """
         Sail. 
         """
-        if self.curr_loc is None or self.curr_dest is None:
+        if self.current_location is None or self.current_destination is None:
             # Not enough information to calculate rudder angle yet
             return
         
@@ -141,13 +147,15 @@ class MainAlgo(Node):
                                          self.current_location.target_bearing_to(self.current_destination) + 180, 360) - 180
         self.get_logger().info(f'Heading Difference: {self.heading_difference}')
 
+        # if the boat is in the danger zone, we should inform the sail to trim
+        self.notify_trim_sail()
+
         if self.sail_state == SailState.NORMAL:
             self.set_normal_rudder()
         elif self.sail_state == SailState.TACK:
             self.set_tacking_rudder()
         elif self.sail_state == SailState.JIBE:
             self.set_normal_rudder() # TODO: do we need to set a different (smaller) rudder angle?
-            self.notify_trim_sail() # TODO: implement this function + should notify every step maybe
         else:
             raise ValueError("Unknown state") 
 
@@ -155,44 +163,56 @@ class MainAlgo(Node):
         """
         Update the state of the algorithm. This function is called when the state changes.
         """
+
+        # on the first iteration, set state to NORMAL and destination to current waypoint
+        if self.current_destination is None:
+            self.current_destination = self.current_waypoint
+            self.sail_state = SailState.NORMAL
+        
         if self.sail_state == SailState.NORMAL:
-            self.get_logger().info("Normal sailing")
             if self.waypoint_in_no_go_zone():
+                self.current_destination = self.calculate_tacking_point()
+                self.tack_time_tracker = 0
                 self.sail_state = SailState.TACK
-                self.curr_dest = self.calculate_tacking_point()
             elif self.waypoint_in_danger_zone():
-                self.curr_dest = self.calculate_jibing_point()
+                self.current_destination = self.calculate_jibing_point()
+                self.jibe_time_tracker = 0
                 self.sail_state = SailState.JIBE
             else:
-                self.curr_dest = self.current_waypoint
+                pass # keep sailing normally
 
         elif self.sail_state == SailState.TACK:
-            self.get_logger().info("Tacking")
             # if we reached the tacking point, switch to normal sailing
-            if self.current_location.distance_to(self.curr_dest) < 5:
+            if self.current_location.distance_to(self.current_destination) < self.POP_RADIUS:
                 self.get_logger().info("Reached tacking point")
-                self.curr_dest = self.current_waypoint
+                self.current_destination = self.current_waypoint
                 self.sail_state = SailState.NORMAL
-            elif self.tack_time_tracker > self.tacking_buffer:
+            elif self.tack_time_tracker > self.tack_time_limit:
                 # TODO: do we need to exit the no go zone to gain speed before recalculating?
-                self.curr_dest = self.calculate_tacking_point()
+                self.current_destination = self.calculate_tacking_point()
+                self.tack_time_tracker = 0 # reset time tracker
                 self.sail_state = SailState.TACK
             else:
-                pass # keep tacking
+                self.tack_time_tracker += self.timer_period # keep tacking
             
         elif self.sail_state == SailState.JIBE:
-            self.get_logger().info("Jibing")
             # if we reached the jibing point, switch to normal sailing
-            if self.current_location.distance_to(self.curr_dest) < 5:
+            if self.current_location.distance_to(self.current_destination) < self.POP_RADIUS:
                 self.get_logger().info("Reached jibe point")
+                self.current_destination = self.current_location
                 self.sail_state = SailState.NORMAL
+            # TODO: is this case even necessary
+            elif self.jibe_time_tracker > self.jibe_time_limit:
+                # TODO: do we need to exit the zone to gain speed before recalculating?
+                self.current_destination = self.calculate_jibing_point()
+                self.jibe_time_tracker = 0 # reset time tracker
+                self.sail_state = SailState.JIBE
             else:
-                pass # keep jibing
+                self.jibe_time_tracker += self.timer_period # keep jibing
             
         else:
             self.get_logger().info("Unknown state")
 
-        # TODO: if the boat is in the danger zone, we should inform the sail to trim
 
     def set_tacking_rudder(self): 
         """""""""
@@ -231,28 +251,22 @@ class MainAlgo(Node):
         """
         assert self.waypoint_in_danger_zone(), "Not in nogo zone"
         assert self.state is SailState.JIBE, "Already jibe"
-        assert self.curr_loc is not None, "Current location is None"
-        assert self.curr_dest is not None, "Current destination is None"
+        assert self.current_location is not None, "Current location is None"
+        assert self.current_destination is not None, "Current destination is None"
         assert self.wind_direction is not None, "Wind direction is None"
 
         try:
-            latlong = self.curr_loc.to_latlon()
+            latlong = self.current_location.to_latlon()
             lat,long = latlong.latitude, latlong.longitude
             self.get_logger().info(f'Current Location: ({lat}, {long})')
         except Exception as e:
             self.get_logger().error(f'Error in Lat Long: {str(e)}') 
 
-        x_distance = self.curr_dest.easting - self.curr_loc.easting
-        y_distance = self.curr_dest.northing - self.curr_loc.northing
 
-        heading_to_dest = np.arctan2(y_distance, x_distance) * 180 / np.pi
-        jibe_diff = np.mod(self.heading_direction - heading_to_dest + 180, 360) - 180
+        if(abs(self.heading_diff) > self.jibe_danger_zone):
+            return self.current_destination
 
-
-        if(abs(jibe_diff) > self.jibe_danger_zone):
-            return self.curr_dest
-
-        if(jibe_diff > 0):
+        if(self.heading_diff > 0):
             #tack on right
             jibe_angle = (self.heading_direction - self.jibe_danger_zone) % 360
             approach_angle = (self.jibe_danger_zone + self.heading_direction) % 360
@@ -267,8 +281,8 @@ class MainAlgo(Node):
         self.get_logger().info(f'Vector 1: {vec1}')
         self.get_logger().info(f'Vector 2: {vec2}')
 
-        P1 = np.array([self.curr_loc.easting, self.curr_loc.northing])
-        P2 = np.array([self.curr_dest.easting, self.curr_dest.northing])
+        P1 = np.array([self.current_location.easting, self.current_location.northing])
+        P2 = np.array([self.current_destination.easting, self.current_destination.northing])
 
         # intersection of two lines
         A = np.column_stack((vec1, -vec2))
@@ -279,52 +293,46 @@ class MainAlgo(Node):
         jibing_point = P1 + t_vals[0] * vec1
         self.get_logger().info(f'Jibe Point: {jibing_point}')
 
-        gp = UTMPoint(easting=jibing_point[0], northing=jibing_point[1], 
-                      zone_number=self.curr_loc.zone_number, zone_letter=self.curr_loc.zone_letter)
+        jp = UTMPoint(easting=jibing_point[0], northing=jibing_point[1], 
+                      zone_number=self.current_location.zone_number, zone_letter=self.current_location.zone_letter)
 
-        assert gp.easting > 100000 and gp.easting < 900000, "Easting out of range"
+        assert jp.easting > 100000 and jp.easting < 900000, "Easting out of range"
 
         # publish new GP if we do not encounter an exception
         try:
-            gybe_point_msg = gp.to_navsatfix_msg()
+            gybe_point_msg = jp.to_navsatfix_msg()
             self.tacking_point_pub.publish(gybe_point_msg)
         except Exception as e: 
-            self.get_logger().error(f'Gybing point easting: {gp.easting}, northing: {gp.northing}')
+            self.get_logger().error(f'Jibing point easting: {jp.easting}, northing: {jp.northing}')
             self.get_logger().error(f'Error in calculateGP: {str(e)}') 
 
-        self.get_logger().info(f'Gybe Point: {str(gp.to_latlon())}')
+        self.get_logger().info(f'Jibe Point: {str(jp.to_latlon())}')
 
-        return gp
+        return jp
 
     def calculate_tacking_point(self) -> UTMPoint:
         """
         Calcualte tacking point to begin tacking. uses winddir + dest
         Assuming that the boat is heading towards the positive x-axis and the destination
 
-        Precondition: self.waypoint_in_nogo_zone() is true. self.tacking is false. self.curr_loc is not None. self.curr_dest is not None. self.wind_direction is not None.
+        Precondition: self.waypoint_in_nogo_zone() is true. self.tacking is false. self.current_location is not None. self.current_destination is not None. self.wind_direction is not None.
         """
 
         assert self.waypoint_in_no_go(), "Waypoint not in nogo zone"
         assert self.state is SailState.TACK, "Already tacking"
-        assert self.curr_loc is not None, "Current location is None"
-        assert self.curr_dest is not None, "Current destination is None"
+        assert self.current_location is not None, "Current location is None"
+        assert self.current_destination is not None, "Current destination is None"
         assert self.wind_direction is not None, "Wind direction is None"
 
         try:
-            latlong = self.curr_loc.to_latlon()
+            latlong = self.current_location.to_latlon()
             lat,long = latlong.latitude, latlong.longitude
             self.get_logger().info(f'Current Location: ({lat}, {long})')
         except Exception as e:
             self.get_logger().error(f'Error in Lat Long: {str(e)}') 
 
-        x_distance = self.curr_dest.easting - self.curr_loc.easting
-        y_distance = self.curr_dest.northing - self.curr_loc.northing
-
-        heading_to_dest = np.arctan2(y_distance, x_distance) * 180 / np.pi
-        tack_diff = np.mod(self.heading_direction - heading_to_dest + 180, 360) - 180
-
         # tack left or right depending on the angle from the middling line
-        if(tack_diff > 0):
+        if(self.heading_difference > 0):
             #tack on right
             tack_angle = (self.heading_direction - self.no_go_zone) % 360
             approach_angle = (self.no_go_zone + self.heading_direction) % 360
@@ -341,8 +349,8 @@ class MainAlgo(Node):
         self.get_logger().info(f'Vector 1: {vec1}')
         self.get_logger().info(f'Vector 2: {vec2}')
 
-        P1 = np.array([self.curr_loc.easting, self.curr_loc.northing])
-        P2 = np.array([self.curr_dest.easting, self.curr_dest.northing])
+        P1 = np.array([self.current_location.easting, self.current_location.northing])
+        P2 = np.array([self.current_destination.easting, self.current_destination.northing])
 
         # intersection of two lines
         A = np.column_stack((vec1, -vec2))
@@ -354,7 +362,7 @@ class MainAlgo(Node):
         self.get_logger().info(f'Tacking Point: {tacking_point}')
 
         tp = UTMPoint(easting=tacking_point[0], northing=tacking_point[1], 
-                      zone_number=self.curr_loc.zone_number, zone_letter=self.curr_loc.zone_letter)
+                      zone_number=self.current_location.zone_number, zone_letter=self.current_location.zone_letter)
         assert tp.easting > 100000 and tp.easting < 900000, "Easting out of range"
 
         # publish new TP if we do not encounter an exception
@@ -372,6 +380,7 @@ class MainAlgo(Node):
 
 
     # ======================== Helper Functions =======================
+        
     def boat_in_nogo_zone(self):
         """
         Check if the boat is in nogo zone based on the wind direction
@@ -394,10 +403,10 @@ class MainAlgo(Node):
         """
         Check if the current destination waypoint is in the danger zone.
         """
-        if self.curr_dest is None or self.curr_loc is None:
+        if self.current_destination is None or self.current_location is None:
             return False
 
-        dist_to_dest = self.curr_loc.distance_to(self.curr_dest)
+        dist_to_dest = self.current_location.distance_to(self.current_destination)
         self.get_logger().info(f'Distance to destination: {dist_to_dest}')
         return dist_to_dest < self.danger_zone
 
@@ -405,21 +414,13 @@ class MainAlgo(Node):
         """
         Check if the current destination waypoint is in the no-go zone.
         """
-        if self.curr_dest is None or self.curr_loc is None:
+        if self.current_destination is None or self.current_location is None:
             return False
 
-        x_distance = self.curr_dest.easting - self.curr_loc.easting
-        y_distance = self.curr_dest.northing - self.curr_loc.northing
-
-        heading_to_dest = np.arctan2(y_distance, x_distance) * 180 / np.pi
-        tack_diff = np.mod(self.heading_direction - heading_to_dest + 180, 360) - 180
-
-        return abs(tack_diff) < self.no_go_zone
+        return abs(self.heading_difference) < self.no_go_zone
 
 
-    # ========================= Callbacks =========================
-        
-
+    # ========================= Callbacks & Publishers =========================
 
     def current_waypoint_callback(self, msg):
         """
@@ -433,7 +434,8 @@ class MainAlgo(Node):
         Publish the internal state as a JSON string.
         """
         debug_msg = AlgoDebug()
-        debug_msg.tacking = self.tacking
+        # update to handle jibing  
+        debug_msg.tacking = True if self.sail_state == SailState.TACK else False
 
         if self.tacking_point is not None:
             debug_msg.tacking_point = self.tacking_point.to_navsatfix_msg()
@@ -443,13 +445,13 @@ class MainAlgo(Node):
         debug_msg.heading_direction = Int32()
         debug_msg.heading_direction.data = int(self.heading_direction) if self.heading_direction is not None else 0
 
-        if self.curr_dest is not None:
-            debug_msg.curr_dest = self.curr_dest.to_navsatfix_msg()
+        if self.current_destination is not None:
+            debug_msg.curr_dest = self.current_destination.to_navsatfix_msg()
         else:
             debug_msg.curr_dest = NavSatFix() # empty msg
 
-        debug_msg.heading_difference = Int32()
-        debug_msg.heading_difference.data = int(self.heading_difference) if self.diff is not None else 0
+        debug_msg.heading_diff = Int32()
+        debug_msg.heading_diff.data = int(self.heading_difference) if self.diff is not None else 0
 
         if self.dist_to_dest is not None:
             debug_msg.dist_to_dest = Int32()
@@ -460,6 +462,11 @@ class MainAlgo(Node):
 
         self.state_pub.publish(debug_msg)
 
+    def notify_trim_sail(self):
+        """
+        Notify the trim_sail node to trim the sail.
+        """
+        self.danger_zone_pub.publish(Bool(data=self.boat_in_danger_zone()))
 
     def pop_waypoint(self):
         self.cli = self.create_client(Waypoint, 'mutate_waypoint_queue')
@@ -488,22 +495,20 @@ class MainAlgo(Node):
 
     def curr_gps_callback(self, msg):
         """
-        Use the NavSatFix data to assign value to self.curr_loc
+        Use the NavSatFix data to assign value to self.current_location
         """
         # assuming the zone_number and zone_letter are the same for the current location and the destination
-        self.curr_loc = LatLongPoint(latitude=msg.latitude, longitude=msg.longitude).to_utm()
+        self.current_location = LatLongPoint(latitude=msg.latitude, longitude=msg.longitude).to_utm()
 
         # Update the distance to destination, check if we have reached our waypoint
-        if self.curr_dest is not None:
+        if self.current_destination is not None:
             self.dist_to_dest = self.current_location.distance_to(self.current_waypoint)
             self.get_logger().info(f'Distance to destination: {self.dist_to_dest}')
             # if we have reached our waypoint, pop it off 
             if self.dist_to_dest < 5:
                 self.get_logger().info('=============================== Waypoint popped ===============================')
                 self.pop_waypoint()
-                self.curr_dest = None
-
-        self.step()
+                self.current_destination = None
 
     def wind_callback(self, msg):
         """
