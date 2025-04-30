@@ -15,7 +15,7 @@ from sailboat_interface.msg import AlgoDebug
 from .points import LatLongPoint, UTMPoint
 from .states import SailState
 
-class MainAlgo(Node):
+class SailAlgo(Node):
     """
     The sailing algorithm responsible for changing the rudder angle based on the 
     current location, destination, and heading direction.
@@ -106,11 +106,13 @@ class MainAlgo(Node):
         self.danger_zone_pub = self.create_publisher(Bool, 'danger_zone', 10)
 
         # Setup primary loop for stepping through sailing algorithm
-        self.timer = self.create_timer(self.timer_period, self.step)
+        self.step_timer = self.create_timer(self.timer_period, self.step)
 
         # Handle Debug Publishing
-        self.declare_parameter("debug", False)
-        if self.get_parameter("debug").value:
+        self.declare_parameter("debug", True)
+        self.debug = self.get_parameter("debug").value
+        self.get_logger().info(f'Debug mode: {self.debug}')
+        if self.debug:
             # Publisher for internal state
             self.state_pub = self.create_publisher(AlgoDebug, 'main_algo_debug', 10)
             # Timer to publish state every 1 second
@@ -122,16 +124,22 @@ class MainAlgo(Node):
         """
         Sail. 
         """
-        if self.current_location is None or self.current_destination is None:
+        if self.current_location is None or self.current_waypoint is None or self.heading_direction is None:
             # Not enough information to calculate rudder angle yet
             return
         
-        self.update_state()
+        # on the first iteration, set state to NORMAL and destination to current waypoint
+        if self.current_destination is None:
+            self.current_destination = self.current_waypoint
+            self.sail_state = SailState.NORMAL
 
+    
         # update heading difference: heading_direction - target_bearing
         self.heading_difference = np.mod(self.heading_direction -
                                          self.current_location.target_bearing_to(self.current_destination) + 180, 360) - 180
         self.get_logger().info(f'Heading Difference: {self.heading_difference}')
+        
+        self.update_state()
 
         # if the boat is in the danger zone, we should inform the sail to trim
         self.notify_trim_sail()
@@ -149,12 +157,6 @@ class MainAlgo(Node):
         """
         Update the state of the algorithm. This function is called when the state changes.
         """
-
-        # on the first iteration, set state to NORMAL and destination to current waypoint
-        if self.current_destination is None:
-            self.current_destination = self.current_waypoint
-            self.sail_state = SailState.NORMAL
-        
         if self.sail_state == SailState.NORMAL:
             if self.waypoint_in_no_go_zone():
                 self.current_destination = self.calculate_tacking_point()
@@ -236,7 +238,6 @@ class MainAlgo(Node):
         Calculate the jibe point to begin jibing. uses winddir + dest
         """
         assert self.waypoint_in_danger_zone(), "Not in nogo zone"
-        assert self.state is SailState.JIBE, "Already jibe"
         assert self.current_location is not None, "Current location is None"
         assert self.current_destination is not None, "Current destination is None"
         assert self.wind_direction is not None, "Wind direction is None"
@@ -249,10 +250,10 @@ class MainAlgo(Node):
             self.get_logger().error(f'Error in Lat Long: {str(e)}') 
 
 
-        if(abs(self.heading_diff) > self.jibe_danger_zone):
+        if(abs(self.heading_difference) > self.jibe_danger_zone):
             return self.current_destination
 
-        if(self.heading_diff > 0):
+        if(self.heading_difference > 0):
             #tack on right
             jibe_angle = (self.heading_direction - self.jibe_danger_zone) % 360
             approach_angle = (self.jibe_danger_zone + self.heading_direction) % 360
@@ -296,8 +297,7 @@ class MainAlgo(Node):
         Precondition: self.waypoint_in_nogo_zone() is true. self.tacking is false. self.current_location is not None. self.current_destination is not None. self.wind_direction is not None.
         """
 
-        assert self.waypoint_in_no_go(), "Waypoint not in nogo zone"
-        assert self.state is SailState.TACK, "Already tacking"
+        assert self.waypoint_in_no_go_zone(), "Waypoint not in nogo zone"
         assert self.current_location is not None, "Current location is None"
         assert self.current_destination is not None, "Current destination is None"
         assert self.wind_direction is not None, "Wind direction is None"
@@ -413,20 +413,22 @@ class MainAlgo(Node):
         """
         Publish the internal state as a JSON string.
         """
+        self.get_logger().info('Publishing internal state')
         debug_msg = AlgoDebug()
         # update to handle jibing  
-        debug_msg.tacking = True if self.sail_state == SailState.TACK else False
+        debug_msg.tacking = True if self.sail_state == SailState.TACK or self.sail_state == SailState.JIBE else False
 
-        debug_msg.heading_direction = Int32()
-        debug_msg.heading_direction.data = int(self.heading_direction) if self.heading_direction is not None else 0
+        debug_msg.heading_dir = Int32()
+        debug_msg.heading_dir.data = int(self.heading_direction) if self.heading_direction is not None else 0
 
         if self.current_destination is not None:
             debug_msg.curr_dest = self.current_destination.to_navsatfix_msg()
         else:
+            self.get_logger().info("Current destination is None")
             debug_msg.curr_dest = NavSatFix() # empty msg
 
-        debug_msg.heading_diff = Int32()
-        debug_msg.heading_diff.data = int(self.heading_difference) if self.diff is not None else 0
+        debug_msg.diff = Int32()
+        debug_msg.diff.data = int(self.heading_difference) if self.heading_difference is not None else 0
 
         if self.dist_to_dest is not None:
             debug_msg.dist_to_dest = Int32()
@@ -499,7 +501,7 @@ class MainAlgo(Node):
         
 def main(args=None):
     rclpy.init(args=args)
-    main_algo = MainAlgo()
+    main_algo = SailAlgo()
     # Explicitly destroy the node when done
     try:
         rclpy.spin(main_algo)
