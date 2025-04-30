@@ -40,7 +40,7 @@ class SailAlgo(Node):
     jibe_danger_zone: int = 15 # distance to the waypoint at which we should start jibing
     tack_time_limit : int = 60
     jibe_time_limit : int = 60
-    jibe_angle : int = 10
+    jibe_angle : int = 10 # TODO: Currently not used
     neutral_zone: int = 10 
 
     # Physical Parameters
