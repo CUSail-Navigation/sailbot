@@ -96,7 +96,7 @@ class MainAlgo(Node):
     def __init__(self):
         super().__init__('main_algo')
 
-        self.declare_parameter('timer_period', 0.500) 
+        self.declare_parameter('timer_period', 0.2500) 
         self.timer_period = self.get_parameter('timer_period').value
 
         self.declare_parameter('tacking_buffer', 15)
@@ -105,8 +105,11 @@ class MainAlgo(Node):
         self.declare_parameter("debug", False)
         self.debug = self.get_parameter("debug").value
     
-        self.declare_parameter("no_go_zone", 45)
+        self.declare_parameter("no_go_zone", 50)
         self.no_go_zone = self.get_parameter("no_go_zone").value
+
+        self.declare_parameter("neutral_zone", 20)
+        self.neutral_zone = self.get_parameter("neutral_zone").value
 
         self.tack_time_tracker = 0
 
@@ -294,15 +297,24 @@ class MainAlgo(Node):
         self.get_logger().info(f'Heading Difference: {diff}')
         self.diff = diff
 
-        if(not self.in_nogo()):
+        # if(not self.in_nogo() or np.absolute(self.neutral_zone) < 10 ):
+        #     rudder_angle = (diff / 180.0) * 25
+        # else:
+        #     rudder_angle = np.sign(diff) * 25 # max rudder angle if we are in nogo zone
+
+        # THIS RUDDER LOGIC IS TEMPORARY
+        # This will set the rudder to a small angle in the neutral zone, and a large angle in the no-go zone and medium angle elsewhere
+        if(np.absolute(diff) < self.neutral_zone ):
             rudder_angle = (diff / 180.0) * 25
-        else:
+        elif(self.in_nogo()):
             rudder_angle = np.sign(diff) * 25 # max rudder angle if we are in nogo zone
+        else:
+            rudder_angle = np.sign(diff) * 15 # medium rudder angle otherwise (this will help maintain speed pre tack)
 
         self.get_logger().info(f'Rudder Angle Raw: {rudder_angle}')
 
         # Assuming rudder_angle is a floating-point number and you want it to be an Int32 message
-        rudder_angle = np.floor(rudder_angle / 5) * 5  # Floor the angle to the nearest multiple of 5
+        rudder_angle = np.floor(rudder_angle)  # Floor the angle
         rudder_angle = int(rudder_angle)  # Convert to int since Int32 requires an integer value
 
         self.get_logger().info(f'Rudder Angle: {rudder_angle}')
@@ -321,6 +333,23 @@ class MainAlgo(Node):
         if self.wind_dir is None:
             return False
         return (150 < self.wind_dir < 210)
+    
+    def waypoint_in_nogo(self):
+        """
+        Check if the waypoint is in nogo zone based on the wind direction
+        """
+        if self.curr_dest is None or self.wind_dir is None or self.curr_loc is None:
+            return False
+
+        x_distance = self.curr_dest.easting - self.curr_loc.easting
+        y_distance = self.curr_dest.northing - self.curr_loc.northing
+
+        target_bearing = np.arctan2(y_distance, x_distance) * 180 / np.pi
+        diff = np.mod(self.heading_dir - target_bearing + 180, 360) - 180
+
+        self.get_logger().info(f'NOGO Zone Check: {diff}')
+
+        return ((self.wind_dir - self.no_go_zone) % 360 < diff < (self.wind_dir + self.no_go_zone) % 360)
 
     def calculateTP(self) -> UTMPoint:
         """

@@ -46,10 +46,10 @@ class TrimSail(Node):
         # sets a 20 degree buffer zone so that the sail does not always flip.
         if 0 <= windDir < 10 or 350 < windDir < 360:
             return 90
-        elif 210 < windDir <= 350:
-            return round(((7/15)*windDir - 80)/5)*5
-        elif 10 <= windDir < 150:
-            return round(((7/15)*windDir - 88)/5)*5
+        elif 225 < windDir <= 350:
+            return round(((18/25)*windDir - 162)/5)*5
+        elif 10 <= windDir < 135:
+            return round((-(18/25)*windDir + 97.2)/5)*5 # these were calculated by finding the line of the linear map for the sail angle
         # no go zone (150 <= cWindDir <= 210)
         else:
             return 0
