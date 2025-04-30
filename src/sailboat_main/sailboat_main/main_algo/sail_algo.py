@@ -212,7 +212,7 @@ class SailAlgo(Node):
     
         # update heading difference: heading_direction - target_bearing
         self.heading_difference = np.mod(self.heading_direction -
-                                         self.current_destination.target_bearing_to(self.current_location) + 180, 360) - 180
+                                         self.current_location.target_bearing_to(self.current_destination) + 180, 360) - 180
         self.get_logger().info(f'Heading Difference: {self.heading_difference}')
         
         self.update_state()
