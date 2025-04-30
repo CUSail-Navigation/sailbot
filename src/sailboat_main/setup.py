@@ -26,7 +26,8 @@ setup(
             'main_algo = sailboat_main.main_algo.main_algo:main',
             'trim_sail = sailboat_main.trim_sail.trim_sail:main',
             'teensy = sailboat_main.teensy.teensy_node:main',
-            'mux = sailboat_main.mux.mux_node:main'
+            'mux = sailboat_main.mux.mux_node:main',
+            'sail_algo = sailboat_main.main_algo.sail_algo:main',
         ],
     },
 )

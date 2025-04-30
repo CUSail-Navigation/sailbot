@@ -284,14 +284,6 @@ class MainAlgo(Node):
 
         assert jp.easting > 100000 and jp.easting < 900000, "Easting out of range"
 
-        # publish new GP if we do not encounter an exception
-        try:
-            gybe_point_msg = jp.to_navsatfix_msg()
-            self.tacking_point_pub.publish(gybe_point_msg)
-        except Exception as e: 
-            self.get_logger().error(f'Jibing point easting: {jp.easting}, northing: {jp.northing}')
-            self.get_logger().error(f'Error in calculateGP: {str(e)}') 
-
         self.get_logger().info(f'Jibe Point: {str(jp.to_latlon())}')
 
         return jp
@@ -350,14 +342,6 @@ class MainAlgo(Node):
         tp = UTMPoint(easting=tacking_point[0], northing=tacking_point[1], 
                       zone_number=self.current_location.zone_number, zone_letter=self.current_location.zone_letter)
         assert tp.easting > 100000 and tp.easting < 900000, "Easting out of range"
-
-        # publish new TP if we do not encounter an exception
-        try:
-            tacking_point_msg = tp.to_navsatfix_msg()
-            self.tacking_point_pub.publish(tacking_point_msg)
-        except Exception as e: 
-            self.get_logger().error(f'Tacking point easting: {tp.easting}, northing: {tp.northing}')
-            self.get_logger().error(f'Error in calculateTP: {str(e)}') 
 
         self.get_logger().info(f'Tacking Point: {str(tp.to_latlon())}')
 
@@ -432,11 +416,6 @@ class MainAlgo(Node):
         debug_msg = AlgoDebug()
         # update to handle jibing  
         debug_msg.tacking = True if self.sail_state == SailState.TACK else False
-
-        if self.tacking_point is not None:
-            debug_msg.tacking_point = self.tacking_point.to_navsatfix_msg()
-        else:
-            debug_msg.tacking_point = NavSatFix() # empty msg
 
         debug_msg.heading_direction = Int32()
         debug_msg.heading_direction.data = int(self.heading_direction) if self.heading_direction is not None else 0
