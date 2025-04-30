@@ -47,8 +47,8 @@ class UTMPoint():
         Calculate the bearing to another UTM point.
         """
         assert self.zone_number == other.zone_number, "Zone numbers must be the same for bearing calculation"
-        delta_easting = self.easting - other.easting
-        delta_northing = self.northing - other.northing
+        delta_easting = other.easting - self.easting
+        delta_northing = other.northing- self.northing
         return np.arctan2(delta_northing, delta_easting) * 180 / np.pi
 
     def __repr__(self):
