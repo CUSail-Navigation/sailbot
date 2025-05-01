@@ -69,7 +69,7 @@ class UTMPoint():
         return np.arctan2(delta_northing, delta_easting) * 180 / np.pi
 
     def __repr__(self):
-        return f"UTMPoint(x={self.x}, y={self.y}, zone_number={self.zone_number}, zone_letter={self.zone_letter})"
+        return f"UTMPoint(easting={self.easting}, northing={self.northing}, zone_number={self.zone_number}, zone_letter={self.zone_letter})"
 
 class LatLongPoint():
     """
@@ -203,19 +203,26 @@ class SailAlgo(Node):
         if self.current_location is None or self.current_waypoint is None or self.heading_direction is None:
             # Not enough information to calculate rudder angle yet
             return
-        
+
+        self.get_logger().info(f'Current Destination: {self.current_destination}')
         # on the first iteration, set state to NORMAL and destination to current waypoint
         if self.current_destination is None:
             self.current_destination = self.current_waypoint
             self.sail_state = SailState.NORMAL
+            self.heading_difference = np.mod(self.heading_direction -
+                                         self.current_location.target_bearing_to(self.current_destination) + 180, 360) - 180
 
     
         # update heading difference: heading_direction - target_bearing
-        self.heading_difference = np.mod(self.heading_direction -
-                                         self.current_location.target_bearing_to(self.current_destination) + 180, 360) - 180
+        
         self.get_logger().info(f'Heading Difference: {self.heading_difference}')
         
+        # update state and current heading diff
         self.update_state()
+        self.heading_difference = np.mod(self.heading_direction -
+                                         self.current_location.target_bearing_to(self.current_destination) + 180, 360) - 180
+
+        
 
         # if the boat is in the danger zone, we should inform the sail to trim
         self.notify_trim_sail()
@@ -473,13 +480,11 @@ class SailAlgo(Node):
         Callback to update the current destination waypoint from the 'current_waypoint' topic.
         """
         self.current_waypoint = LatLongPoint(msg.latitude, msg.longitude).to_utm()
-        self.new_waypoint_flag = True
         self.get_logger().info(f'Updated current waypoint to: ({msg.latitude}, {msg.longitude})')
 
         # reset entire state
         self.get_logger().info("New waypoint received")
-        self.new_waypoint_flag = False
-        self.current_destination = self.current_waypoint
+        self.current_destination = None
         self.tack_time_tracker = 0
         self.jibe_time_tracker = 0
         self.sail_state = SailState.NORMAL
@@ -560,7 +565,6 @@ class SailAlgo(Node):
             if self.dist_to_dest < 5:
                 self.get_logger().info('=============================== Waypoint popped ===============================')
                 self.pop_waypoint()
-                self.current_destination = None
 
     def wind_callback(self, msg):
         """
