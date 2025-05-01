@@ -38,10 +38,11 @@ void ServoControlTask::execute()
         }
 
         // Directly set servo to the commanded angle
-        actuate_servo(tracker_servo, sfr::serial::servo_angle);
+        actuate_servo(tracker_servo, tracker_to_pwm(sfr::serial::servo_angle));
 
         // Update the buoy angle to reflect the current servo position
         sfr::serial::buoy_angle = sfr::serial::servo_angle;
+        Serial.println(sfr::serial::servo_angle);
         
         sfr::serial::update_servos = false; // reset flag for next update
     }
@@ -61,6 +62,11 @@ uint32_t ServoControlTask::tail_to_pwm(uint8_t angle)
 uint32_t ServoControlTask::sail_to_pwm(uint8_t angle)
 {
     return map(angle, 0, 90, 1050, 1200);
+}
+
+uint32_t ServoControlTask::tracker_to_pwm(uint8_t angle)
+{
+    return map(angle, 0, 180, 0, 127);
 }
 
 void ServoControlTask::actuate_servo(Servo &servo, uint32_t pwm)

@@ -72,7 +72,7 @@ class BuoyDetectorNode(Node):
             self.get_logger().info(f'No buoy detected')
             return
  
-        displacement = buoy_center[0] - self.CENTER
+        displacement = abs(buoy_center[0] - self.CENTER)
         if displacement > self.MARGIN:
             if buoy_center[0] > self.CENTER + self.MARGIN:
                 servo_angle = max(0, self.servo_angle - self.servo_angle_step)
@@ -88,8 +88,8 @@ class BuoyDetectorNode(Node):
         else:
             depth = depth_image[buoy_center[0], buoy_center[1]] / 1000
             point_msg = Point()
-            point_msg.x = depth * math.sin(math.radians(self.angle) - 90)
-            point_msg.y = depth * math.cos(math.radians(self.angle) - 90)
+            point_msg.x = depth * math.sin(math.radians(self.angle - 90))
+            point_msg.y = depth * math.cos(math.radians(self.angle - 90))
             point_msg.z = float(buoy_center[1])
             self.position_publisher.publish(point_msg)
             self.get_logger().info(f'Detected buoy at: ({point_msg.x, point_msg.y, point_msg.z})')

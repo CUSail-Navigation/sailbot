@@ -19,5 +19,5 @@ protected:
     SerialMonitor serial_monitor;
     ServoControlTask servo_control_task;
     SerialControlTask serial_control_task;
-    TrackerControlTask tracker_control_task;
+    // TrackerControlTask tracker_control_task;
 };
