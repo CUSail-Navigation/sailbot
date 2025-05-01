@@ -59,19 +59,16 @@ class TrimSail(Node):
         # wind is blowing in the same direction as the sailing direction (run), this range
         # sets a 20 degree buffer zone so that the sail does not always flip.
 
-        if self.in_danger_zone:
-            if 0 <= windDir < 10 or 350 < windDir < 360:
-                return 90
-            elif 210 < windDir <= 350:
-                return round(((7/15)*windDir - 80)/5)*5
-            elif 10 <= windDir < 150:
-                return round(((7/15)*windDir - 88)/5)*5
-            # no go zone (150 <= cWindDir <= 210)
-            else:
-                return 0
-        
+        if 0 <= windDir < 10 or 350 < windDir < 360:
+            return 90
+        elif 235 < windDir <= 350: # assumes no-go zone is 55 degrees
+            return round(((18/23)*windDir - 4230/32))
+        elif 10 <= windDir < 125:
+            return round((-(18/23)*windDir + 2250/23))
+        # no go zone 
         else:
-            return 0 # TODO: what is the logic here?
+            return 0
+
 
 def main(args=None):
     rclpy.init(args=args)
