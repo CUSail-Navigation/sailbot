@@ -35,9 +35,11 @@ class BuoyDetectorNode(Node):
         self.detector = BuoyDetectorCV(hsv_lower, hsv_upper, detection_threshold)
         
         self.CENTER = 320
-        self.MARGIN = 30 # TODO: Find best value for margin of error
+        self.MARGIN = 30
         self.angle = 0
         self.servo_angle = 90
+
+        self.CAMERA_FOV = 87
 
         self.position_publisher = self.create_publisher(Point, '/buoy_position', 10)
         self.servo_angle_publisher = self.create_publisher(Int32, '/servo_angle', 10)
@@ -73,25 +75,13 @@ class BuoyDetectorNode(Node):
             return
  
         displacement = buoy_center[0] - self.CENTER
-        if displacement > self.MARGIN:
-            if buoy_center[0] > self.CENTER + self.MARGIN:
-                servo_angle = max(0, self.servo_angle - self.servo_angle_step)
-            #move servo left (max of 180)
-            elif buoy_center[0] < self.CENTER - self.MARGIN:
-                servo_angle = min(180, self.servo_angle + self.servo_angle_step)
-            
-            angle_msg = Int32()
-            angle_msg.data = servo_angle
-            self.servo_angle_publisher.publish(angle_msg)
-            self.get_logger().info(f'Detected buoy displacement: {displacement}')
-        else:
-            depth = depth_image[buoy_center[0], buoy_center[1]] / 1000
-            point_msg = Point()
-            point_msg.x = depth * math.sin(math.radians(self.angle) - 90)
-            point_msg.y = depth * math.cos(math.radians(self.angle) - 90)
-            point_msg.z = float(buoy_center[1])
-            self.position_publisher.publish(point_msg)
-            self.get_logger().info(f'Detected buoy at: ({point_msg.x, point_msg.y, point_msg.z})')
+        # depth = depth_image[buoy_center[0], buoy_center[1]] / 1000
+        point_msg = Point()
+        point_msg.x = depth * math.tan(math.radians(self.CAMERA_FOV / 2)) * displacement / self.CENTER
+        point_msg.y = float(depth)
+        point_msg.z = 0.0
+        self.position_publisher.publish(point_msg)
+        self.get_logger().info(f'Detected buoy at: ({point_msg.x, point_msg.y, point_msg.z})')
     
     def buoy_angle_callback(self, msg):
         self.angle = msg.data
