@@ -12,7 +12,7 @@ class VectorNav(Node):
         super().__init__('vectornav')
 
         # Declare timer period parameter
-        self.declare_parameter('timer_period', 0.5)
+        self.declare_parameter('timer_period', 0.1)
         self.timer_period = self.get_parameter('timer_period').value
 
         self.declare_parameter('vectornav_port', '/dev/serial/by-id/usb-FTDI_USB-RS232-WE_AV0LF3XT-if00-port0') # FIXME: Add a better default port

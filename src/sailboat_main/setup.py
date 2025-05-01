@@ -30,6 +30,7 @@ setup(
             'teensy = sailboat_main.teensy.teensy_node:main',
             'mux = sailboat_main.mux.mux_node:main',
             'sail_algo = sailboat_main.main_algo.sail_algo:main',
+            'algo = sailboat_main.main_algo.algo:main',
         ],
     },
 )

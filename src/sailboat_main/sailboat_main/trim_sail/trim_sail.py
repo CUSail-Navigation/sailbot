@@ -62,7 +62,7 @@ class TrimSail(Node):
         if 0 <= windDir < 10 or 350 < windDir < 360:
             return 90
         elif 235 < windDir <= 350: # assumes no-go zone is 55 degrees
-            return round(((18/23)*windDir - 4230/32))
+            return round(((18/23)*windDir - 4230/23))
         elif 10 <= windDir < 125:
             return round((-(18/23)*windDir + 2250/23))
         # no go zone 
