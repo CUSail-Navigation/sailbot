@@ -2,11 +2,11 @@
 
 ServoControlTask::ServoControlTask()
 {
-    sail_servo.attach(constants::servo::SAIL_PIN);
+    sail_servo.attach(constants::servo::SAIL_PIN, constants::servo::SAIL_MIN_PULSE, constants::servo::SAIL_MAX_PULSE);
     rudder_servo.attach(constants::servo::RUDDER_PIN);
     tracker_servo.attach(constants::servo::TRACKER_PIN);
     // Set initial servo positions to 0-degrees
-    actuate_servo(sail_servo, 1050);
+    actuate_servo(sail_servo, 0);
     actuate_servo(rudder_servo, 1050);
 }
 
@@ -49,20 +49,15 @@ void ServoControlTask::execute()
     }
 }
 
-// uint32_t ServoControlTask::angle_to_pwm(uint8_t angle)
-// {
-//     // FIXME: this is hardcoded for our specific scenario
-//     return angle * 2;
-// }
-
 uint32_t ServoControlTask::tail_to_pwm(uint8_t angle)
 {
-    return map(angle, 0, 50, 45, 55);
+    return map(angle, 0, 50, 55, 45);
 }
 
 uint32_t ServoControlTask::sail_to_pwm(uint8_t angle)
 {
-    return map(angle, 0, 90, 1050, 1200);
+    // return map(angle, 0, 90, 1050, 1200);
+    return map(angle, 0, 90, 38, 0);
 }
 
 void ServoControlTask::actuate_servo(Servo &servo, uint32_t pwm)
