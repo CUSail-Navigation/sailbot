@@ -309,7 +309,9 @@ class MainAlgo(Node):
         elif(self.in_nogo()):
             rudder_angle = np.sign(diff) * 25 # max rudder angle if we are in nogo zone
         else:
-            rudder_angle = np.sign(diff) * 15 # medium rudder angle otherwise (this will help maintain speed pre tack)
+            rudder_angle = (diff / 180.0) * 25
+
+           # rudder_angle = np.sign(diff) * 15 # medium rudder angle otherwise (this will help maintain speed pre tack)
 
         self.get_logger().info(f'Rudder Angle Raw: {rudder_angle}')
 
