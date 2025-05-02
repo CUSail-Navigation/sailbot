@@ -15,6 +15,92 @@ from sailboat_interface.msg import AlgoDebug
 
 import utm
 import math
+import random
+
+class Particle:
+    def __init__(self, x: float, y: float, weight: float = 1.0):
+        self.x=x
+        self.y=y
+        self.weight = weight
+        
+
+class ParticleFilter:
+    def __init__(self, num_particles: int, search_radius: float, center: UTMPoint):
+        """
+        Initialize particle filter with circular search area
+        :param num_particles: Number of particles to use
+        :param search_radius: Radius of search area in meters
+        :param center: Center point of search area in UTM coordinates
+        """
+        self.particles = []
+        self.num_particles = num_particles
+        self.search_radius = search_radius
+        self.center = center
+        self.initialize_particles()
+    
+    def initialize_particles(self):
+        """Initialize particles uniformly within circular search area"""
+        for _ in range(self.num_particles):
+            # Generate random angle and radius
+            angle = random.uniform(0, 2 * math.pi)
+            radius = math.sqrt(random.uniform(0, 1)) * self.search_radius
+            
+            # Convert to Cartesian coordinates relative to center
+            x = self.center.easting + radius * math.cos(angle)
+            y = self.center.northing + radius * math.sin(angle)
+            
+            self.particles.append(Particle(x, y, 1.0/self.num_particles))
+        
+    def update_weights(self, bearing, boat_pos):
+        """
+        Update particle weights based on bearing measurement
+        :param bearing: Measured bearing to buoy in degrees (0-360)
+        :param boat_pos: Current boat position in UTM
+        """
+        total_weight = 0
+        for p in self.particles:
+            dx = p.x - boat_pos.easting
+            dy = p.y - boat_pos.northing
+            predicted_bearing = math.degrees(math.atan2(dx, dy)) % 360
+            bearing_error = min(abs(predicted_bearing - bearing), 360 - abs(predicted_bearing - bearing))
+          
+            #Update weight using Gaussian distribution 
+            p.weight = math.exp(-bearing_error ** 2 / (2 * 20 ** 2))  # assume ~20 deg noise
+            total_weight += p.weight
+        
+        #Normalizing weights
+        if total_weight > 0:
+            for p in self.particles:
+                p.weight /= total_weight
+                
+    def resample(self):
+        """Resample particles based on weights."""
+        weights = [p.weight for p in self.particles]
+        indices = np.random.choice(range(self.num_particles), size=self.num_particles, p=weights)
+        new_particles = [Particle(self.particles[i].x, self.particles[i].y) for i in indices]
+        
+        # Add slight random noise to prevent particle deprivation 
+        for p in new_particles:
+            p.x += random.gauss(0, 2)  
+            p.y += random.gauss(0, 2)
+        
+        self.particles = new_particles
+        # Reset weights after resampling
+        for p in self.particles:
+            p.weight = 1.0 / self.num_particles
+
+    def estimate(self):
+        """Estimate buoy position as weighted average of particles"""
+        x = sum(p.x * p.weight for p in self.particles)
+        y = sum(p.y * p.weight for p in self.particles)
+        return x, y
+    
+     
+    def shift_particles(self, dx: float, dy: float):
+        """Shift all particles by (dx, dy) to account for boat movement"""
+        for p in self.particles:
+            p.x += dx
+            p.y += dy
 
 class UTMPoint():
     """
@@ -96,20 +182,6 @@ class BuoySearch(Node):
     def __init__(self):
         super().__init__('buoy_search')
 
-        # self.declare_parameter('timer_period', 0.500) 
-        # self.timer_period = self.get_parameter('timer_period').value
-
-        # self.declare_parameter('tacking_buffer', 15)
-        # self.tacking_buffer = self.get_parameter('tacking_buffer').value
-
-        # self.declare_parameter("debug", False)
-        # self.debug = self.get_parameter("debug").value
-    
-        # self.declare_parameter("no_go_zone", 45)
-        # self.no_go_zone = self.get_parameter("no_go_zone").value
-
-        # self.tack_time_tracker = 0
-
         #Subscription for current location
         self.subscription_curr_loc = self.create_subscription(
             NavSatFix,
@@ -131,45 +203,23 @@ class BuoySearch(Node):
             self.wind_callback,
             10)
 
-        # #Subscription for wind direction
-        # self.subscription_wind_dir = self.create_subscription(
-        #     NavSatFix,
-        #     'current_waypoint',
-        #     self.update_current_waypoint,
-        #     10)
-
         # Subscription for buoy position
         self.subscription_buoy_pos = self.create_subscription(
             Point,
             '/buoy_position',
             self.buoy_position_callback,
             10)
-        
-        # self.timer = self.create_timer(self.timer_period, self.step)
-
-        # # Publisher for rudder angle
-        # self.rudder_angle_pub = self.create_publisher(Int32, 'algo_rudder', 10)
-
-        # self.tacking_point_pub = self.create_publisher(NavSatFix, 'tacking_point', 10)
 
         # Internal state
         self.wind_dir = None
         self.curr_loc = None
-        # self.tacking = False
-        # self.tacking_point = None
         self.heading_dir = None
-        # self.curr_dest = None
-        # self.diff = None
-        # self.dist_to_dest = None
 
-        # if self.debug:
-        #     # Publisher for internal state
-        #     self.state_pub = self.create_publisher(AlgoDebug, 'main_algo_debug', 10)
-        #     # Timer to publish state every 1 second
-        #     self.state_timer = self.create_timer(1.0, self.publish_state_debug)
-
-        # # Publisher for tacking point
-        # self.tacking_point_pub = self.create_publisher(NavSatFix, 'tacking_point', 10)
+        #Particle filter initizliation
+        self.num_particles = 100
+        self.search_radius = 100
+        self.particle_filter = None
+        
 
         self.waypoints = []
 
@@ -177,44 +227,19 @@ class BuoySearch(Node):
 
         self.get_logger().info('Buoy search algo started successfully')  # Check if this line prints
 
-    # def update_current_waypoint(self, msg):
-    #     """
-    #     Callback to update the current destination waypoint from the 'current_waypoint' topic.
-    #     """
-    #     self.curr_dest = LatLongPoint(msg.latitude, msg.longitude).to_utm()
-    #     self.get_logger().info(f'Updated current waypoint to: ({msg.latitude}, {msg.longitude})')
 
-    # def publish_state_debug(self):
-    #     """
-    #     Publish the internal state as a JSON string.
-    #     """
-    #     debug_msg = AlgoDebug()
-    #     debug_msg.tacking = self.tacking
-
-    #     if self.tacking_point is not None:
-    #         debug_msg.tacking_point = self.tacking_point.to_navsatfix_msg()
-    #     else:
-    #         debug_msg.tacking_point = NavSatFix() # empty msg
-
-    #     debug_msg.heading_dir = Int32()
-    #     debug_msg.heading_dir.data = int(self.heading_dir) if self.heading_dir is not None else 0
-
-    #     if self.curr_dest is not None:
-    #         debug_msg.curr_dest = self.curr_dest.to_navsatfix_msg()
-    #     else:
-    #         debug_msg.curr_dest = NavSatFix() # empty msg
-
-    #     debug_msg.diff = Int32()
-    #     debug_msg.diff.data = int(self.diff) if self.diff is not None else 0
-
-    #     if self.dist_to_dest is not None:
-    #         debug_msg.dist_to_dest = Int32()
-    #         debug_msg.dist_to_dest.data = int(self.dist_to_dest)
-    #     else:
-    #         debug_msg.dist_to_dest = Int32()
-    #         debug_msg.dist_to_dest.data = -666
-
-    #     self.state_pub.publish(debug_msg)
+    #Method to initialize the particle filter
+    def initialize_particle_filter(self):
+        """Initialize the particle filter with particles over the search area."""
+        if self.curr_loc is not None:
+            self.particle_filter = ParticleFilter(
+                num_particles=self.num_particles,
+                search_radius=self.search_radius,
+                center=self.curr_loc
+            )
+            self.get_logger().info('Particle filter initialized.')
+        else:
+            self.get_logger().error('Cannot initialize particle filter: Current location is None.')
 
 
     def pop_waypoint(self):
@@ -317,164 +342,46 @@ class BuoySearch(Node):
         self.heading_dir = data
 
     def buoy_position_callback(self, msg):
-        return
+        """Callback to handle buoy position updates from the camera."""
+        if self.particle_filter is None:
+            self.get_logger().info('Buoy detected. Initializing particle filter.')
+            self.initialize_particle_filter()
 
-    # def calculate_rudder_angle(self):
-    #     """
-    #     The main function for calculating the rudder angle.
-    #     This function will do nothing if current location is missing, or the boat is tacking
-    #     but the tacking point is missing, or the current destination is missing (inclusive or).
-    #     Otherwise, this function will publish the rudder angle, and the rudder angle is 
-    #     from -25 to 25 degree rounded to the nearest 5.
+        # Calculate the relative bearing from the camera's frame
+        relative_bearing = math.degrees(math.atan2(msg.x, msg.y)) % 360
 
-    #     Precondition: self.curr_dest is not None, self.curr_loc is not None, self.heading_dir is not None
-    #     """
-    #     if self.curr_dest is None or self.curr_loc is None or self.heading_dir is None:
-    #         return # Not enough information to calculate rudder angle yet
+        # Perform one full filter step using the relative bearing
+        self.perform_particle_filter_step(relative_bearing)
+                
+    def perform_particle_filter_step(self, relative_bearing: float):
+        """Perform one step of the particle filter process."""
+        if self.heading_dir is not None:
+            global_bearing = (relative_bearing + self.heading_dir) % 360
+        else:
+            self.get_logger().error('Heading direction is not available.')
+            return
 
-    #     #Handle tacking logic in step
-    #     if self.tacking: 
-    #         dest = self.tacking_point
-    #     else:
-    #         dest = self.curr_dest
+        if self.curr_loc is not None:
+            self.particle_filter.update_weights(global_bearing, self.curr_loc)
+            self.particle_filter.resample()
 
-    #     x_distance = dest.easting - self.curr_loc.easting
-    #     y_distance = dest.northing - self.curr_loc.northing
+            estimated_x, estimated_y = self.particle_filter.estimate()
+            estimated_buoy = UTMPoint(estimated_x, estimated_y, self.curr_loc.zone_number, self.curr_loc.zone_letter)
 
-    #     target_bearing = np.arctan2(y_distance, x_distance) * 180 / np.pi
-    #     self.get_logger().info(f'Target Bearing: {target_bearing}')
+            self.get_logger().info(f"Estimated buoy position: {estimated_buoy}")
 
-    #     diff = np.mod(self.heading_dir - target_bearing + 180, 360) - 180
-    #     self.get_logger().info(f'Heading Difference: {diff}')
-    #     self.diff = diff
+            # Push the estimated position as a waypoint
+            navsat_msg = estimated_buoy.to_navsatfix_msg()
+            waypoint_str = f"{navsat_msg.latitude},{navsat_msg.longitude}"
+            self.push_waypoint(waypoint_str)
 
-    #     if(not self.in_nogo()):
-    #         rudder_angle = (diff / 180.0) * 25
-    #     else:
-    #         rudder_angle = np.sign(diff) * 25 # max rudder angle if we are in nogo zone
+            # Shift particles based on boat movement
+            dx = self.curr_loc.easting - estimated_buoy.easting
+            dy = self.curr_loc.northing - estimated_buoy.northing
+            self.particle_filter.shift_particles(dx, dy)
+        else:
+            self.get_logger().error('Current location is not available.')
 
-    #     self.get_logger().info(f'Rudder Angle Raw: {rudder_angle}')
-
-    #     # Assuming rudder_angle is a floating-point number and you want it to be an Int32 message
-    #     rudder_angle = np.floor(rudder_angle / 5) * 5  # Floor the angle to the nearest multiple of 5
-    #     rudder_angle = int(rudder_angle)  # Convert to int since Int32 requires an integer value
-
-    #     self.get_logger().info(f'Rudder Angle: {rudder_angle}')
-
-    #     # Create an Int32 message and publish the rudder angle
-    #     rudder_angle_msg = Int32()
-    #     rudder_angle_msg.data = rudder_angle
-
-    #     self.rudder_angle_pub.publish(rudder_angle_msg)
-        
-    # def in_nogo(self):
-    #     """
-    #     Check if the boat is in nogo zone based on the wind direction
-    #     """
-    #     self.get_logger().info(f'Wind Direction: {self.wind_dir}')
-    #     if self.wind_dir is None:
-    #         return False
-    #     return (150 < self.wind_dir < 210)
-
-    # def calculateTP(self) -> UTMPoint:
-    #     """
-    #     Calcualte tacking point to begin tacking. uses winddir + dest
-    #     Assuming that the boat is heading towards the positive x-axis and the destination
-
-    #     Precondition: self.in_nogo() is true. self.tacking is false. self.curr_loc is not None. self.curr_dest is not None. self.wind_dir is not None.
-    #     """
-
-    #     assert self.in_nogo(), "Not in nogo zone"
-    #     assert self.tacking, "Already tacking"
-    #     assert self.curr_loc is not None, "Current location is None"
-    #     assert self.curr_dest is not None, "Current destination is None"
-    #     assert self.wind_dir is not None, "Wind direction is None"
-
-    #     try:
-    #         latlong = self.curr_loc.to_latlon()
-    #         lat,long = latlong.latitude, latlong.longitude
-    #         self.get_logger().info(f'Current Location: ({lat}, {long})')
-    #     except Exception as e:
-    #         self.get_logger().error(f'Error in Lat Long: {str(e)}') 
-
-    #     x_distance = self.curr_dest.easting - self.curr_loc.easting
-    #     y_distance = self.curr_dest.northing - self.curr_loc.northing
-
-    #     heading_to_dest = np.arctan2(y_distance, x_distance) * 180 / np.pi
-    #     tack_diff = np.mod(self.heading_dir - heading_to_dest + 180, 360) - 180
-
-    #     # if we're out of the no-go-zone, don't tack at all
-    #     if(abs(tack_diff) > self.no_go_zone):
-    #         return self.curr_dest
-
-    #     # tack left or right depending on the angle from the middling line
-    #     if(tack_diff > 0):
-    #         #tack on right
-    #         tack_angle = (self.heading_dir - self.no_go_zone) % 360
-    #         approach_angle = (self.no_go_zone + self.heading_dir) % 360
-
-    #     else:
-    #         #tack on left
-    #         tack_angle = (self.no_go_zone + self.heading_dir) % 360
-    #         approach_angle = (self.heading_dir - self.no_go_zone) % 360
-
-    #     # calculate tacking point as intersection of the tack vector and the approach vector
-    #     vec1 = np.array([np.cos(np.deg2rad(tack_angle)), np.sin(np.deg2rad(tack_angle))])
-    #     vec2 = -np.array([np.cos(np.deg2rad(approach_angle)), np.sin(np.deg2rad(approach_angle))])
-
-    #     self.get_logger().info(f'Vector 1: {vec1}')
-    #     self.get_logger().info(f'Vector 2: {vec2}')
-
-    #     P1 = np.array([self.curr_loc.easting, self.curr_loc.northing])
-    #     P2 = np.array([self.curr_dest.easting, self.curr_dest.northing])
-
-    #     # intersection of two lines
-    #     A = np.column_stack((vec1, -vec2))
-    #     b = P2 - P1
-
-    #     t_vals = np.linalg.solve(A, b)
-
-    #     tacking_point = P1 + t_vals[0] * vec1
-    #     self.get_logger().info(f'Tacking Point: {tacking_point}')
-
-    #     tp = UTMPoint(easting=tacking_point[0], northing=tacking_point[1], zone_number=self.curr_loc.zone_number, zone_letter=self.curr_loc.zone_letter)
-    #     assert tp.easting > 100000 and tp.easting < 900000, "Easting out of range"
-
-    #     # publish new TP if we do not encounter an exception
-    #     try:
-    #         tacking_point_msg = tp.to_navsatfix_msg()
-    #         self.tacking_point_pub.publish(tacking_point_msg)
-    #     except Exception as e: 
-    #         self.get_logger().error(f'Tacking point easting: {tp.easting}, northing: {tp.northing}')
-    #         self.get_logger().error(f'Error in calculateTP: {str(e)}') 
-
-    #     self.get_logger().info(f'Tacking Point: {str(tp.to_latlon())}')
-
-    #     return tp
-
-    # def step(self):
-    #     """
-    #     Sail. 
-    #     """
-    #     if self.curr_loc is None or (self.tacking and self.tacking_point is None) or self.curr_dest is None:
-    #         # Not enough information to calculate rudder angle yet
-    #         return
-
-    #     if self.in_nogo() and not self.tacking:
-    #         self.get_logger().info("Beginning Tacking")
-    #         self.tacking = True
-    #         self.tacking_point = self.calculateTP()
-    #         self.tack_time_tracker = 0
-    #     elif self.tacking:
-    #         self.tack_time_tracker += self.timer_period
-    #         if self.tack_time_tracker >= self.tacking_buffer:
-    #             self.get_logger().info("End Tack")
-
-    #             self.tacking = False
-    #             self.tacking_point = None
-    #     self.calculate_rudder_angle()
-
-    #     self.get_logger().info("Sailing")
     
     def initialize_search_pattern(self):
         search_pattern = []
