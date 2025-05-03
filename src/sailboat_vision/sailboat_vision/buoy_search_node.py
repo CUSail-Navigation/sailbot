@@ -288,7 +288,7 @@ class BuoySearch(Node):
         # Set up the request with the "set" command
         self.req = Waypoint.Request()
         self.req.command = "set"
-        self.req.argument = ';'.join(self.waypoints)
+        self.req.argument = ';'.join([f"{x},{y}" for x, y in waypoints])
 
         self.future = self.cli.call_async(self.req)
         # Use a callback to handle the response
@@ -314,7 +314,7 @@ class BuoySearch(Node):
         # Set up the request with the "push" command
         self.req = Waypoint.Request()
         self.req.command = "push"
-        self.req.argument = ""  # TODO
+        self.req.argument = ';'.join([f"{x},{y}" for x, y in waypoints])
 
         self.future = self.cli.call_async(self.req)
         # Use a callback to handle the response
@@ -386,6 +386,7 @@ class BuoySearch(Node):
             # Push the estimated position as a waypoint
             navsat_msg = estimated_buoy.to_navsatfix_msg()
             waypoint_str = f"{navsat_msg.latitude},{navsat_msg.longitude}"
+            self.pop_waypoint()
             self.push_waypoint(waypoint_str)
 
             # Shift particles based on boat movement
@@ -396,7 +397,7 @@ class BuoySearch(Node):
             self.get_logger().error('Current location is not available.')
 
     
-    def initialize_search_pattern(self):
+    def initialize_search_pattern(self, center: UTMPoint):
         search_pattern = []
         expansion_step = 5
         max_radius = 100
@@ -413,20 +414,15 @@ class BuoySearch(Node):
             search_pattern.append([x, direction * max_radius])
             direction *= -1
             x -= expansion_step
-        
-        if self.wind_dir is not None and self.curr_loc is not None:
-            rotation_angle = math.radians(self.wind_dir)
-            translation = self.curr_loc.easting, self.curr_loc.northing
-            zone_number = self.curr_loc.zone_number
-            zone_letter = self.curr_loc.zone_letter
-        else:
-            self.wind_dir = 0
-            self.curr_loc = LatLongPoint(42.443962, -76.501884).to_utm()
-            rotation_angle = math.radians(self.wind_dir)
-            translation = self.curr_loc.easting, self.curr_loc.northing
-            zone_number = self.curr_loc.zone_number
-            zone_letter = self.curr_loc.zone_letter
+
+        if self.wind_dir is None or self.heading_dir is None:
             self.get_logger().error(f'Search pattern failed to initialize.')
+            return
+        
+        rotation_angle = math.radians(self.wind_dir + self.heading_dir)
+        translation = center.easting, center.northing
+        zone_number = self.curr_loc.zone_number
+        zone_letter = self.curr_loc.zone_letter
 
         for i in range(len(search_pattern)):
             x, y = search_pattern[i]
