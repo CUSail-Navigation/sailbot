@@ -234,7 +234,7 @@ class BuoySearch(Node):
 
         self.waypoints = []
 
-        self.initialize_search_pattern()
+        self.initialize_search_pattern(self.curr_loc)
 
         self.get_logger().info('Buoy search algo started successfully')  # Check if this line prints
 
