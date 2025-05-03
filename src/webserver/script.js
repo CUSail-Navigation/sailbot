@@ -22,6 +22,8 @@ let formattedHeading;
 let waypointPath; // Global variable for waypoint trail
 let waypointPlanCoordinates = []; // Global variable for waypoint path coordinates
 
+let currentControlMode = null; // Global variable to store control mode
+
 // Initialize the Google Map
 function initMap() {
     const defaultLocation = { lat: 42.45, lng: -76.474 }; // Ithaca, NY (for now)
@@ -122,12 +124,12 @@ function connectToROS(url) {
         initializePublishers();
 
         // make sure that when you re-connect to ROS the selected control mode is still being published
-        const modeButton = document.getElementById('mode-button');
-        currMode = modeButton.innerText;
-        if (controlModeTopic && currMode) {
-            const message = new ROSLIB.Message({ data: currMode.toLowerCase() });
+        // const modeButton = document.getElementById('mode-button');
+        // currMode = modeButton.innerText;
+        if (controlModeTopic && currentControlMode) {
+            const message = new ROSLIB.Message({ data: currentControlMode.toLowerCase() });
             controlModeTopic.publish(message);
-            console.log(`Published control mode on connect: ${currMode.toLowerCase()}`);
+            console.log(`Published control mode on connect: ${currentControlMode.toLowerCase()}`);
         }
     });
 
@@ -808,11 +810,27 @@ function selectMode(mode) {
     modeButton.innerText = mode; // Update button text
     toggleDropdown(); // Close the dropdown
 
+    currentControlMode = mode
+
     // Publish the selected mode to the /control_mode topic
-    const message = new ROSLIB.Message({ data: mode.toLowerCase() });
-    controlModeTopic.publish(message);
-    console.log(`Published control mode: ${mode.toLowerCase()}`);
+    if (controlModeTopic) {
+        const message = new ROSLIB.Message({ data: mode.toLowerCase() });
+        controlModeTopic.publish(message);
+        console.log(`Published control mode: ${mode.toLowerCase()}`);
+    } else {
+        console.warn("Control mode topic not initialized yet");
+    }
+
 }
+
+// code to initialize currentControlMode from the button on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const modeButton = document.getElementById("mode-button");
+    if (modeButton && modeButton.innerText && modeButton.innerText !== "Select Mode") {
+        currentControlMode = modeButton.innerText;
+        console.log(`Initialized current control mode from button: ${currentControlMode}`);
+    }
+});
 
 // Close dropdown if clicking outside of it
 window.onclick = function (event) {
