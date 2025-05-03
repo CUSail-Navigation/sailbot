@@ -7,7 +7,7 @@ class MuxNode(Node):
         super().__init__('mux_node')
 
         # Default control mode
-        self.declare_parameter('control_mode', 'algorithm')
+        self.declare_parameter('control_mode', 'algo')
         self.control_mode = self.get_parameter('control_mode').value
 
         # Mux topic for changing control_mode
@@ -16,7 +16,7 @@ class MuxNode(Node):
         # Define control sources
         self.control_sources = {
             'radio': {'sail': None, 'rudder': None},
-            'algorithm': {'sail': None, 'rudder': None},
+            'algo': {'sail': None, 'rudder': None},
             'webserver': {'sail': None, 'rudder': None},
             'controller_app': {'sail': None, 'rudder': None}
         }
