@@ -112,7 +112,6 @@ class Algo(Node):
     # Algorithm Parameters (angles calculated in degrees in one direction symmetric around the centerline)
     tacking_buffer : int = 30 
     tack_no_go_zone : int = 60 # anglular size of the no-go-zone on one side of the boat's centerline
-    # tack_time_limit : int = 60
     neutral_zone: int = 10 
 
     # Physical Parameters
@@ -129,7 +128,7 @@ class Algo(Node):
         self.declare_parameter('tacking_buffer', 15)
         self.tacking_buffer = self.get_parameter('tacking_buffer').value
     
-        self.declare_parameter("no_go_zone", 45)
+        self.declare_parameter("no_go_zone", 60)
         self.no_go_zone = self.get_parameter("no_go_zone").value
 
         self.declare_parameter("danger_zone", 10)
@@ -222,9 +221,12 @@ class Algo(Node):
         """
         if self.sail_state == SailState.NORMAL:
             if self.boat_in_nogo_zone():
-                self.current_destination = self.calculate_tacking_point()
-                self.tack_time_tracker = 0
-                self.sail_state = SailState.TACK
+                if np.abs(self.heading_difference) > self.no_go_zone:
+                    pass
+                else:
+                    self.current_destination = self.calculate_tacking_point()
+                    self.tack_time_tracker = 0
+                    self.sail_state = SailState.TACK
             else:
                 pass
 
@@ -269,7 +271,11 @@ class Algo(Node):
         """
             Sails normally to REACHABLE destination (assumes not in no-go etc.)
         """
-        rudder_angle = np.round(self.heading_difference / 180 * 25)
+        if(not self.boat_in_nogo_zone()):
+            rudder_angle = np.round(self.heading_difference / 180 * 25)
+        else: # this handles the case where we need to push out of the no-go zone but do not need a tacking point
+            rudder_angle = self.MAX_RUDDER_ANGLE if self.heading_difference >= 0 else -self.MAX_RUDDER_ANGLE
+
         # rudder_angle = int(rudder_angle // 5 * 5)  # round to nearest 5 degrees
 
         self.get_logger().info(f'Rudder Angle: {rudder_angle}')
@@ -299,6 +305,8 @@ class Algo(Node):
             self.get_logger().info(f'Current Location: ({lat}, {long})')
         except Exception as e:
             self.get_logger().error(f'Error in Lat Long: {str(e)}') 
+
+
 
         # tack left or right depending on the angle from the middling line
         if(self.wind_direction > 180):
@@ -348,27 +356,6 @@ class Algo(Node):
         if self.wind_direction is None:
             return False
         return (150 < self.wind_direction < 210)
-    
-    def waypoint_in_danger_zone(self) -> bool:
-        """
-        Check if the current destination waypoint is in the danger zone.
-        """
-        if self.current_destination is None or self.current_location is None:
-            return False
-
-        dist_to_dest = self.current_location.distance_to(self.current_destination)
-        self.get_logger().info(f'Distance to destination: {dist_to_dest}')
-        return dist_to_dest < self.danger_zone
-
-    def waypoint_in_no_go_zone(self) -> bool:
-        """
-        Check if the current destination waypoint is in the no-go zone.
-        """
-        if self.current_destination is None or self.current_location is None:
-            return False
-
-        return abs(self.heading_difference) < self.no_go_zone
-
 
     # ========================= Callbacks & Publishers =========================
 

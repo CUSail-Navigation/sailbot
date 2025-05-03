@@ -23,7 +23,6 @@ setup(
         'console_scripts': [
             'servo = sailboat_main.servo.servo_node:main',
             'radio = sailboat_main.radio.radio_node:main',
-            # 'main_algo = sailboat_main.main_algo.main_algo:main',
             'main_algo = sailboat_main.main_algo.main_algo:main',
             'sail_algorithm = sailboat_main.main_algo.sail_algorithm:main',
             'trim_sail = sailboat_main.trim_sail.trim_sail:main',
