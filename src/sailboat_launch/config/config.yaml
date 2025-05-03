@@ -5,7 +5,7 @@
 sailbot: #Namespace
    teensy:
       ros__parameters:
-         teensy_port: "/dev/serial/by-id/usb-Teensyduino_USB_Serial_16089010-if00"
+         teensy_port: "/dev/serial/by-id/usb-Teensyduino_USB_Serial_15675220-if00"
          simulated: false
 
    vectornav:
@@ -19,7 +19,7 @@ sailbot: #Namespace
 
    main_algo:
       ros__parameters:
-         tacking_buffer: 10
+         tacking_buffer: 20
          debug: True
    
 

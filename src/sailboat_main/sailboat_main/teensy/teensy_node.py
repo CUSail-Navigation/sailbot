@@ -26,7 +26,7 @@ class Teensy(Node):
         self.declare_parameter('simulated', False)
 
         # teensy sends data every 0.5s, chose .25s read period to avoid overflow   
-        self.declare_parameter('rx_period', 0.500) 
+        self.declare_parameter('rx_period', 0.2500) 
 
         # get parameters
         self.timer_period = self.get_parameter('rx_period').value
