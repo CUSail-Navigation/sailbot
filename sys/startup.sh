@@ -28,9 +28,10 @@ echo "Sourcing environment..." >> "$LOG_FILE"
 source install/setup.bash >> "$LOG_FILE" 2>&1
 
 # Run Ngrok for rosbridge on 9090
+# ngrok http 9090 &
 ngrok start --all
 
-# Run ROS
+# # Run ROS
 # echo "Starting ROS @ ros.out..." >> "$LOG_FILE"
 # ros2 launch sailboat_launch sailboat.launch_sim.py > sys/ros.out
 

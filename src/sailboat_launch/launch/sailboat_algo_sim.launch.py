@@ -28,8 +28,8 @@ def generate_launch_description():
 
    main_algo_cmd  = Node(
       package='sailboat_main',
-      executable='main_algo',
-      name='main_algo',
+      executable='algo',
+      name='algo',
       namespace='sailbot',
       parameters=[config]
    )

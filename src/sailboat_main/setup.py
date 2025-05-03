@@ -24,9 +24,12 @@ setup(
             'servo = sailboat_main.servo.servo_node:main',
             'radio = sailboat_main.radio.radio_node:main',
             'main_algo = sailboat_main.main_algo.main_algo:main',
+            'sail_algorithm = sailboat_main.main_algo.sail_algorithm:main',
             'trim_sail = sailboat_main.trim_sail.trim_sail:main',
             'teensy = sailboat_main.teensy.teensy_node:main',
-            'mux = sailboat_main.mux.mux_node:main'
+            'mux = sailboat_main.mux.mux_node:main',
+            'sail_algo = sailboat_main.main_algo.sail_algo:main',
+            'algo = sailboat_main.main_algo.algo:main',
         ],
     },
 )
