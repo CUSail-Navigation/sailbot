@@ -213,14 +213,13 @@ class Algo(Node):
         if self.current_destination is None:
             self.current_destination = self.current_waypoint
             self.sail_state = SailState.NORMAL
+        
+        self.update_state()
 
-    
         # update heading difference: heading_direction - target_bearing
         self.heading_difference = np.mod(self.heading_direction -
                                          self.current_location.target_bearing_to(self.current_destination) + 180, 360) - 180
         self.get_logger().info(f'Heading Difference: {self.heading_difference}')
-        
-        self.update_state()
 
         if self.sail_state == SailState.NORMAL:
             self.set_normal_rudder()
