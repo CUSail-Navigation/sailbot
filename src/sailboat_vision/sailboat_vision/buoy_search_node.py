@@ -51,7 +51,7 @@ class ParticleFilter:
             
             self.particles.append(Particle(x, y, 1.0/self.num_particles))
         
-    def update_weights(self, bearing, boat_pos):
+    def update_weights(self, bearing, boat_pos, observed_range):
         """
         Update particle weights based on bearing measurement
         :param bearing: Measured bearing to buoy in degrees (0-360)
@@ -63,9 +63,20 @@ class ParticleFilter:
             dy = p.y - boat_pos.northing
             predicted_bearing = math.degrees(math.atan2(dx, dy)) % 360
             bearing_error = min(abs(predicted_bearing - bearing), 360 - abs(predicted_bearing - bearing))
-          
-            #Update weight using Gaussian distribution 
-            p.weight = math.exp(-bearing_error ** 2 / (2 * 20 ** 2))  # assume ~20 deg noise
+
+            bearing_likelihood = math.exp(-bearing_error ** 2 / (2 * 20 ** 2))  # assume ~20 deg noise
+
+            # range likelihood (assume Gaussian noise)
+            predicted_range = math.hypot(dx, dy)
+
+            if(observed_range > 7.5): # assume beyond 7.5 meters we are uncertain, sorry for magic numbers
+                # Saturated: range is unreliable
+                if predicted_range < 6.5:
+                    range_likelihood = 0.01  # penalize particles too close
+                else:
+                    range_likelihood = 1.0  # neutral
+
+            p.weight = bearing_likelihood * range_likelihood
             total_weight += p.weight
         
         #Normalizing weights
@@ -350,10 +361,12 @@ class BuoySearch(Node):
         # Calculate the relative bearing from the camera's frame
         relative_bearing = math.degrees(math.atan2(msg.x, msg.y)) % 360
 
+        observed_range = math.sqrt(msg.x**2 + msg.y**2)
+
         # Perform one full filter step using the relative bearing
-        self.perform_particle_filter_step(relative_bearing)
+        self.perform_particle_filter_step(relative_bearing, observed_range)
                 
-    def perform_particle_filter_step(self, relative_bearing: float):
+    def perform_particle_filter_step(self, relative_bearing: float, observed_range: float):
         """Perform one step of the particle filter process."""
         if self.heading_dir is not None:
             global_bearing = (relative_bearing + self.heading_dir) % 360
@@ -362,7 +375,7 @@ class BuoySearch(Node):
             return
 
         if self.curr_loc is not None:
-            self.particle_filter.update_weights(global_bearing, self.curr_loc)
+            self.particle_filter.update_weights(global_bearing, self.curr_loc, observed_range)
             self.particle_filter.resample()
 
             estimated_x, estimated_y = self.particle_filter.estimate()
@@ -378,7 +391,7 @@ class BuoySearch(Node):
             # Shift particles based on boat movement
             dx = self.curr_loc.easting - estimated_buoy.easting
             dy = self.curr_loc.northing - estimated_buoy.northing
-            self.particle_filter.shift_particles(dx, dy)
+            #self.particle_filter.shift_particles(dx, dy)
         else:
             self.get_logger().error('Current location is not available.')
 
