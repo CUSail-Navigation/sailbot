@@ -166,6 +166,20 @@ class Algo(Node):
             self.current_waypoint_callback,
             10)
         
+        #Subscription for runtime no-go zone adjustments
+        self.subscription_no_go_zone = self.create_subscription(
+            Int32, 
+            'no_go_zone',
+            self.no_go_zone_callback,
+            10)
+        
+        #Subscription for runtime neutral zone adjustments
+        self.subscription_no_go_zone = self.create_subscription(
+            Int32, 
+            'neutral_zone',
+            self.neutral_zone_callback,
+            10)
+        
         # Publisher for rudder angle
         self.rudder_angle_pub = self.create_publisher(Int32, 'algo_rudder', 10)
 
@@ -404,6 +418,12 @@ class Algo(Node):
             debug_msg.dist_to_dest = Int32()
             debug_msg.dist_to_dest.data = -1 # Default value if distance is not available
 
+        debug_msg.no_go_zone = Int32()
+        debug_msg.no_go_zone.data = int(self.no_go_zone)
+
+        debug_msg.neutral_zone = Int32()
+        debug_msg.neutral_zone.data = int(self.neutral_zone)
+        
         self.state_pub.publish(debug_msg)
 
     def pop_waypoint(self):
@@ -460,6 +480,20 @@ class Algo(Node):
         self.get_logger().info(f'Heading Direction: {msg.z}')
         data = msg.z
         self.heading_direction = data
+
+    def no_go_zone_callback(self, msg):
+        """
+        Use the no-go zone data from msg to assign value to self.no_go_zone
+        """
+        self.no_go_zone = msg.data
+        self.get_logger().info(f'No-Go Zone: {self.no_go_zone}')
+
+    def neutral_zone_callback(self, msg):
+        """
+        Use the neutral zone data from msg to assign value to self.neutral_zone
+        """
+        self.neutral_zone = msg.data
+        self.get_logger().info(f'Neutral Zone: {self.neutral_zone}')
         
 def main(args=None):
     rclpy.init(args=args)
