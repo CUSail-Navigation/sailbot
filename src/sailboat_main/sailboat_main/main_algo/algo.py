@@ -311,6 +311,7 @@ class Algo(Node):
         assert self.current_location is not None, "Current location is None"
         assert self.current_destination is not None, "Current destination is None"
         assert self.wind_direction is not None, "Wind direction is None"
+        assert self.absolute_wind_dir is not None, "Absolute wind direction is None"
 
         try:
             latlong = self.current_location.to_latlon()
@@ -319,18 +320,19 @@ class Algo(Node):
         except Exception as e:
             self.get_logger().error(f'Error in Lat Long: {str(e)}') 
 
-
+        # calculate the no-go zone centerline
+        centerline = (self.absolute_wind_dir + 180) % 360
 
         # tack left or right depending on the angle from the middling line
-        if(self.wind_direction > 180):
+        if(self.wind_direction < 180):
             #tack on right
-            tack_angle = (self.heading_direction - self.no_go_zone) % 360
-            approach_angle = (self.no_go_zone + self.heading_direction) % 360
+            tack_angle = (centerline- self.no_go_zone) % 360
+            approach_angle = (self.no_go_zone + centerline) % 360
 
         else:
             #tack on left
-            tack_angle = (self.no_go_zone + self.heading_direction) % 360
-            approach_angle = (self.heading_direction - self.no_go_zone) % 360
+            tack_angle = (self.no_go_zone + centerline) % 360
+            approach_angle = (centerline- self.no_go_zone) % 360
 
         # calculate tacking point as intersection of the tack vector and the approach vector
         vec1 = np.array([np.cos(np.deg2rad(tack_angle)), np.sin(np.deg2rad(tack_angle))])
@@ -471,6 +473,7 @@ class Algo(Node):
         Use the wind data from msg to assign value to self.wind_direction
         """
         self.wind_direction = msg.data
+        self.absolute_wind_dir = (self.wind_direction + self.heading_direction) % 360
 
     def heading_direction_callback(self, msg):
         """

@@ -289,6 +289,8 @@ class MainAlgo(Node):
         if(abs(tack_diff) > self.no_go_zone):
             return self.curr_dest
 
+        absolute_wind = (self.wind_dir + self.heading_dir) % 360
+        self.get_logger().info(f'Absolute Wind: {absolute_wind}')
         # tack left or right depending on the angle from the middling line
         if(tack_diff > 0):
             #tack on right
