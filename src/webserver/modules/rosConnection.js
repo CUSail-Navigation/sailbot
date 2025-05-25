@@ -36,6 +36,50 @@ export class ROSConnection {
             }
         });
 
+        // Individual sail control
+        document.getElementById('sail-submit').addEventListener('click', () => {
+            const sailAngle = document.getElementById('sail-input');
+            
+            if (sailAngle && sailAngle.value) {
+                const sailMessage = new ROSLIB.Message({
+                    data: parseInt(sailAngle.value, 10)
+                });
+                
+                if (this.webserverSailTopic) {
+                    this.webserverSailTopic.publish(sailMessage);
+                    console.log(`Published sail angle: ${sailAngle.value}`);
+                    sailAngle.value = ''; // Clear input after successful submission
+                } else {
+                    console.warn("Webserver sail topic not initialized yet");
+                    alert("ROS not connected. Please connect to ROS first.");
+                }
+            } else {
+                alert('Please enter a sail angle.');
+            }
+        });
+
+        // Individual rudder control
+        document.getElementById('rudder-submit').addEventListener('click', () => {
+            const rudderAngle = document.getElementById('rudder-input');
+            
+            if (rudderAngle && rudderAngle.value) {
+                const rudderMessage = new ROSLIB.Message({
+                    data: parseInt(rudderAngle.value, 10)
+                });
+                
+                if (this.webserverRudderTopic) {
+                    this.webserverRudderTopic.publish(rudderMessage);
+                    console.log(`Published rudder angle: ${rudderAngle.value}`);
+                    rudderAngle.value = ''; // Clear input after successful submission
+                } else {
+                    console.warn("Webserver rudder topic not initialized yet");
+                    alert("ROS not connected. Please connect to ROS first.");
+                }
+            } else {
+                alert('Please enter a rudder angle.');
+            }
+        });
+        
         // Initialize current control mode from button
         document.addEventListener('DOMContentLoaded', () => {
             const modeButton = document.getElementById("mode-button");
