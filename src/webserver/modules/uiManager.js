@@ -66,6 +66,57 @@ export class UIManager {
             }
         });
 
+        // HSV Lower parameter
+        document.getElementById('hsv-lower-submit').addEventListener('click', () => {
+            const input = document.getElementById('hsv-lower-input').value;
+
+            try {
+                const values = input.split(',').map(v => parseInt(v.trim(), 10));
+
+                if (values.length === 3 && values.every(v => !isNaN(v))) {
+                    this.publishHsvLower(values);
+                    console.log(`Setting HSV lower to: [${values.join(', ')}]`);
+                    document.getElementById('hsv-lower-input').value = '';
+                } else {
+                    alert('Please enter 3 comma-separated integers for HSV lower (e.g. "0, 120, 180").');
+                }
+            } catch (e) {
+                alert('Invalid input format for HSV lower.');
+            }
+        });
+
+        // HSV Upper parameter
+        document.getElementById('hsv-upper-submit').addEventListener('click', () => {
+            const input = document.getElementById('hsv-upper-input').value;
+
+            try {
+                const values = input.split(',').map(v => parseInt(v.trim(), 10));
+
+                if (values.length === 3 && values.every(v => !isNaN(v))) {
+                    this.publishHsvUpper(values);
+                    console.log(`Setting HSV upper to: [${values.join(', ')}]`);
+                    document.getElementById('hsv-upper-input').value = '';
+                } else {
+                    alert('Please enter 3 comma-separated integers for HSV upper (e.g. "10, 160, 255").');
+                }
+            } catch (e) {
+                alert('Invalid input format for HSV upper.');
+            }
+        });
+
+        // Detection Threshold parameter
+        document.getElementById('detection-threshold-submit').addEventListener('click', () => {
+            const input = document.getElementById('detection-threshold-input').value;
+
+            if (input && !isNaN(input)) {
+                this.publishDetectionThreshold(parseInt(input, 10));
+                console.log(`Setting detection threshold to: ${input}`);
+                document.getElementById('detection-threshold-input').value = '';
+            } else {
+                alert('Please enter a valid numeric value for the detection threshold.');
+            }
+        });
+
         // Allow Enter key to submit parameters
         document.getElementById('no-go-zone-input').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {

@@ -135,6 +135,57 @@
             </div>
             <div class="table-container">
                 <div class="table-heading" onclick="toggleSection(this)">
+                    <h1>CV Tuning Params <span class="toggle-icon">+</span></h1>
+                </div>
+                <div class="collapsible-section hidden">
+                    <div class="waypoint-buoy-container">
+                        <!-- HSV Lower Input -->
+                        <div class="waypoint-buoy-table">
+                            <div class="status-row-input second">
+                                <span class="status-label">HSV Lower:</span>
+                                <div class="input-group">
+                                    <input type="text" id="hsv-lower-input" name="hsv-lower-input"
+                                        placeholder="e.g. 0, 120, 180" required>
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button type="button" id="hsv-lower-submit">Submit HSV Lower</button>
+                            </div>
+                        </div>
+
+                        <!-- HSV Upper Input -->
+                        <div class="waypoint-buoy-table">
+                            <div class="status-row-input second">
+                                <span class="status-label">HSV Upper:</span>
+                                <div class="input-group">
+                                    <input type="text" id="hsv-upper-input" name="hsv-upper-input"
+                                        placeholder="e.g. 10, 160, 255" required>
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button type="button" id="hsv-upper-submit">Submit HSV Upper</button>
+                            </div>
+                        </div>
+
+                        <!-- Detection Threshold -->
+                        <div class="waypoint-buoy-table">
+                            <div class="status-row-input second">
+                                <span class="status-label">Detection Threshold:</span>
+                                <div class="input-group">
+                                    <input type="number" id="detection-threshold-input" name="detection-threshold-input"
+                                        placeholder="e.g. 100" required>
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button type="button" id="detection-threshold-submit">Submit Threshold</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <div class="table-heading" onclick="toggleSection(this)">
                     <h1>Algo Debugger <span class="toggle-icon">+</span></h1>
                 </div>
                 <div class="collapsible-section hidden">

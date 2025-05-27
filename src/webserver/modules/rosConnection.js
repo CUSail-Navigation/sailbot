@@ -337,6 +337,27 @@ export class ROSConnection {
             messageType: 'std_msgs/Int32',
             throttle_rate: this.BASE_THROTTLE_RATE
         });
+
+        this.hsvLowerTopic = new ROSLIB.Topic({
+            ros: this.ros,
+            name: 'update_hsv_lower',
+            messageType: 'std_msgs/Int32MultiArray',
+            throttle_rate: this.BASE_THROTTLE_RATE
+        });
+
+        this.hsvUpperTopic = new ROSLIB.Topic({
+            ros: this.ros,
+            name: 'update_hsv_upper',
+            messageType: 'std_msgs/Int32MultiArray',
+            throttle_rate: this.BASE_THROTTLE_RATE
+        });
+
+        this.detectionThresholdTopic = new ROSLIB.Topic({
+            ros: this.ros,
+            name: 'update_detection_threshold',
+            messageType: 'std_msgs/Int32',
+            throttle_rate: this.BASE_THROTTLE_RATE
+        });
     }
 
     parseGpsData(message) {
@@ -414,6 +435,36 @@ export class ROSConnection {
             const message = new ROSLIB.Message({ data: parseInt(value, 10) });
             this.neutralZoneTopic.publish(message);
             console.log(`Published to neutralZoneTopic: ${value}`);
+        }
+    }
+
+    publishHsvLower(array) {
+        if (this.hsvLowerTopic && Array.isArray(array) && array.length === 3) {
+            const message = new ROSLIB.Message({ data: array.map(Number) });
+            this.hsvLowerTopic.publish(message);
+            console.log(`Published HSV Lower: [${array.join(', ')}]`);
+        } else {
+            console.warn("Invalid input or HSV Lower topic not initialized.");
+        }
+    }
+
+    publishHsvUpper(array) {
+        if (this.hsvUpperTopic && Array.isArray(array) && array.length === 3) {
+            const message = new ROSLIB.Message({ data: array.map(Number) });
+            this.hsvUpperTopic.publish(message);
+            console.log(`Published HSV Upper: [${array.join(', ')}]`);
+        } else {
+            console.warn("Invalid input or HSV Upper topic not initialized.");
+        }
+    }
+
+    publishDetectionThreshold(value) {
+        if (this.detectionThresholdTopic && !isNaN(value)) {
+            const message = new ROSLIB.Message({ data: parseInt(value, 10) });
+            this.detectionThresholdTopic.publish(message);
+            console.log(`Published Detection Threshold: ${value}`);
+        } else {
+            console.warn("Invalid value or Detection Threshold topic not initialized.");
         }
     }
 
