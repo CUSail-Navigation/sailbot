@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import rclpy
 
@@ -16,6 +17,69 @@ from sailboat_interface.msg import AlgoDebug
 import utm
 import math
 import random
+
+
+class UTMPoint():
+    """
+    A class to represent a point in UTM coordinates.
+    """
+    easting : float
+    northing : float
+    zone_number : int
+    zone_letter : str
+
+    def __init__(self, easting, northing, zone_number, zone_letter):
+        self.easting = easting
+        self.northing = northing
+        self.zone_number = zone_number
+        self.zone_letter = zone_letter
+
+    def to_latlon(self) -> 'LatLongPoint':
+        """
+        Convert UTM coordinates to latitude and longitude.
+        """
+        latitude, longitude = utm.to_latlon(self.easting, self.northing, self.zone_number, self.zone_letter)
+        return LatLongPoint(latitude, longitude) 
+
+    def to_navsatfix_msg(self) -> NavSatFix:
+        """
+        Convert UTM coordinates to NavSatFix message.
+        """
+        lat_long = self.to_latlon()
+        msg = NavSatFix()
+        msg.latitude = lat_long.latitude
+        msg.longitude = lat_long.longitude
+        return msg
+    
+    def distance_to(self, other: 'UTMPoint') -> float:
+        """
+        Calculate the distance to another UTM point.
+        """
+        assert self.zone_number == other.zone_number, "Zone numbers must be the same for distance calculation"
+        return math.dist((self.easting, self.northing), (other.easting, other.northing))
+
+    def __repr__(self):
+        return f"UTMPoint(x={self.x}, y={self.y}, zone_number={self.zone_number}, zone_letter={self.zone_letter})"
+
+class LatLongPoint():
+    """
+    A class to represent a point in latitude and longitude coordinates.
+    """
+    latitude : float
+    longitude : float
+    def __init__(self, latitude, longitude):
+        self.latitude = latitude
+        self.longitude = longitude
+
+    def to_utm(self) -> 'UTMPoint':
+        """
+        Convert latitude and longitude to UTM coordinates.
+        """
+        x, y, zone_number, zone_letter = utm.from_latlon(self.latitude, self.longitude)
+        return UTMPoint(x, y, zone_number, zone_letter) 
+
+    def __repr__(self):
+        return f"latitude={self.latitude}, longitude={self.longitude}"
 
 class Particle:
     def __init__(self, x: float, y: float, weight: float = 1.0):
@@ -113,68 +177,6 @@ class ParticleFilter:
             p.x += dx
             p.y += dy
 
-class UTMPoint():
-    """
-    A class to represent a point in UTM coordinates.
-    """
-    easting : float
-    northing : float
-    zone_number : int
-    zone_letter : str
-
-    def __init__(self, easting, northing, zone_number, zone_letter):
-        self.easting = easting
-        self.northing = northing
-        self.zone_number = zone_number
-        self.zone_letter = zone_letter
-
-    def to_latlon(self) -> 'LatLongPoint':
-        """
-        Convert UTM coordinates to latitude and longitude.
-        """
-        latitude, longitude = utm.to_latlon(self.easting, self.northing, self.zone_number, self.zone_letter)
-        return LatLongPoint(latitude, longitude) 
-
-    def to_navsatfix_msg(self) -> NavSatFix:
-        """
-        Convert UTM coordinates to NavSatFix message.
-        """
-        lat_long = self.to_latlon()
-        msg = NavSatFix()
-        msg.latitude = lat_long.latitude
-        msg.longitude = lat_long.longitude
-        return msg
-    
-    def distance_to(self, other: 'UTMPoint') -> float:
-        """
-        Calculate the distance to another UTM point.
-        """
-        assert self.zone_number == other.zone_number, "Zone numbers must be the same for distance calculation"
-        return math.dist((self.easting, self.northing), (other.easting, other.northing))
-
-    def __repr__(self):
-        return f"UTMPoint(x={self.x}, y={self.y}, zone_number={self.zone_number}, zone_letter={self.zone_letter})"
-
-class LatLongPoint():
-    """
-    A class to represent a point in latitude and longitude coordinates.
-    """
-    latitude : float
-    longitude : float
-    def __init__(self, latitude, longitude):
-        self.latitude = latitude
-        self.longitude = longitude
-
-    def to_utm(self) -> 'UTMPoint':
-        """
-        Convert latitude and longitude to UTM coordinates.
-        """
-        x, y, zone_number, zone_letter = utm.from_latlon(self.latitude, self.longitude)
-        return UTMPoint(x, y, zone_number, zone_letter) 
-
-    def __repr__(self):
-        return f"latitude={self.latitude}, longitude={self.longitude}"
-
 class BuoySearch(Node):
     """
     The sailing algorithm responsible for search event.
@@ -222,15 +224,21 @@ class BuoySearch(Node):
             10)
 
         # Internal state
-        self.wind_dir = None
-        self.curr_loc = None
-        self.heading_dir = None
+        self.wind_dir = 0
+        self.curr_loc = LatLongPoint(42.44394751249068, -76.4827713523971).to_utm()
+        self.heading_dir = 0
 
         #Particle filter initizliation
         self.num_particles = 100
         self.search_radius = 100
         self.particle_filter = None
-        
+
+        self.fig, self.ax = plt.subplots(figsize=(8, 6))
+        self.scatter, = self.ax.plot([], [], 'ro')
+        plt.show(block=False)
+        self.fig.savefig("src/waypoints.png")
+        plt.show(block=False)
+
 
         self.waypoints = []
 
@@ -285,6 +293,15 @@ class BuoySearch(Node):
         self.waypoints = []
         self.waypoints.extend(waypoints)
 
+        # Plot new waypoints for testing
+        latitudes = [coord[0] for coord in self.waypoints]
+        longitudes = [coord[1] for coord in self.waypoints]
+        self.scatter, = self.ax.plot(longitudes, latitudes, 'ro')  # red circles
+        plt.draw()
+        self.fig.savefig("src/waypoints.png")
+        plt.show(block=False)
+
+
         # Set up the request with the "set" command
         self.req = Waypoint.Request()
         self.req.command = "set"
@@ -311,10 +328,19 @@ class BuoySearch(Node):
 
         self.waypoints.append(waypoint)
 
+        # Plot new waypoint for testing
+        latitudes = [coord[0] for coord in self.waypoints]
+        longitudes = [coord[1] for coord in self.waypoints]
+        self.scatter, = self.ax.plot(longitudes, latitudes, 'ro')  # red circles
+        plt.draw()
+        self.fig.savefig("src/waypoints.png")
+        plt.show(block=False)
+
+
         # Set up the request with the "push" command
         self.req = Waypoint.Request()
         self.req.command = "push"
-        self.req.argument = ';'.join([f"{x},{y}" for x, y in waypoints])
+        self.req.argument = ';'.join([f"{x},{y}" for x, y in self.waypoints])
 
         self.future = self.cli.call_async(self.req)
         # Use a callback to handle the response
@@ -436,6 +462,14 @@ class BuoySearch(Node):
             search_pattern[i] = (new_waypoint.latitude, new_waypoint.longitude)
         
             self.set_waypoints(search_pattern)
+
+        # Plot search pattern for testing
+        latitudes = [coord[0] for coord in search_pattern]
+        longitudes = [coord[1] for coord in search_pattern]
+        self.scatter, = self.ax.plot(longitudes, latitudes, 'ro')  # red circles
+        plt.draw()
+        self.fig.savefig("src/waypoints.png")
+        plt.show(block=False)
 
 def main(args=None):
     rclpy.init(args=args)
