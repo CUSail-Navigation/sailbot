@@ -6,6 +6,7 @@ import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Point
 from std_msgs.msg import Int32
+from std_msgs.msg import Int32MultiArray
 
 from sailboat_vision.buoy_detection import BuoyDetectorCV
 
@@ -19,9 +20,9 @@ class BuoyDetectorNode(Node):
         self.declare_parameter('timer_period', 0.1)  # Timer period for frame processing
         self.declare_parameter('servo_angle_step', 5) # How much to shift servo by each time
         
-        hsv_lower = self.get_parameter('hsv_lower').value
-        hsv_upper = self.get_parameter('hsv_upper').value
-        detection_threshold = self.get_parameter('detection_threshold').value
+        self.hsv_lower = self.get_parameter('hsv_lower').value
+        self.hsv_upper = self.get_parameter('hsv_upper').value
+        self.detection_threshold = self.get_parameter('detection_threshold').value
         self.timer_period = self.get_parameter('timer_period').value
         self.servo_angle_step = self.get_parameter('servo_angle_step').value
 
@@ -32,7 +33,7 @@ class BuoyDetectorNode(Node):
         self.pipeline.start(config)
         self.align = rs.align(rs.stream.color)
 
-        self.detector = BuoyDetectorCV(hsv_lower, hsv_upper, detection_threshold)
+        self.detector = BuoyDetectorCV(self.hsv_lower, self.hsv_upper, self.detection_threshold)
         
         self.CENTER = 320
         self.MARGIN = 30
@@ -50,6 +51,25 @@ class BuoyDetectorNode(Node):
             Int32,
             'buoy_angle',
             self.buoy_angle_callback,
+            10)
+        
+        # Subscriptions for dynamic parameter tuning
+        self.hsv_lower_sub = self.create_subscription(
+            Int32MultiArray,
+            'update_hsv_lower',
+            self.hsv_lower_callback,
+            10)
+
+        self.hsv_upper_sub = self.create_subscription(
+            Int32MultiArray,
+            'update_hsv_upper',
+            self.hsv_upper_callback,
+            10)
+
+        self.detection_threshold_sub = self.create_subscription(
+            Int32,
+            'update_detection_threshold',
+            self.detection_threshold_callback,
             10)
 
         self.get_logger().info('Buoy Detector Node Initialized')
@@ -86,19 +106,33 @@ class BuoyDetectorNode(Node):
     def buoy_angle_callback(self, msg):
         self.angle = msg.data
 
-    def update_detector_parameters(self):
+    def update_detector_params(self):
         """Update the CV detector parameters dynamically."""
-        hsv_lower = self.get_parameter('hsv_lower').value
-        hsv_upper = self.get_parameter('hsv_upper').value
-        detection_threshold = self.get_parameter('detection_threshold').value
-
-        self.detector.update_parameters(hsv_lower, hsv_upper, detection_threshold)
-        self.get_logger().info(f"Updated parameters: HSV Lower: {hsv_lower}, HSV Upper: {hsv_upper}, Detection Threshold: {detection_threshold}")
+        self.detector.update_parameters(self.hsv_lower, self.hsv_upper, self.detection_threshold)
+        self.get_logger().info(f"Updated parameters: HSV Lower: {self.hsv_lower}, HSV Upper: {self.hsv_upper}, Detection Threshold: {self.detection_threshold}")
 
     def destroy_node(self):
         """Release the video capture and destroy the node."""
         self.pipeline.stop()
         super().destroy_node()
+
+    def hsv_lower_callback(self, msg: Int32MultiArray):
+        if len(msg.data) == 3:
+            self.hsv_lower = msg.data
+            self.update_detector_params()
+        else:
+            self.get_logger().warn('HSV Lower must have 3 elements (H, S, V)')
+
+    def hsv_upper_callback(self, msg: Int32MultiArray):
+        if len(msg.data) == 3:
+            self.hsv_upper = msg.data
+            self.update_detector_params()
+        else:
+            self.get_logger().warn('HSV Upper must have 3 elements (H, S, V)')
+
+    def detection_threshold_callback(self, msg: Int32):
+        self.detection_threshold = msg.data
+        self.update_detector_params()
 
 def main(args=None):
     rclpy.init(args=args)
