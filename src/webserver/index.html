@@ -98,6 +98,42 @@
             </div>
             <div class="table-container">
                 <div class="table-heading" onclick="toggleSection(this)">
+                    <h1>Algo Runtime Params <span class="toggle-icon">+</span></h1>
+                </div>
+                <div class="collapsible-section hidden">
+                    <div class="waypoint-buoy-container">
+                        <!-- No-Go-Zone Box -->
+                        <div class="waypoint-buoy-table">
+                            <div class="status-row-input second">
+                                <span class="status-label">No-Go Zone:</span>
+                                <div class="input-group">
+                                    <input type="number" id="no-go-zone-input" name="no-go-zone-input"
+                                        placeholder="Enter no-go zone" required>
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button type="button" id="no-go-zone-submit">Submit</button>
+                            </div>
+                        </div>
+
+                        <!-- Neutral Zone Box -->
+                        <div class="waypoint-buoy-table">
+                            <div class="status-row-input second">
+                                <span class="status-label">Neutral Zone:</span>
+                                <div class="input-group">
+                                    <input type="number" id="neutral-zone-input" name="neutral-zone-input"
+                                        placeholder="Enter neutral zone" required>
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button type="button" id="neutral-zone-submit">Submit</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-container">
+                <div class="table-heading" onclick="toggleSection(this)">
                     <h1>Algo Debugger <span class="toggle-icon">+</span></h1>
                 </div>
                 <div class="collapsible-section hidden">
@@ -106,10 +142,10 @@
                             <span class="status-label">Tacking:</span>
                             <span class="status-value" id="tacking-value">N/A</span>
                         </div>
-                        <div class="status-row">
+                        <!-- <div class="status-row">
                             <span class="status-label">Tacking Point:</span>
                             <span class="status-value" id="tacking-point-value">N/A</span>
-                        </div>
+                        </div> -->
                         <div class="status-row">
                             <span class="status-label">Heading Direction:</span>
                             <span class="status-value" id="heading-dir-value">N/A</span>
@@ -126,45 +162,18 @@
                             <span class="status-label">Distance to Destination:</span>
                             <span class="status-value" id="dist-value">N/A</span>
                         </div>
+                        <div class="status-row">
+                            <span class="status-label">No-Go Zone:</span>
+                            <span class="status-value" id="no-go-zone-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Neutral Zone:</span>
+                            <span class="status-value" id="neutral-zone-value">N/A</span>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="table-container">
-                <div class="table-heading" onclick="toggleSection(this)">
-                    <h1>Sail & Rudder Input <span class="toggle-icon">+</span></h1>
-                </div>
-                <div class="collapsible-section hidden">
-                    <div class="waypoint-buoy-container">
-                        <!-- Sail Box -->
-                        <div class="waypoint-buoy-table">
-                            <div class="status-row-input second">
-                                <span class="status-label">Sail Input:</span>
-                                <div class="input-group">
-                                    <input type="number" id="sail-input" name="sail-input"
-                                        placeholder="Enter sail input" required>
-                                </div>
-                            </div>
-                            <div class="button-group">
-                                <button type="button" id="sail-submit">Submit Sail</button>
-                            </div>
-                        </div>
 
-                        <!-- Rudder Box -->
-                        <div class="waypoint-buoy-table">
-                            <div class="status-row-input second">
-                                <span class="status-label">Rudder Input:</span>
-                                <div class="input-group">
-                                    <input type="number" id="rudder-input" name="rudder-input"
-                                        placeholder="Enter rudder input" required>
-                                </div>
-                            </div>
-                            <div class="button-group">
-                                <button type="button" id="rudder-submit">Submit Rudder</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
             <div class="table-container">
                 <div class="table-heading" onclick="toggleSection(this)">
                     <h1>Waypoint & Buoy Input <span class="toggle-icon">+</span></h1>

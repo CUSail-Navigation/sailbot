@@ -5,6 +5,8 @@ let waypointTopic;
 // topics for publishing sail and rudder angles from the webserver to the sailboat
 let webserverRudderTopic;
 let webserverSailTopic;
+let noGoZoneTopic;
+let neutralZoneTopic;
 
 console.log("script.js loaded successfully");
 
@@ -12,7 +14,7 @@ let waypoints = []; // Global array for storing waypoints
 const waypointMarkers = {}; // Global dictionary for waypoint markers
 let map; // Global variable for the map instance
 let sailboatMarker; // Global variable for the sailboat marker
-let tackingPointMarker; // Global variable for the tacking point marker
+let currentDestMarker; // Global variable for the current destination marker
 
 let buoys = []
 const buoyMarkers = {};
@@ -212,22 +214,15 @@ function parseHeading(message) {
     }
 }
 
-// Updates the tacking point on the map and UI
-function parseTackingPoint(message) {
-    // Update the UI with the tacking point lat/long
-    const formattedLatitude = message.latitude.toFixed(6);
-    const formattedLongitude = message.longitude.toFixed(6);
-
-    document.getElementById('tacking-point-value').innerText = `${formattedLatitude}, ${formattedLongitude}`;
-
-    // Update the tacking point marker on the map
-    const tackingPointLocation = { lat: message.latitude, lng: message.longitude };
-    if (!tackingPointMarker) {
+function parseCurrentDestination(message) {
+    // Update the current destination marker on the map
+    const currentDestLocation = { lat: message.latitude, lng: message.longitude };
+    if (!currentDestMarker) {
         // Create a new marker if it doesn't exist
-        tackingPointMarker = new google.maps.Marker({
-            position: tackingPointLocation,
+        currentDestMarker = new google.maps.Marker({
+            position: currentDestLocation,
             map: map,
-            title: "Tacking Point Location",
+            title: "Current Destination Location",
             icon: {
                 path: google.maps.SymbolPath.CIRCLE,
                 scale: 8,
@@ -237,10 +232,9 @@ function parseTackingPoint(message) {
                 strokeColor: "#FFFFFF"
             }
         });
-    } else {
-        tackingPointMarker.setPosition(tackingPointLocation);
     }
-
+    currentDestMarker.setPosition(currentDestLocation);
+    currentDestMarker.setMap(map); // Make sure it's visible
 }
 
 let waypointService;
@@ -371,14 +365,6 @@ function subscribeToTopics() {
         updateSailAngle(message.data, "actual-sail-angle-dial");
     });
 
-    const tackingPointTopic = new ROSLIB.Topic({
-        ros: ros,
-        name: '/sailbot/tacking_point',
-        messageType: 'sensor_msgs/NavSatFix',
-        throttle_rate: BASE_THROTTLE_RATE,
-    })
-    tackingPointTopic.subscribe(parseTackingPoint);
-
     const algoDebugTopic = new ROSLIB.Topic({
         ros: ros,
         name: '/sailbot/main_algo_debug',
@@ -389,18 +375,23 @@ function subscribeToTopics() {
         // console.log("Algo debug")
         // Extract and log the received data
         const tacking = message.tacking;
-        const tackingPoint = message.tacking_point;
         const headingDir = message.heading_dir.data;
         const currDest = message.curr_dest;
         const diff = message.diff.data;
         const dist = message.dist_to_dest.data;
+        const noGoZone = message.no_go_zone.data;
+        const neutralZone = message.neutral_zone.data;
+
+        // update map with current destination
+        parseCurrentDestination(currDest);
 
         document.getElementById('tacking-value').innerText = tacking;
-        document.getElementById('tacking-point-value').innerText = `${tackingPoint.latitude.toFixed(6)}, ${tackingPoint.longitude.toFixed(6)}`;
         document.getElementById('heading-dir-value').innerText = headingDir;
         document.getElementById('curr-dest-value').innerText = `${currDest.latitude.toFixed(6)}, ${currDest.longitude.toFixed(6)}`;
         document.getElementById('diff-value').innerText = diff;
         document.getElementById('dist-value').innerText = dist;
+        document.getElementById('no-go-zone-value').innerText = noGoZone;
+        document.getElementById('neutral-zone-value').innerText = neutralZone;
     });
 
     waypointService = new ROSLIB.Service({
@@ -445,6 +436,21 @@ function initializePublishers() {
         messageType: 'std_msgs/Int32',
         throttle_rate: BASE_THROTTLE_RATE
     });
+
+    // runtime algo parameter topics
+    noGoZoneTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: '/sailbot/no_go_zone',
+        messageType: 'std_msgs/Int32',
+        throttle_rate: BASE_THROTTLE_RATE
+    });
+    neutralZoneTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: '/sailbot/neutral_zone',
+        messageType: 'std_msgs/Int32',
+        throttle_rate: BASE_THROTTLE_RATE
+    });
+
 }
 
 // Connect to ROS when the page loads
@@ -1034,27 +1040,41 @@ function updateHeadAngle(angle, id) {
     document.getElementById(id).innerText = "Angle: " + angle;
 }
 
-// ====================== BEGIN: Sail/Rudder Handling ==========================
+// ====================== BEGIN: Algo Runtime Params Handling ==================
 
-document.getElementById('sail-rudder-button').addEventListener('click', function (event) {
-    console.log("Button clicked!");
-    const sailAngle = document.getElementById('sail-input');
-    const rudderAngle = document.getElementById('rudder-input');
+// Add event listener for the no-go-zone button
+document.getElementById('no-go-zone-submit').addEventListener('click', function () {
+    const noGoZoneInput = document.getElementById('no-go-zone-input').value;
 
-    const sailMessage = new ROSLIB.Message({
-        data: parseInt(sailAngle.value, 10)
-    });
+    if (noGoZoneInput) {
+        const noGoZoneMessage = new ROSLIB.Message({
+            data: parseInt(noGoZoneInput, 10) // Convert input to Int32
+        });
 
-    const rudderMessage = new ROSLIB.Message({
-        data: parseInt(rudderAngle.value, 10)
-    });
-    webserverRudderTopic.publish(rudderMessage);
-    webserverSailTopic.publish(sailMessage);
-})
+        noGoZoneTopic.publish(noGoZoneMessage);
+        console.log(`Published to noGoZoneTopic: ${noGoZoneInput}`);
+    } else {
+        alert('Please enter a valid value for the no-go zone.');
+    }
+});
 
+// Add event listener for the neutral-zone button
+document.getElementById('neutral-zone-submit').addEventListener('click', function () {
+    const neutralZoneInput = document.getElementById('neutral-zone-input').value;
 
-// ====================== END: Sail/Rudder Handling ============================
+    if (neutralZoneInput) {
+        const neutralZoneMessage = new ROSLIB.Message({
+            data: parseInt(neutralZoneInput, 10) // Convert input to Int32
+        });
 
+        neutralZoneTopic.publish(neutralZoneMessage);
+        console.log(`Published to neutralZoneTopic: ${neutralZoneInput}`);
+    } else {
+        alert('Please enter a valid value for the neutral zone.');
+    }
+});
+
+// ====================== END: Algo Runtime Params Handling ====================
 
 function toggleSection(headerElement) {
     const content = headerElement.nextElementSibling;
