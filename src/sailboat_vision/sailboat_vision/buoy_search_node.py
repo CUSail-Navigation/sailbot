@@ -236,18 +236,63 @@ class BuoySearch(Node):
         self.search_radius = 100
         self.particle_filter = None
 
-        # FIXME: Plot in real time for debug
-        # self.fig, self.ax = plt.subplots(figsize=(8, 6))
-        # self.scatter, = self.ax.plot([], [], 'ro')
-        # plt.show(block=False)
-        # self.fig.savefig("src/waypoints.png")
-        # plt.show(block=False)
-
         self.waypoints = []
 
+        #Initiialize debug plot
+        self.setup_debug_plot()
         self.initialize_search_pattern()
-
+        
         self.get_logger().info('Buoy search algo started successfully')
+
+    def setup_debug_plot(self):
+        """Initialize the matplotlib plot for real-time debugging."""
+        try:
+            self.fig, self.ax = plt.subplots(figsize=(8, 6))
+            plt.ion()  # Enable interactive mode
+            self.fig.show()
+        except Exception as e:
+            self.get_logger().error(f'Failed to initialize debug plot: {str(e)}')
+            self.fig = None
+            self.ax = None
+    
+    def update_debug_plot(self):
+        """Update the matplotlib plot with current state."""
+        if self.fig is None or self.ax is None:
+            return
+
+        self.ax.clear()
+        
+        # Plot particles
+        if self.particle_filter is not None:
+            xs = [p.x for p in self.particle_filter.particles]
+            ys = [p.y for p in self.particle_filter.particles]
+            self.ax.scatter(xs, ys, c='r', s=10, label='Particles', alpha=0.5)
+            
+        # Plot waypoints
+        if self.waypoints:
+            utm_points = [LatLongPoint(lat, lon).to_utm() for lat, lon in self.waypoints]
+            wx = [p.easting for p in utm_points]
+            wy = [p.northing for p in utm_points]
+            self.ax.plot(wx, wy, 'bo-', label='Waypoints')
+            
+        # Plot current location
+        if self.curr_loc is not None:
+            self.ax.scatter([self.curr_loc.easting], [self.curr_loc.northing],
+                           c='g', s=50, marker='*', label='Boat')
+            
+        self.ax.set_title('Particle Filter & Search Pattern')
+        self.ax.set_xlabel('Easting (m)')
+        self.ax.set_ylabel('Northing (m)')
+        self.ax.legend()
+        self.ax.grid(True)
+        
+        try:
+            self.fig.canvas.draw()
+            self.fig.canvas.flush_events()
+            plt.pause(0.001) 
+            self.fig.savefig("src/waypoints.png")
+        except Exception as e:
+            self.get_logger().error(f'Failed to update or save plot: {str(e)}')
 
 
     def initialize_particle_filter(self):
@@ -259,6 +304,7 @@ class BuoySearch(Node):
                 center=self.curr_loc
             )
             self.get_logger().info('Particle filter initialized.')
+            self.update_debug_plot()
         else:
             self.get_logger().error('Cannot initialize particle filter: Current location is None.')
     
@@ -269,13 +315,7 @@ class BuoySearch(Node):
 
         self.waypoints = waypoints
 
-        # FIXME: Plot in real time for debug
-        # latitudes = [coord[0] for coord in self.waypoints]
-        # longitudes = [coord[1] for coord in self.waypoints]
-        # self.scatter, = self.ax.plot(longitudes, latitudes, 'ro')  # red circles
-        # plt.draw()
-        # self.fig.savefig("src/waypoints.png")
-        # plt.show(block=False)
+        self.update_debug_plot()
 
         # Set up the request with the "set" command
         self.req = Waypoint.Request()
@@ -342,6 +382,7 @@ class BuoySearch(Node):
         if self.curr_loc is not None:
             self.particle_filter.update_weights(global_bearing, self.curr_loc, observed_range)
             self.particle_filter.resample()
+            self.update_debug_plot()
 
             estimated_x, estimated_y = self.particle_filter.estimate()
             estimated_buoy = UTMPoint(estimated_x, estimated_y, self.curr_loc.zone_number, self.curr_loc.zone_letter)
@@ -391,6 +432,7 @@ class BuoySearch(Node):
             search_pattern_waypoints.append((new_waypoint.latitude, new_waypoint.longitude))
         
         self.set_waypoints(search_pattern_waypoints)
+        self.update_debug_plot()
 
 def main(args=None):
     rclpy.init(args=args)
