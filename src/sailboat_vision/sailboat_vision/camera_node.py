@@ -15,7 +15,7 @@ class BuoyDetectorNode(Node):
         super().__init__('buoy_detector_node')
 
         self.declare_parameter('hsv_lower', [0, 120, 180])
-        self.declare_parameter('hsv_upper', [10, 160, 255])
+        self.declare_parameter('hsv_upper', [100, 160, 255])
         self.declare_parameter('detection_threshold', 100)
         self.declare_parameter('timer_period', 0.1)  # Timer period for frame processing
         self.declare_parameter('servo_angle_step', 5) # How much to shift servo by each time

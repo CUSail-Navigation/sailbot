@@ -139,8 +139,10 @@ class ParticleFilter:
                     range_likelihood = 0.01  # penalize particles too close
                 else:
                     range_likelihood = 1.0  # neutral
+                p.weight = bearing_likelihood * range_likelihood
+            else:
+                p.weight = bearing_likelihood
 
-            p.weight = bearing_likelihood * range_likelihood
             total_weight += p.weight
         
         # Normalizing weights
@@ -324,7 +326,7 @@ class BuoySearch(Node):
 
         self.future = self.cli.call_async(self.req)
         # Use a callback to handle the response
-        self.future.add_done_callback(self.push_response_callback)
+        self.future.add_done_callback(self.set_response_callback)
 
     def set_response_callback(self, future: Future):
         try:
@@ -385,13 +387,17 @@ class BuoySearch(Node):
             self.update_debug_plot()
 
             estimated_x, estimated_y = self.particle_filter.estimate()
-            estimated_buoy = UTMPoint(estimated_x, estimated_y, self.curr_loc.zone_number, self.curr_loc.zone_letter)
+            try:
+                estimated_buoy = UTMPoint(estimated_x, estimated_y, self.curr_loc.zone_number, self.curr_loc.zone_letter)
+            except utm.error.OutOfRangeError: # Catches when between different UTM zones
+                self.get_logger().warn(f"Invalid UTM")
+                return
 
             self.get_logger().info(f"Estimated buoy position: {estimated_buoy}")
 
             # Push the estimated position as a waypoint
             estimated_buoy_latlon = estimated_buoy.to_latlon()
-            self.set_waypoints([estimated_buoy_latlon.latitude, estimated_buoy_latlon.longitude])
+            self.set_waypoints([[estimated_buoy_latlon.latitude, estimated_buoy_latlon.longitude]])
 
             # Shift particles based on boat movement
             dx = self.curr_loc.easting - estimated_buoy.easting
@@ -407,8 +413,8 @@ class BuoySearch(Node):
         direction = 1
         x = -1 * max_radius
 
-        self.center = self.center if self.center is not None else LatLongPoint(42.44413971997969, -76.48367751849098).to_utm()
-        self.scan_direction = self.scan_direction if self.scan_direction is not None else 0
+        self.center = self.center if self.center is not None else LatLongPoint(42.44415534324632, -76.48367002684182).to_utm()
+        self.search_direction = self.search_direction if self.search_direction is not None else 0
 
         while x <= max_radius:
             y = direction * math.sqrt(max_radius ** 2 - x ** 2)
@@ -417,7 +423,7 @@ class BuoySearch(Node):
             x += expansion_step
         
         search_pattern_waypoints = []
-        rotation_angle = math.radians(self.scan_direction)
+        rotation_angle = math.radians(self.search_direction)
         easting_translation = self.center.easting
         northing_translation = self.center.northing
 
@@ -427,7 +433,11 @@ class BuoySearch(Node):
             easting += easting_translation
             northing += northing_translation
 
-            new_waypoint = UTMPoint(easting, northing, self.center.zone_number, self.center.zone_letter).to_latlon()
+            try:
+                new_waypoint = UTMPoint(easting, northing, self.center.zone_number, self.center.zone_letter).to_latlon()
+            except utm.error.OutOfRangeError: # Catches when between different UTM zones
+                self.get_logger().warn(f"Invalid UTM")
+                return
     
             search_pattern_waypoints.append((new_waypoint.latitude, new_waypoint.longitude))
         

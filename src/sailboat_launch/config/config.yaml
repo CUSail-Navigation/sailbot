@@ -13,10 +13,10 @@ sailbot: #Namespace
          vectornav_port: "/dev/serial/by-id/usb-FTDI_USB-RS232-WE_AV0LF3XT-if00-port0"
          simulated: false
    
-   computer_vision: 
+   buoy_detection: 
       ros__parameters:
-         hsv_lower: [0, 120, 180]
-         hsv_upper: [10, 160, 255] 
+         hsv_lower: [5, 127, 63]
+         hsv_upper: [20, 255, 191] 
          detection_threshold: 100
          use_fake_data: false
       
