@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sailbot Status Dashboard</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- External libraries -->
     <script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
@@ -134,6 +135,57 @@
             </div>
             <div class="table-container">
                 <div class="table-heading" onclick="toggleSection(this)">
+                    <h1>CV Tuning Params <span class="toggle-icon">+</span></h1>
+                </div>
+                <div class="collapsible-section hidden">
+                    <div class="waypoint-buoy-container">
+                        <!-- HSV Lower Input -->
+                        <div class="waypoint-buoy-table">
+                            <div class="status-row-input second">
+                                <span class="status-label">HSV Lower:</span>
+                                <div class="input-group">
+                                    <input type="text" id="hsv-lower-input" name="hsv-lower-input"
+                                        placeholder="e.g. 0, 120, 180" required>
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button type="button" id="hsv-lower-submit">Submit HSV Lower</button>
+                            </div>
+                        </div>
+
+                        <!-- HSV Upper Input -->
+                        <div class="waypoint-buoy-table">
+                            <div class="status-row-input second">
+                                <span class="status-label">HSV Upper:</span>
+                                <div class="input-group">
+                                    <input type="text" id="hsv-upper-input" name="hsv-upper-input"
+                                        placeholder="e.g. 10, 160, 255" required>
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button type="button" id="hsv-upper-submit">Submit HSV Upper</button>
+                            </div>
+                        </div>
+
+                        <!-- Detection Threshold -->
+                        <div class="waypoint-buoy-table">
+                            <div class="status-row-input second">
+                                <span class="status-label">Detection Threshold:</span>
+                                <div class="input-group">
+                                    <input type="number" id="detection-threshold-input" name="detection-threshold-input"
+                                        placeholder="e.g. 100" required>
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button type="button" id="detection-threshold-submit">Submit Threshold</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <div class="table-heading" onclick="toggleSection(this)">
                     <h1>Algo Debugger <span class="toggle-icon">+</span></h1>
                 </div>
                 <div class="collapsible-section hidden">
@@ -142,10 +194,6 @@
                             <span class="status-label">Tacking:</span>
                             <span class="status-value" id="tacking-value">N/A</span>
                         </div>
-                        <!-- <div class="status-row">
-                            <span class="status-label">Tacking Point:</span>
-                            <span class="status-value" id="tacking-point-value">N/A</span>
-                        </div> -->
                         <div class="status-row">
                             <span class="status-label">Heading Direction:</span>
                             <span class="status-value" id="heading-dir-value">N/A</span>
@@ -169,6 +217,43 @@
                         <div class="status-row">
                             <span class="status-label">Neutral Zone:</span>
                             <span class="status-value" id="neutral-zone-value">N/A</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <div class="table-heading" onclick="toggleSection(this)">
+                    <h1>Sail & Rudder Input <span class="toggle-icon">+</span></h1>
+                </div>
+                <div class="collapsible-section hidden">
+                    <div class="waypoint-buoy-container">
+                        <!-- Sail Box -->
+                        <div class="waypoint-buoy-table">
+                            <div class="status-row-input second">
+                                <span class="status-label">Sail Input:</span>
+                                <div class="input-group">
+                                    <input type="number" id="sail-input" name="sail-input"
+                                        placeholder="Enter sail input" required>
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button type="button" id="sail-submit">Submit Sail</button>
+                            </div>
+                        </div>
+
+                        <!-- Rudder Box -->
+                        <div class="waypoint-buoy-table">
+                            <div class="status-row-input second">
+                                <span class="status-label">Rudder Input:</span>
+                                <div class="input-group">
+                                    <input type="number" id="rudder-input" name="rudder-input"
+                                        placeholder="Enter rudder input" required>
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button type="button" id="rudder-submit">Submit Rudder</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -283,8 +368,12 @@
             </div>
         </div>
     </div>
-    <script src="script.js"></script>
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=key&callback=initMap">
+    
+    <!-- Load the modular JavaScript -->
+    <script type="module" src="main.js"></script>
+    
+    <!-- Google Maps API - will call window.initMap when ready -->
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBuFSxZ-m0FA2FubP6t7irEPSklGe7oGV0&callback=window.initMap">
     </script>
 </body>
 
