@@ -26,12 +26,12 @@ class BuoyDetectorNode(Node):
         self.timer_period = self.get_parameter('timer_period').value
         self.servo_angle_step = self.get_parameter('servo_angle_step').value
 
-        # self.pipeline = rs.pipeline()
-        # config = rs.config()
-        # config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
-        # config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
-        # self.pipeline.start(config)
-        # self.align = rs.align(rs.stream.color)
+        self.pipeline = rs.pipeline()
+        config = rs.config()
+        config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
+        config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
+        self.pipeline.start(config)
+        self.align = rs.align(rs.stream.color)
 
         self.detector = BuoyDetectorCV(self.hsv_lower, self.hsv_upper, self.detection_threshold)
         
@@ -39,8 +39,6 @@ class BuoyDetectorNode(Node):
         self.MARGIN = 30
         self.angle = 0
         self.servo_angle = 90
-
-        self.CAMERA_FOV = 87
 
         self.position_publisher = self.create_publisher(Point, '/buoy_position', 10)
         self.servo_angle_publisher = self.create_publisher(Int32, '/servo_angle', 10)
@@ -76,32 +74,33 @@ class BuoyDetectorNode(Node):
 
     def process_frame(self):
 
-        # frames = self.pipeline.wait_for_frames()
+        frames = self.pipeline.wait_for_frames()
 
-        # # Align the depth frame to color frame
-        # aligned_frames = self.align.process(frames)
-        # aligned_depth_frame = aligned_frames.get_depth_frame()
-        # color_frame = aligned_frames.get_color_frame()
-        # if not aligned_depth_frame or not color_frame:
-        #     return
+        # Align the depth frame to color frame
+        aligned_frames = self.align.process(frames)
+        aligned_depth_frame = aligned_frames.get_depth_frame()
+        color_frame = aligned_frames.get_color_frame()
+        if not aligned_depth_frame or not color_frame:
+            return
 
-        # depth_image = np.asanyarray(aligned_depth_frame.get_data())
-        # color_image = np.asanyarray(color_frame.get_data())
+        color_image = np.asanyarray(color_frame.get_data())
 
-        # buoy_center, _ = self.detector.process_frame(color_image)
-
-        buoy_center = [320, 0]
+        buoy_center, _ = self.detector.process_frame(color_image)
 
         if not buoy_center:
             self.get_logger().info(f'No buoy detected')
             return
- 
-        displacement = buoy_center[0] - self.CENTER
-        depth = 10 # depth_image[buoy_center[0], buoy_center[1]] / 1000
+
+        # depth_image = np.asanyarray(aligned_depth_frame.get_data())
+        # displacement = buoy_center[0] - self.CENTER
+        # depth = depth_image[buoy_center[1], buoy_center[0]] / 1000
+        # point_msg.x = depth * math.tan(math.radians(87 / 2)) * displacement / self.CENTER
+        # point_msg.y = float(depth)
+        # point_msg.z = 0.0
+        depth_intrinsics = aligned_depth_frame.profile.as_video_stream_profile().intrinsics
+        depth = aligned_depth_frame.get_distance(buoy_center[0], buoy_center[1])
         point_msg = Point()
-        point_msg.x = depth * math.tan(math.radians(self.CAMERA_FOV / 2)) * displacement / self.CENTER
-        point_msg.y = float(depth)
-        point_msg.z = 0.0
+        point_msg.x, point_msg.z, point_msg.y = rs.rs2_deproject_pixel_to_point(depth_intrinsics, buoy_center, depth)
         self.position_publisher.publish(point_msg)
         self.get_logger().info(f'Detected buoy at: ({point_msg.x, point_msg.y, point_msg.z})')
     
