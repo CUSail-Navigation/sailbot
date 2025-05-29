@@ -133,9 +133,9 @@ class ParticleFilter:
             # range likelihood (assume Gaussian noise)
             predicted_range = math.hypot(dx, dy)
 
-            if(observed_range > 7.5): # assume beyond 7.5 meters we are uncertain, sorry for magic numbers
+            if(observed_range > 20): # assume beyond 20 meters we are uncertain, sorry for magic numbers
                 # Saturated: range is unreliable
-                if predicted_range < 6.5:
+                if predicted_range < 15:
                     range_likelihood = 0.01  # penalize particles too close
                 else:
                     range_likelihood = 1.0  # neutral
@@ -241,7 +241,7 @@ class BuoySearch(Node):
         self.waypoints = []
 
         #Initiialize debug plot
-        self.setup_debug_plot()
+        # self.setup_debug_plot()
         self.initialize_search_pattern()
         
         self.get_logger().info('Buoy search algo started successfully')
@@ -292,7 +292,6 @@ class BuoySearch(Node):
             self.fig.canvas.draw()
             self.fig.canvas.flush_events()
             plt.pause(0.001) 
-            self.fig.savefig("src/waypoints.png")
         except Exception as e:
             self.get_logger().error(f'Failed to update or save plot: {str(e)}')
 
@@ -306,7 +305,7 @@ class BuoySearch(Node):
                 center=self.curr_loc
             )
             self.get_logger().info('Particle filter initialized.')
-            self.update_debug_plot()
+            # self.update_debug_plot()
         else:
             self.get_logger().error('Cannot initialize particle filter: Current location is None.')
     
@@ -317,7 +316,7 @@ class BuoySearch(Node):
 
         self.waypoints = waypoints
 
-        self.update_debug_plot()
+        # self.update_debug_plot()
 
         # Set up the request with the "set" command
         self.req = Waypoint.Request()
@@ -384,7 +383,7 @@ class BuoySearch(Node):
         if self.curr_loc is not None:
             self.particle_filter.update_weights(global_bearing, self.curr_loc, observed_range)
             self.particle_filter.resample()
-            self.update_debug_plot()
+            # self.update_debug_plot()
 
             estimated_x, estimated_y = self.particle_filter.estimate()
             try:
@@ -400,8 +399,8 @@ class BuoySearch(Node):
             self.set_waypoints([[estimated_buoy_latlon.latitude, estimated_buoy_latlon.longitude]])
 
             # Shift particles based on boat movement
-            dx = self.curr_loc.easting - estimated_buoy.easting
-            dy = self.curr_loc.northing - estimated_buoy.northing
+            # dx = self.curr_loc.easting - estimated_buoy.easting
+            # dy = self.curr_loc.northing - estimated_buoy.northing
         else:
             self.get_logger().error('Current location is not available.')
 
@@ -442,7 +441,7 @@ class BuoySearch(Node):
             search_pattern_waypoints.append((new_waypoint.latitude, new_waypoint.longitude))
         
         self.set_waypoints(search_pattern_waypoints)
-        self.update_debug_plot()
+        # self.update_debug_plot()
 
 def main(args=None):
     rclpy.init(args=args)

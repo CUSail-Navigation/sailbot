@@ -7,7 +7,7 @@ class BuoyDetectorCV:
         self.hsv_lower = np.array(hsv_lower if hsv_lower else [0, 127, 63])
         self.hsv_upper = np.array(hsv_upper if hsv_upper else [100, 255, 191])
         self.detection_threshold = detection_threshold
-        self.show_frames = True
+        self.show_frames = False
     
     def update_parameters(self, hsv_lower=None, hsv_upper=None, detection_threshold=None):
         """Update parameters dynamically."""
