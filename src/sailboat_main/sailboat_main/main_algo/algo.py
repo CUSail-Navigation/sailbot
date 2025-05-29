@@ -307,7 +307,7 @@ class Algo(Node):
         Precondition: self.waypoint_in_nogo_zone() is true. self.tacking is false. self.current_location is not None. self.current_destination is not None. self.wind_direction is not None.
         """
 
-        assert self.boat_in_nogo_zone(), "Waypoint not in nogo zone"
+        assert self.boat_in_nogo_zone(), "Boat not in nogo zone"
         assert self.current_location is not None, "Current location is None"
         assert self.current_destination is not None, "Current destination is None"
         assert self.wind_direction is not None, "Wind direction is None"
@@ -370,7 +370,7 @@ class Algo(Node):
         self.get_logger().info(f'Wind Direction: {self.wind_direction}')
         if self.wind_direction is None:
             return False
-        return (150 < self.wind_direction < 210)
+        return (180 - self.no_go_zone < self.wind_direction < 180 + self.no_go_zone)
 
     # ========================= Callbacks & Publishers =========================
 
