@@ -4,10 +4,11 @@ import numpy as np
 class BuoyDetectorCV:
     def __init__(self, hsv_lower=None, hsv_upper=None, detection_threshold=100):
         # Initialize parameters with defaults or provided values
-        self.hsv_lower = np.array(hsv_lower if hsv_lower else [0, 120, 180])
-        self.hsv_upper = np.array(hsv_upper if hsv_upper else [10, 160, 255])
+        self.hsv_lower = np.array(hsv_lower if hsv_lower else [5, 127, 63])
+        self.hsv_upper = np.array(hsv_upper if hsv_upper else [20, 255, 191])
         self.detection_threshold = detection_threshold
-
+        self.show_frames = False
+    
     def update_parameters(self, hsv_lower=None, hsv_upper=None, detection_threshold=None):
         """Update parameters dynamically."""
         if hsv_lower:
@@ -52,5 +53,15 @@ class BuoyDetectorCV:
             if cv2.contourArea(largest_contour) > self.detection_threshold:
                 x, y, w, h = cv2.boundingRect(largest_contour)
                 buoy_center = (x + w // 2, y + h // 2)
-                return buoy_center, frame 
+                if self.show_frames:
+                    cv2.drawContours(frame, contours, -1, (0, 255, 0), 2)
+                    cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+                    cv2.circle(frame, buoy_center, 5, (255, 0, 0), -1)
+                    cv2.imshow("Camera", frame)
+                    cv2.waitKey(1)
+                return buoy_center, frame
+        if self.show_frames:
+            cv2.drawContours(frame, contours, -1, (0, 255, 0), 2)
+            cv2.imshow("Camera", frame)
+            cv2.waitKey(1) 
         return None, frame

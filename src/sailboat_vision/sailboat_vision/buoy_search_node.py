@@ -59,7 +59,7 @@ class UTMPoint():
         return math.dist((self.easting, self.northing), (other.easting, other.northing))
 
     def __repr__(self):
-        return f"UTMPoint(x={self.x}, y={self.y}, zone_number={self.zone_number}, zone_letter={self.zone_letter})"
+        return f"UTMPoint(x={self.easting}, y={self.northing}, zone_number={self.zone_number}, zone_letter={self.zone_letter})"
 
 class LatLongPoint():
     """
@@ -143,7 +143,7 @@ class ParticleFilter:
             p.weight = bearing_likelihood * range_likelihood
             total_weight += p.weight
         
-        #Normalizing weights
+        # Normalizing weights
         if total_weight > 0:
             for p in self.particles:
                 p.weight /= total_weight
@@ -224,30 +224,32 @@ class BuoySearch(Node):
             10)
 
         # Internal state
-        self.wind_dir = 0
-        self.curr_loc = LatLongPoint(42.44394751249068, -76.4827713523971).to_utm()
-        self.heading_dir = 0
+        self.wind_dir = None
+        self.curr_loc = None
+        self.heading_dir = None
+
+        self.center = None
+        self.search_direction = None
 
         #Particle filter initizliation
         self.num_particles = 100
         self.search_radius = 100
         self.particle_filter = None
 
-        self.fig, self.ax = plt.subplots(figsize=(8, 6))
-        self.scatter, = self.ax.plot([], [], 'ro')
-        plt.show(block=False)
-        self.fig.savefig("src/waypoints.png")
-        plt.show(block=False)
-
+        # FIXME: Plot in real time for debug
+        # self.fig, self.ax = plt.subplots(figsize=(8, 6))
+        # self.scatter, = self.ax.plot([], [], 'ro')
+        # plt.show(block=False)
+        # self.fig.savefig("src/waypoints.png")
+        # plt.show(block=False)
 
         self.waypoints = []
 
-        self.initialize_search_pattern(self.curr_loc)
+        self.initialize_search_pattern()
 
-        self.get_logger().info('Buoy search algo started successfully')  # Check if this line prints
+        self.get_logger().info('Buoy search algo started successfully')
 
 
-    #Method to initialize the particle filter
     def initialize_particle_filter(self):
         """Initialize the particle filter with particles over the search area."""
         if self.curr_loc is not None:
@@ -259,53 +261,26 @@ class BuoySearch(Node):
             self.get_logger().info('Particle filter initialized.')
         else:
             self.get_logger().error('Cannot initialize particle filter: Current location is None.')
-
-
-    def pop_waypoint(self):
-        self.cli = self.create_client(Waypoint, 'mutate_waypoint_queue')
-        while not self.cli.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Waypoint service not available, waiting...')
-
-        # Set up the request with the "pop" command
-        self.req = Waypoint.Request()
-        self.req.command = "pop"
-        self.req.argument = ""  # No argument needed for the "pop" command
-
-        self.future = self.cli.call_async(self.req)
-        # Use a callback to handle the response
-        self.future.add_done_callback(self.pop_response_callback)
-
-    def pop_response_callback(self, future: Future):
-        try:
-            response = future.result()
-            if response.success:
-                self.get_logger().info('Waypoint popped successfully.')
-            else:
-                self.get_logger().info('Failed to pop waypoint from the service.')
-        except Exception as e:
-            self.get_logger().error(f'Error in waypoint_response_callback: {str(e)}')
     
     def set_waypoints(self, waypoints):
         self.cli = self.create_client(Waypoint, 'mutate_waypoint_queue')
         while not self.cli.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Waypoint service not available, waiting...')
 
-        self.waypoints = []
-        self.waypoints.extend(waypoints)
+        self.waypoints = waypoints
 
-        # Plot new waypoints for testing
-        latitudes = [coord[0] for coord in self.waypoints]
-        longitudes = [coord[1] for coord in self.waypoints]
-        self.scatter, = self.ax.plot(longitudes, latitudes, 'ro')  # red circles
-        plt.draw()
-        self.fig.savefig("src/waypoints.png")
-        plt.show(block=False)
-
+        # FIXME: Plot in real time for debug
+        # latitudes = [coord[0] for coord in self.waypoints]
+        # longitudes = [coord[1] for coord in self.waypoints]
+        # self.scatter, = self.ax.plot(longitudes, latitudes, 'ro')  # red circles
+        # plt.draw()
+        # self.fig.savefig("src/waypoints.png")
+        # plt.show(block=False)
 
         # Set up the request with the "set" command
         self.req = Waypoint.Request()
         self.req.command = "set"
-        self.req.argument = ';'.join([f"{x},{y}" for x, y in waypoints])
+        self.req.argument = ';'.join([f"{x},{y}" for x, y in self.waypoints])
 
         self.future = self.cli.call_async(self.req)
         # Use a callback to handle the response
@@ -320,42 +295,6 @@ class BuoySearch(Node):
                 self.get_logger().info('Failed to set waypoint from the service.')
         except Exception as e:
             self.get_logger().error(f'Error in waypoint_response_callback: {str(e)}')
-
-    def push_waypoint(self, waypoint):
-        self.cli = self.create_client(Waypoint, 'mutate_waypoint_queue')
-        while not self.cli.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Waypoint service not available, waiting...')
-
-        self.waypoints.append(waypoint)
-
-        # Plot new waypoint for testing
-        latitudes = [coord[0] for coord in self.waypoints]
-        longitudes = [coord[1] for coord in self.waypoints]
-        self.scatter, = self.ax.plot(longitudes, latitudes, 'ro')  # red circles
-        plt.draw()
-        self.fig.savefig("src/waypoints.png")
-        plt.show(block=False)
-
-
-        # Set up the request with the "push" command
-        self.req = Waypoint.Request()
-        self.req.command = "push"
-        self.req.argument = ';'.join([f"{x},{y}" for x, y in self.waypoints])
-
-        self.future = self.cli.call_async(self.req)
-        # Use a callback to handle the response
-        self.future.add_done_callback(self.push_response_callback)
-
-    def push_response_callback(self, future: Future):
-        try:
-            response = future.result()
-            if response.success:
-                self.get_logger().info('Waypoint pushed successfully.')
-            else:
-                self.get_logger().info('Failed to push waypoint from the service.')
-        except Exception as e:
-            self.get_logger().error(f'Error in waypoint_response_callback: {str(e)}')
-
 
     def curr_gps_callback(self, msg):
         """
@@ -410,66 +349,48 @@ class BuoySearch(Node):
             self.get_logger().info(f"Estimated buoy position: {estimated_buoy}")
 
             # Push the estimated position as a waypoint
-            navsat_msg = estimated_buoy.to_navsatfix_msg()
-            waypoint_str = f"{navsat_msg.latitude},{navsat_msg.longitude}"
-            self.pop_waypoint()
-            self.push_waypoint(waypoint_str)
+            estimated_buoy_latlon = estimated_buoy.to_latlon()
+            self.set_waypoints([estimated_buoy_latlon.latitude, estimated_buoy_latlon.longitude])
 
             # Shift particles based on boat movement
             dx = self.curr_loc.easting - estimated_buoy.easting
             dy = self.curr_loc.northing - estimated_buoy.northing
-            #self.particle_filter.shift_particles(dx, dy)
         else:
             self.get_logger().error('Current location is not available.')
 
     
-    def initialize_search_pattern(self, center: UTMPoint):
+    def initialize_search_pattern(self):
         search_pattern = []
         expansion_step = 5
         max_radius = 100
-
-        # Start at the middle top
-        x = 0
         direction = 1
+        x = -1 * max_radius
+
+        self.center = self.center if self.center is not None else LatLongPoint(42.44413971997969, -76.48367751849098).to_utm()
+        self.scan_direction = self.scan_direction if self.scan_direction is not None else 0
 
         while x <= max_radius:
-            search_pattern.append([x, direction * max_radius])
+            y = direction * math.sqrt(max_radius ** 2 - x ** 2)
+            search_pattern.append([x, y])
             direction *= -1
             x += expansion_step
-        while x >= -1 * max_radius:
-            search_pattern.append([x, direction * max_radius])
-            direction *= -1
-            x -= expansion_step
-
-        if self.wind_dir is None or self.heading_dir is None:
-            self.get_logger().error(f'Search pattern failed to initialize.')
-            return
         
-        rotation_angle = math.radians(self.wind_dir + self.heading_dir)
-        translation = center.easting, center.northing
-        zone_number = self.curr_loc.zone_number
-        zone_letter = self.curr_loc.zone_letter
+        search_pattern_waypoints = []
+        rotation_angle = math.radians(self.scan_direction)
+        easting_translation = self.center.easting
+        northing_translation = self.center.northing
 
-        for i in range(len(search_pattern)):
-            x, y = search_pattern[i]
+        for x, y in search_pattern:
             easting = x * math.cos(rotation_angle) - y * math.sin(rotation_angle)
             northing = x * math.sin(rotation_angle) + y * math.cos(rotation_angle)
-            easting += translation[0]
-            northing += translation[1]
+            easting += easting_translation
+            northing += northing_translation
 
-            new_waypoint = UTMPoint(easting, northing, zone_number, zone_letter).to_latlon()
+            new_waypoint = UTMPoint(easting, northing, self.center.zone_number, self.center.zone_letter).to_latlon()
     
-            search_pattern[i] = (new_waypoint.latitude, new_waypoint.longitude)
+            search_pattern_waypoints.append((new_waypoint.latitude, new_waypoint.longitude))
         
-            self.set_waypoints(search_pattern)
-
-        # Plot search pattern for testing
-        latitudes = [coord[0] for coord in search_pattern]
-        longitudes = [coord[1] for coord in search_pattern]
-        self.scatter, = self.ax.plot(longitudes, latitudes, 'ro')  # red circles
-        plt.draw()
-        self.fig.savefig("src/waypoints.png")
-        plt.show(block=False)
+        self.set_waypoints(search_pattern_waypoints)
 
 def main(args=None):
     rclpy.init(args=args)
