@@ -15,8 +15,8 @@ sailbot: #Namespace
    
    buoy_detection: 
       ros__parameters:
-         hsv_lower: [5, 127, 63]
-         hsv_upper: [20, 255, 191] 
+         hsv_lower: [0, 127, 63]
+         hsv_upper: [20, 255, 255] 
          detection_threshold: 100
          use_fake_data: false
       

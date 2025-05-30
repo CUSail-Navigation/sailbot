@@ -118,16 +118,16 @@ class ParticleFilter:
     def update_weights(self, bearing, boat_pos, observed_range):
         """
         Update particle weights based on bearing measurement
-        :param bearing: Measured bearing to buoy in degrees (0-360)
+        :param bearing: Measured bearing of buoy in degrees relative to east (0-360)
         :param boat_pos: Current boat position in UTM
         """
         total_weight = 0
         for p in self.particles:
             dx = p.x - boat_pos.easting
             dy = p.y - boat_pos.northing
-            predicted_bearing = math.degrees(math.atan2(dx, dy)) % 360
-            bearing_error = min(abs(predicted_bearing - bearing), 360 - abs(predicted_bearing - bearing))
+            predicted_bearing = np.arctan2(dy, dx) * 180 / np.pi
 
+            bearing_error = (predicted_bearing - bearing) % 360
             bearing_likelihood = math.exp(-bearing_error ** 2 / (2 * 20 ** 2))  # assume ~20 deg noise
 
             # range likelihood (assume Gaussian noise)
@@ -247,7 +247,10 @@ class BuoySearch(Node):
         self.waypoints = []
 
         #Initiialize debug plot
-        # self.setup_debug_plot()
+        self.show_debug_plot = False
+        if show_debug_plot:
+            self.setup_debug_plot()
+        
         self.initialize_search_pattern()
         
         self.get_logger().info('Buoy search algo started successfully')
@@ -311,7 +314,8 @@ class BuoySearch(Node):
                 center=self.curr_loc
             )
             self.get_logger().info('Particle filter initialized.')
-            # self.update_debug_plot()
+            if show_debug_plot:
+                self.update_debug_plot()
         else:
             self.get_logger().error('Cannot initialize particle filter: Current location is None.')
     
@@ -322,7 +326,8 @@ class BuoySearch(Node):
 
         self.waypoints = waypoints
 
-        # self.update_debug_plot()
+        if show_debug_plot:
+            self.update_debug_plot()
 
         # Set up the request with the "set" command
         self.req = Waypoint.Request()
@@ -381,15 +386,16 @@ class BuoySearch(Node):
     def perform_particle_filter_step(self, relative_bearing: float, observed_range: float):
         """Perform one step of the particle filter process."""
         if self.heading_dir is not None:
-            global_bearing = (relative_bearing + self.heading_dir) % 360
+            global_bearing = (self.heading_dir - relative_bearing) % 360
         else:
             self.get_logger().error('Heading direction is not available.')
             return
 
-        if self.curr_loc is not None:
+        if self.curr_loc is not None and self.heading_dir is not None:
             self.particle_filter.update_weights(global_bearing, self.curr_loc, observed_range)
             self.particle_filter.resample()
-            # self.update_debug_plot()
+            if show_debug_plot:
+                self.update_debug_plot()
 
             estimated_x, estimated_y = self.particle_filter.estimate()
             try:
@@ -413,7 +419,7 @@ class BuoySearch(Node):
     
     def initialize_search_pattern(self):
         search_pattern = []
-        expansion_step = 5
+        expansion_step = 20
         max_radius = 100
         direction = 1
         x = -1 * max_radius
@@ -447,7 +453,8 @@ class BuoySearch(Node):
             search_pattern_waypoints.append((new_waypoint.latitude, new_waypoint.longitude))
         
         self.set_waypoints(search_pattern_waypoints)
-        # self.update_debug_plot()
+        if show_debug_plot:
+            self.update_debug_plot()
 
 def main(args=None):
     rclpy.init(args=args)

@@ -91,12 +91,6 @@ class BuoyDetectorNode(Node):
             self.get_logger().info(f'No buoy detected')
             return
 
-        # depth_image = np.asanyarray(aligned_depth_frame.get_data())
-        # displacement = buoy_center[0] - self.CENTER
-        # depth = depth_image[buoy_center[1], buoy_center[0]] / 1000
-        # point_msg.x = depth * math.tan(math.radians(87 / 2)) * displacement / self.CENTER
-        # point_msg.y = float(depth)
-        # point_msg.z = 0.0
         depth_intrinsics = aligned_depth_frame.profile.as_video_stream_profile().intrinsics
         depth = aligned_depth_frame.get_distance(buoy_center[0], buoy_center[1])
         point_msg = Point()
