@@ -132,17 +132,23 @@ class ParticleFilter:
 
             # range likelihood (assume Gaussian noise)
             predicted_range = math.hypot(dx, dy)
+            range_error = abs(predicted_range - observed_range)
 
-            if(observed_range > 20): # assume beyond 20 meters we are uncertain, sorry for magic numbers
-                # Saturated: range is unreliable
-                if predicted_range < 15:
-                    range_likelihood = 0.01  # penalize particles too close
-                else:
-                    range_likelihood = 1.0  # neutral
-                p.weight = bearing_likelihood * range_likelihood
+            if(observed_range > 15): # assume beyond 20 meters we are uncertain, sorry for magic numbers
+                range_likelihood = math.exp(-range_error ** 2 / (2 * 4 ** 2))  # assume ~4m stddev
             else:
-                p.weight = bearing_likelihood
+                range_likelihood = math.exp(-range_error ** 2 / (2 * 2 ** 2)) # assume ~2m stddev
 
+            # if(observed_range > 20): # assume beyond 20 meters we are uncertain, sorry for magic numbers
+            #     # Saturated: range is unreliable
+            #     if predicted_range < 15:
+            #         range_likelihood = 0.01  # penalize particles too close
+            #     else:
+            #         range_likelihood = 1.0  # neutral
+            #     p.weight = bearing_likelihood * range_likelihood
+            # else:
+            #     p.weight = bearing_likelihood
+            p.weight = bearing_likelihood * range_likelihood
             total_weight += p.weight
         
         # Normalizing weights
