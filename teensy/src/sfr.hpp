@@ -22,12 +22,9 @@ namespace sfr
     {
         extern bool update_servos;
         extern bool send_telemetry;
-        //extern int8_t buoy_displacement;
-        extern int8_t servo_angle;
-        extern int8_t buoy_angle;
 
         extern uint8_t dropped_packets;
 
-        extern uint8_t buffer[3];
+        extern uint8_t buffer[2];
     }
 }

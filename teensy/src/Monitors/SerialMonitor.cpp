@@ -18,8 +18,6 @@ void SerialMonitor::execute()
             buffer_index = 0;
         }
         // check if packet end byte is correct and buffer is full
-
-
         else if (incoming_byte == constants::serial::RX_END_FLAG && buffer_index == sizeof(sfr::serial::buffer) && packet_started)
         {
             buffer_index = 0;
@@ -27,14 +25,12 @@ void SerialMonitor::execute()
             sfr::serial::update_servos = true;
             sfr::servo::sail_angle = sfr::serial::buffer[0];
             sfr::servo::rudder_angle = sfr::serial::buffer[1];
-            sfr::serial::servo_angle = sfr::serial::buffer[2];
         }
         else if (packet_started)
         {
             // store a data byte into the buffer
-            if (buffer_index < sizeof(sfr::serial::buffer)) {
+            if (buffer_index < sizeof(sfr::serial::buffer))
                 sfr::serial::buffer[buffer_index++] = incoming_byte;
-        }
             // if buffer is full, drop the packet
             else
             {

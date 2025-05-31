@@ -19,7 +19,6 @@ private:
 
     Servo sail_servo;
     Servo rudder_servo;
-    Servo tracker_servo;
 
     
 };

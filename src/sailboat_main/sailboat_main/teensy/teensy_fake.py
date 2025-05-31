@@ -14,7 +14,6 @@ class TeensyFake:
         self.wind_step = random.uniform(-5, 5) 
         self.last_sail = 0
         self.last_rudder = 0
-        self.buoy_angle = 90
         self.dropped_packets = 0
 
         print("Simulated TeensyFake initialized")
@@ -27,7 +26,6 @@ class TeensyFake:
         data["wind_angle"] = self._generate_random_wind()
         data["sail_angle"] = self.last_sail
         data["rudder_angle"] = self.last_rudder
-        data["buoy_angle"] = self.buoy_angle
         data["dropped_packets"] = self.dropped_packets
 
         return random.randint(0,1)
@@ -48,15 +46,13 @@ class TeensyFake:
         return int(self.wind_angle)
     
 
-    def send_command(self, sail, rudder, buoy):
+    def send_command(self, sail, rudder):
         """
         Send a properly formatted command packet to the servo.
 
         :param sail: Sail position (integer)
         :param tail: Tail position (integer)
-        :param buoy: Buoy position (integer)
         """
-
         try:
             # check bounds
             sail = max(min(sail, 127), -128)
@@ -65,10 +61,9 @@ class TeensyFake:
             # convert sail and tail to signed 8-bit integers (bytes)
             sail_byte = sail & 0xFF if sail >= 0 else (sail + 256) & 0xFF
             rudder_byte = rudder & 0xFF if rudder >= 0 else (rudder + 256) & 0xFF
-            buoy_byte = buoy
 
             # create the packet: [start flag] [sail] [tail] [end flag]
-            command_packet = bytearray([self.START_BYTE, sail_byte, rudder_byte, buoy_byte, self.END_BYTE])
+            command_packet = bytearray([self.START_BYTE, sail_byte, rudder_byte, self.END_BYTE])
 
             # send the packet over serial
             return 0   

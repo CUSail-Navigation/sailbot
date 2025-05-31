@@ -14,17 +14,15 @@ class BuoyDetectorNode(Node):
     def __init__(self):
         super().__init__('buoy_detector_node')
 
-        self.declare_parameter('hsv_lower', [0, 120, 180])
-        self.declare_parameter('hsv_upper', [100, 160, 255])
+        self.declare_parameter('hsv_lower', [0, 127, 63])
+        self.declare_parameter('hsv_upper', [20, 255, 255] )
         self.declare_parameter('detection_threshold', 100)
         self.declare_parameter('timer_period', 0.1)  # Timer period for frame processing
-        self.declare_parameter('servo_angle_step', 5) # How much to shift servo by each time
         
         self.hsv_lower = self.get_parameter('hsv_lower').value
         self.hsv_upper = self.get_parameter('hsv_upper').value
         self.detection_threshold = self.get_parameter('detection_threshold').value
         self.timer_period = self.get_parameter('timer_period').value
-        self.servo_angle_step = self.get_parameter('servo_angle_step').value
 
         self.pipeline = rs.pipeline()
         config = rs.config()
@@ -34,22 +32,10 @@ class BuoyDetectorNode(Node):
         self.align = rs.align(rs.stream.color)
 
         self.detector = BuoyDetectorCV(self.hsv_lower, self.hsv_upper, self.detection_threshold)
-        
-        self.CENTER = 320
-        self.MARGIN = 30
-        self.angle = 0
-        self.servo_angle = 90
 
         self.position_publisher = self.create_publisher(Point, '/buoy_position', 10)
-        self.servo_angle_publisher = self.create_publisher(Int32, '/servo_angle', 10)
 
         self.timer = self.create_timer(self.timer_period, self.process_frame)
-
-        self.subscription = self.create_subscription(
-            Int32,
-            'buoy_angle',
-            self.buoy_angle_callback,
-            10)
         
         # Subscriptions for dynamic parameter tuning
         self.hsv_lower_sub = self.create_subscription(
@@ -97,9 +83,6 @@ class BuoyDetectorNode(Node):
         point_msg.x, point_msg.z, point_msg.y = rs.rs2_deproject_pixel_to_point(depth_intrinsics, buoy_center, depth)
         self.position_publisher.publish(point_msg)
         self.get_logger().info(f'Detected buoy at: ({point_msg.x, point_msg.y, point_msg.z})')
-    
-    def buoy_angle_callback(self, msg):
-        self.angle = msg.data
 
     def update_detector_params(self):
         """Update the CV detector parameters dynamically."""

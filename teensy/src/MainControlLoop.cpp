@@ -16,5 +16,4 @@ void MainControlLoop::execute()
     serial_monitor.execute();
     servo_control_task.execute();
     serial_control_task.execute();
-    tracker_control_task.execute();
 }
