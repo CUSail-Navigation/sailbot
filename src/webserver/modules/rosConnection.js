@@ -35,14 +35,19 @@ export class ROSConnection {
                 console.error('Please enter a valid ROS URL.');
             }
         });
-
+        
+        // FIXME: Eventually (after comp) these should go somewhere else, I think
         // Individual sail control
         document.getElementById('sail-submit').addEventListener('click', () => {
             const sailAngle = document.getElementById('sail-input');
-            
+
             if (sailAngle && sailAngle.value) {
+                // Clamp sail angle to [0, 90]
+                let angle = parseInt(sailAngle.value, 10);
+                angle = Math.max(0, Math.min(90, angle));
+            
                 const sailMessage = new ROSLIB.Message({
-                    data: parseInt(sailAngle.value, 10)
+                    data: angle
                 });
                 
                 if (this.webserverSailTopic) {
@@ -63,8 +68,12 @@ export class ROSConnection {
             const rudderAngle = document.getElementById('rudder-input');
             
             if (rudderAngle && rudderAngle.value) {
+                // Clamp rudder angle to [-25, 25]
+                let angle = parseInt(rudderAngle.value, 10);
+                angle = Math.max(-25, Math.min(25, angle));
+
                 const rudderMessage = new ROSLIB.Message({
-                    data: parseInt(rudderAngle.value, 10)
+                    data: angle
                 });
                 
                 if (this.webserverRudderTopic) {
@@ -78,6 +87,35 @@ export class ROSConnection {
             } else {
                 alert('Please enter a rudder angle.');
             }
+        });
+
+        // Station Keeping Mode
+        document.getElementById('submit-station-rectangle').addEventListener('click', () => {
+            const latLonPairs = [1, 2, 3, 4].map(i => {
+                const lat = parseFloat(document.getElementById(`sk-corner${i}-lat`).value);
+                const lon = parseFloat(document.getElementById(`sk-corner${i}-lon`).value);
+                return { x: lon, y: lat, z: 0.0 };  // ROS Point: x=lon, y=lat
+            });
+
+            if (latLonPairs.some(pt => isNaN(pt.x) || isNaN(pt.y))) {
+                alert("Please enter all 4 corners with valid latitude and longitude values.");
+                return;
+            }
+
+            const request = new ROSLIB.ServiceRequest({
+                mode: "station_keeping",
+                station_rect_points: latLonPairs,
+                search_center_point: { x: 0.0, y: 0.0, z: 0.0 } // dummy value
+            });
+
+            this.setModeService.callService(request, (result) => {
+                if (result.success) {
+                    console.log("Mode set to station_keeping:", result.message);
+                    this.publishControlMode("station_keeping");  // Optional
+                } else {
+                    alert("Failed to set mode: " + result.message);
+                }
+            });
         });
         
         // Initialize current control mode from button
@@ -227,7 +265,8 @@ export class ROSConnection {
             throttle_rate: this.BASE_THROTTLE_RATE,
         });
         actualRudderAngleTopic.subscribe((message) => {
-            updateValue('actual-tail-angle-value', message.data);
+            // Update angle, shift from [0,50] to [-25,25]
+            updateValue('actual-rudder-angle-value', message.data - 25);
             if (this.dialManager) {
                 this.dialManager.updateTailAngle(message.data, "actual-tail-angle-dial");
             }
@@ -290,6 +329,14 @@ export class ROSConnection {
                 this.waypointManager.syncWaypointQueueFromBackend();
             }
         });
+
+        // Initialize set mode service
+        this.setModeService = new ROSLIB.Service({
+            ros: this.ros,
+            name: '/set_mode',
+            serviceType: 'sailboat_interface/srv/SetModeWithParams'
+        });
+
 
         // Initialize waypoint service
         this.waypointService = new ROSLIB.Service({
