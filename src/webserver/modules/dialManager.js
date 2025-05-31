@@ -155,7 +155,7 @@ export class DialManager {
                 .duration(500)
                 .attr("transform", `rotate(${angle - 90})`);
         }
-        document.getElementById(id).innerText = "Angle: " + angle;
+        // document.getElementById(id).innerText = "Angle: " + angle;
     }
 
     updateTailAngle(angle, id) {
@@ -164,7 +164,7 @@ export class DialManager {
                 .duration(500)
                 .attr("transform", `rotate(${angle - 90})`);
         }
-        document.getElementById(id).innerText = "Angle: " + angle;
+        // document.getElementById(id).innerText = "Angle: " + angle;
     }
 
     updateHeadAngle(angle, id) {
@@ -173,6 +173,6 @@ export class DialManager {
                 .duration(500)
                 .attr("transform", `rotate(${angle - 90})`);
         }
-        document.getElementById(id).innerText = "Angle: " + angle;
+        // document.getElementById(id).innerText = "Angle: " + angle;
     }
 }

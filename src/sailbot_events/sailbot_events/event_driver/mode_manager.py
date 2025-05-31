@@ -29,7 +29,7 @@ class ModeManagerNode(Node):
 
         # Publish initial mode
         self.publish_current_mode()
-        self.get_logger().info(f"[ModeManager] Initialized in mode '{self.current_mode}'")
+        self.get_logger().info(f"Initialized in mode '{self.current_mode}'")
 
     def publish_current_mode(self):
         msg = String()

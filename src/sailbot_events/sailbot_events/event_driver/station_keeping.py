@@ -3,8 +3,8 @@ from rclpy.node import Node
 from std_msgs.msg import String, Int32
 from sensor_msgs.msg import NavSatFix
 from geometry_msgs.msg import Point
-from your_package_name.srv import SetModeWithParams, Waypoint
-from your_package_name.msg import StationRectangle
+from sailboat_interface.srv import Waypoint
+from sailboat_interface.msg import StationRectangle
 import math
 import utm
 import time
@@ -74,9 +74,9 @@ class StationKeepingNode(Node):
         self.subscription_wind_direction = self.create_subscription(
             Int32, 'wind', self.wind_callback, 10)
         self.mode_sub = self.create_subscription(
-            String, '/current_mode', self.mode_callback, 10)
+            String, 'current_mode', self.mode_callback, 10)
         self.rect_sub = self.create_subscription(
-            StationRectangle, '/station_rectangle', self.station_rectangle_callback, 10)
+            StationRectangle, 'station_rectangle', self.station_rectangle_callback, 10)
 
         self.timer_5min = None
         self.timer_30sec = self.create_timer(
@@ -85,13 +85,31 @@ class StationKeepingNode(Node):
     def station_rectangle_callback(self, msg):
         self.rectangle_corners = [LatLongPoint(p.y, p.x).to_utm() for p in msg.corners]
         self.get_logger().info("Received updated station-keeping rectangle corners.")
+        center = self.compute_center()
+        self.send_waypoints_to_queue([center])
 
     def mode_callback(self, msg):
-        self.current_mode = msg.data
-        if self.current_mode == 'station_keeping' and self.rectangle_corners:
+        new_mode = msg.data
+        if self.current_mode == 'station_keeping' and new_mode != 'station_keeping':
+            self.get_logger().info(f"Exiting station keeping mode due to mode change to '{new_mode}'.")
+            self.reset_station_keeping()
+
+        self.current_mode = new_mode
+
+        if self.current_mode == 'station_keeping':
             self.get_logger().info("Station keeping mode activated.")
-            center = self.compute_center()
-            self.send_waypoints_to_queue([center])
+
+    def reset_station_keeping(self):
+        if self.timer_5min:
+            self.timer_5min.cancel()
+            self.timer_5min = None
+            self.get_logger().info("Cancelled 5-minute timer.")
+
+        self.in_rectangle = False
+        self.timer_started = False
+        self.rectangle_corners = []
+        self.get_logger().info("Station keeping state reset.")
+
 
     def curr_gps_callback(self, msg):
         self.curr_location = LatLongPoint(
@@ -137,6 +155,7 @@ class StationKeepingNode(Node):
         self.send_waypoints_to_queue([wp1, wp2])
 
     def send_waypoints_to_queue(self, points):
+        self.get_logger().info(f'Sending waypoints to queue: {points}')
         if isinstance(points[0], UTMPoint):
             points = [pt.to_latlon() for pt in points]
         formatted = ';'.join(f'{pt.longitude},{pt.latitude}' for pt in points)

@@ -91,6 +91,7 @@ export class ROSConnection {
 
         // Station Keeping Mode
         document.getElementById('submit-station-rectangle').addEventListener('click', () => {
+            console.log("Submitting station keeping rectangle");
             const latLonPairs = [1, 2, 3, 4].map(i => {
                 const lat = parseFloat(document.getElementById(`sk-corner${i}-lat`).value);
                 const lon = parseFloat(document.getElementById(`sk-corner${i}-lon`).value);
@@ -101,17 +102,36 @@ export class ROSConnection {
                 alert("Please enter all 4 corners with valid latitude and longitude values.");
                 return;
             }
-
+            
+            console.log("Station keeping rectangle points:", latLonPairs);
             const request = new ROSLIB.ServiceRequest({
                 mode: "station_keeping",
                 station_rect_points: latLonPairs,
                 search_center_point: { x: 0.0, y: 0.0, z: 0.0 } // dummy value
             });
 
+
             this.setModeService.callService(request, (result) => {
                 if (result.success) {
                     console.log("Mode set to station_keeping:", result.message);
-                    this.publishControlMode("station_keeping");  // Optional
+                } else {
+                    alert("Failed to set mode: " + result.message);
+                }
+            });
+        });
+
+        // Cancel Station Keeping Mode
+        document.getElementById('cancel-station-keeping').addEventListener('click', () => {
+            if (!this.setModeService) {
+                alert("ROS not connected. Please connect to ROS first.");
+                return;
+            }
+            const request = new ROSLIB.ServiceRequest({
+                mode: "manual"
+            });
+            this.setModeService.callService(request, (result) => {
+                if (result.success) {
+                    console.log("Mode set to manual:", result.message);
                 } else {
                     alert("Failed to set mode: " + result.message);
                 }
@@ -333,7 +353,7 @@ export class ROSConnection {
         // Initialize set mode service
         this.setModeService = new ROSLIB.Service({
             ros: this.ros,
-            name: '/set_mode',
+            name: 'sailbot/set_mode',
             serviceType: 'sailboat_interface/srv/SetModeWithParams'
         });
 
