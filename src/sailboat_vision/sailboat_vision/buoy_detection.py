@@ -2,12 +2,12 @@ import cv2
 import numpy as np
 
 class BuoyDetectorCV:
-    def __init__(self, hsv_lower=None, hsv_upper=None, detection_threshold=100):
+    def __init__(self, hsv_lower=None, hsv_upper=None, detection_threshold=100, show_frames=False):
         # Initialize parameters with defaults or provided values
         self.hsv_lower = np.array(hsv_lower if hsv_lower else [0, 127, 63])
-        self.hsv_upper = np.array(hsv_upper if hsv_upper else [100, 255, 191])
+        self.hsv_upper = np.array(hsv_upper if hsv_upper else [20, 255, 255] )
         self.detection_threshold = detection_threshold
-        self.show_frames = False
+        self.show_frames = show_frames
     
     def update_parameters(self, hsv_lower=None, hsv_upper=None, detection_threshold=None):
         """Update parameters dynamically."""

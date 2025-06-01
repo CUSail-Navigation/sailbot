@@ -18,24 +18,13 @@ class BuoyDetectorNode(Node):
         self.declare_parameter('hsv_upper', [20, 255, 255] )
         self.declare_parameter('detection_threshold', 100)
         self.declare_parameter('timer_period', 0.1)  # Timer period for frame processing
+        self.declare_parameter('show_frames', False)
         
         self.hsv_lower = self.get_parameter('hsv_lower').value
         self.hsv_upper = self.get_parameter('hsv_upper').value
         self.detection_threshold = self.get_parameter('detection_threshold').value
         self.timer_period = self.get_parameter('timer_period').value
-
-        self.pipeline = rs.pipeline()
-        config = rs.config()
-        config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
-        config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
-        self.pipeline.start(config)
-        self.align = rs.align(rs.stream.color)
-
-        self.detector = BuoyDetectorCV(self.hsv_lower, self.hsv_upper, self.detection_threshold)
-
-        self.position_publisher = self.create_publisher(Point, '/buoy_position', 10)
-
-        self.timer = self.create_timer(self.timer_period, self.process_frame)
+        self.show_frames = self.get_parameter('show_frames').value
         
         # Subscriptions for dynamic parameter tuning
         self.hsv_lower_sub = self.create_subscription(
@@ -56,9 +45,24 @@ class BuoyDetectorNode(Node):
             self.detection_threshold_callback,
             10)
 
+        self.position_publisher = self.create_publisher(Point, '/buoy_position', 10)
+
+        self.timer = self.create_timer(self.timer_period, self.process_frame)
+
+        # Initialize camera
+        self.pipeline = rs.pipeline()
+        config = rs.config()
+        config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
+        config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
+        self.pipeline.start(config)
+        self.align = rs.align(rs.stream.color)
+
+        self.detector = BuoyDetectorCV(self.hsv_lower, self.hsv_upper, self.detection_threshold, self.show_frames)
+
         self.get_logger().info('Buoy Detector Node Initialized')
 
     def process_frame(self):
+        """Check if a buoy is in the camera frame and calculate its position"""
 
         frames = self.pipeline.wait_for_frames()
 
@@ -69,14 +73,14 @@ class BuoyDetectorNode(Node):
         if not aligned_depth_frame or not color_frame:
             return
 
+        # Check color frame for buoy
         color_image = np.asanyarray(color_frame.get_data())
-
         buoy_center, _ = self.detector.process_frame(color_image)
-
         if not buoy_center:
             self.get_logger().info(f'No buoy detected')
             return
 
+        # Calculate and publish buoy position relative to boat
         depth_intrinsics = aligned_depth_frame.profile.as_video_stream_profile().intrinsics
         depth = aligned_depth_frame.get_distance(buoy_center[0], buoy_center[1])
         point_msg = Point()

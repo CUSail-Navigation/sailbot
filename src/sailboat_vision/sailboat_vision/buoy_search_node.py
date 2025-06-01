@@ -134,20 +134,10 @@ class ParticleFilter:
             predicted_range = math.hypot(dx, dy)
             range_error = abs(predicted_range - observed_range)
 
-            if(observed_range > 15): # assume beyond 20 meters we are uncertain, sorry for magic numbers
+            if(observed_range > 15): # assume beyond 15 meters we are uncertain, sorry for magic numbers
                 range_likelihood = math.exp(-range_error ** 2 / (2 * 4 ** 2))  # assume ~4m stddev
             else:
                 range_likelihood = math.exp(-range_error ** 2 / (2 * 2 ** 2)) # assume ~2m stddev
-
-            # if(observed_range > 20): # assume beyond 20 meters we are uncertain, sorry for magic numbers
-            #     # Saturated: range is unreliable
-            #     if predicted_range < 15:
-            #         range_likelihood = 0.01  # penalize particles too close
-            #     else:
-            #         range_likelihood = 1.0  # neutral
-            #     p.weight = bearing_likelihood * range_likelihood
-            # else:
-            #     p.weight = bearing_likelihood
             p.weight = bearing_likelihood * range_likelihood
             total_weight += p.weight
         
@@ -248,12 +238,111 @@ class BuoySearch(Node):
 
         #Initiialize debug plot
         self.show_debug_plot = False
-        if show_debug_plot:
+        if self.show_debug_plot:
             self.setup_debug_plot()
         
         self.initialize_search_pattern()
         
         self.get_logger().info('Buoy search algo started successfully')
+
+    def curr_gps_callback(self, msg):
+        """
+        Use the NavSatFix data to assign value to self.curr_loc
+        """
+        # assuming the zone_number and zone_letter are the same for the current location and the destination
+        self.curr_loc = LatLongPoint(latitude=msg.latitude, longitude=msg.longitude).to_utm()
+
+    def wind_callback(self, msg):
+        """
+        Use the wind data from msg to assign value to self.wind_dir
+        """
+        self.wind_dir = msg.data
+
+    def heading_dir_callback(self, msg):
+        """
+        Use the imu data to assign value to self.heading_dir
+        """
+        data = msg.z
+        # roll_x, roll_y, roll_z = euler_from_quaternion(data.x, data.y, data.z, data.w)
+        self.heading_dir = data
+
+    def buoy_position_callback(self, msg):
+        """Callback to handle buoy position updates from the camera."""
+        if self.particle_filter is None:
+            self.get_logger().info('Buoy detected. Initializing particle filter.')
+            self.initialize_particle_filter()
+
+        # Calculate the relative bearing from the camera's frame
+        relative_bearing = math.degrees(math.atan2(msg.x, msg.y)) % 360
+
+        observed_range = math.sqrt(msg.x**2 + msg.y**2)
+
+        # Perform one full filter step using the relative bearing
+        self.perform_particle_filter_step(relative_bearing, observed_range)
+
+    def set_waypoints(self, waypoints):
+        """
+        Send a request to the webserver to set its waypoint queue.
+        """
+        self.cli = self.create_client(Waypoint, 'mutate_waypoint_queue')
+        while not self.cli.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Waypoint service not available, waiting...')
+
+        self.waypoints = waypoints
+
+        if self.show_debug_plot:
+            self.update_debug_plot()
+
+        # Set up the request with the "set" command
+        self.req = Waypoint.Request()
+        self.req.command = "set"
+        self.req.argument = ';'.join([f"{x},{y}" for x, y in self.waypoints])
+
+        self.future = self.cli.call_async(self.req)
+        # Use a callback to handle the response
+        self.future.add_done_callback(self.set_response_callback)
+
+    def set_response_callback(self, future: Future):
+        """
+        Log set request response.
+        """
+        try:
+            response = future.result()
+            if response.success:
+                self.get_logger().info('Waypoints set successfully.')
+            else:
+                self.get_logger().info('Failed to set waypoint from the service.')
+        except Exception as e:
+            self.get_logger().error(f'Error in waypoint_response_callback: {str(e)}')
+                
+    def perform_particle_filter_step(self, relative_bearing: float, observed_range: float):
+        """Perform one step of the particle filter process."""
+        if self.heading_dir is not None:
+            global_bearing = (self.heading_dir - relative_bearing) % 360
+        else:
+            self.get_logger().error('Heading direction is not available.')
+            return
+
+        if self.curr_loc is not None and self.heading_dir is not None:
+            self.particle_filter.update_weights(global_bearing, self.curr_loc, observed_range)
+            self.particle_filter.resample()
+            if self.show_debug_plot:
+                self.update_debug_plot()
+
+            estimated_x, estimated_y = self.particle_filter.estimate()
+            try:
+                estimated_buoy = UTMPoint(estimated_x, estimated_y, self.curr_loc.zone_number, self.curr_loc.zone_letter)
+            except utm.error.OutOfRangeError: # Catches when between different UTM zones
+                self.get_logger().warn(f"Invalid UTM")
+                return
+
+            self.get_logger().info(f"Estimated buoy position: {estimated_buoy}")
+
+            # Push the estimated position as a waypoint
+            estimated_buoy_latlon = estimated_buoy.to_latlon()
+            self.set_waypoints([[estimated_buoy_latlon.latitude, estimated_buoy_latlon.longitude]])
+        else:
+            self.get_logger().error('Current location is not available.')
 
     def setup_debug_plot(self):
         """Initialize the matplotlib plot for real-time debugging."""
@@ -314,119 +403,24 @@ class BuoySearch(Node):
                 center=self.curr_loc
             )
             self.get_logger().info('Particle filter initialized.')
-            if show_debug_plot:
+            if self.show_debug_plot:
                 self.update_debug_plot()
         else:
             self.get_logger().error('Cannot initialize particle filter: Current location is None.')
-    
-    def set_waypoints(self, waypoints):
-        self.cli = self.create_client(Waypoint, 'mutate_waypoint_queue')
-        while not self.cli.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Waypoint service not available, waiting...')
 
-        self.waypoints = waypoints
-
-        if show_debug_plot:
-            self.update_debug_plot()
-
-        # Set up the request with the "set" command
-        self.req = Waypoint.Request()
-        self.req.command = "set"
-        self.req.argument = ';'.join([f"{x},{y}" for x, y in self.waypoints])
-
-        self.future = self.cli.call_async(self.req)
-        # Use a callback to handle the response
-        self.future.add_done_callback(self.set_response_callback)
-
-    def set_response_callback(self, future: Future):
-        try:
-            response = future.result()
-            if response.success:
-                self.get_logger().info('Waypoint set successfully.')
-            else:
-                self.get_logger().info('Failed to set waypoint from the service.')
-        except Exception as e:
-            self.get_logger().error(f'Error in waypoint_response_callback: {str(e)}')
-
-    def curr_gps_callback(self, msg):
-        """
-        Use the NavSatFix data to assign value to self.curr_loc
-        """
-        # assuming the zone_number and zone_letter are the same for the current location and the destination
-        self.curr_loc = LatLongPoint(latitude=msg.latitude, longitude=msg.longitude).to_utm()
-
-    def wind_callback(self, msg):
-        """
-        Use the wind data from msg to assign value to self.wind_dir
-        """
-        self.wind_dir = msg.data
-
-    def heading_dir_callback(self, msg):
-        """
-        Use the imu data to assign value to self.heading_dir
-        """
-        data = msg.z
-        # roll_x, roll_y, roll_z = euler_from_quaternion(data.x, data.y, data.z, data.w)
-        self.heading_dir = data
-
-    def buoy_position_callback(self, msg):
-        """Callback to handle buoy position updates from the camera."""
-        if self.particle_filter is None:
-            self.get_logger().info('Buoy detected. Initializing particle filter.')
-            self.initialize_particle_filter()
-
-        # Calculate the relative bearing from the camera's frame
-        relative_bearing = math.degrees(math.atan2(msg.x, msg.y)) % 360
-
-        observed_range = math.sqrt(msg.x**2 + msg.y**2)
-
-        # Perform one full filter step using the relative bearing
-        self.perform_particle_filter_step(relative_bearing, observed_range)
-                
-    def perform_particle_filter_step(self, relative_bearing: float, observed_range: float):
-        """Perform one step of the particle filter process."""
-        if self.heading_dir is not None:
-            global_bearing = (self.heading_dir - relative_bearing) % 360
-        else:
-            self.get_logger().error('Heading direction is not available.')
-            return
-
-        if self.curr_loc is not None and self.heading_dir is not None:
-            self.particle_filter.update_weights(global_bearing, self.curr_loc, observed_range)
-            self.particle_filter.resample()
-            if show_debug_plot:
-                self.update_debug_plot()
-
-            estimated_x, estimated_y = self.particle_filter.estimate()
-            try:
-                estimated_buoy = UTMPoint(estimated_x, estimated_y, self.curr_loc.zone_number, self.curr_loc.zone_letter)
-            except utm.error.OutOfRangeError: # Catches when between different UTM zones
-                self.get_logger().warn(f"Invalid UTM")
-                return
-
-            self.get_logger().info(f"Estimated buoy position: {estimated_buoy}")
-
-            # Push the estimated position as a waypoint
-            estimated_buoy_latlon = estimated_buoy.to_latlon()
-            self.set_waypoints([[estimated_buoy_latlon.latitude, estimated_buoy_latlon.longitude]])
-
-            # Shift particles based on boat movement
-            # dx = self.curr_loc.easting - estimated_buoy.easting
-            # dy = self.curr_loc.northing - estimated_buoy.northing
-        else:
-            self.get_logger().error('Current location is not available.')
-
-    
     def initialize_search_pattern(self):
-        search_pattern = []
+        """
+        Initialize a search pattern that zigzags across a circle.
+        """
         expansion_step = 20
         max_radius = 100
         direction = 1
-        x = -1 * max_radius
 
         self.center = self.center if self.center is not None else LatLongPoint(42.44415534324632, -76.48367002684182).to_utm()
         self.search_direction = self.search_direction if self.search_direction is not None else 0
 
+        search_pattern = []
+        x = -1 * max_radius
         while x <= max_radius:
             y = direction * math.sqrt(max_radius ** 2 - x ** 2)
             search_pattern.append([x, y])
@@ -451,9 +445,9 @@ class BuoySearch(Node):
                 return
     
             search_pattern_waypoints.append((new_waypoint.latitude, new_waypoint.longitude))
-        
         self.set_waypoints(search_pattern_waypoints)
-        if show_debug_plot:
+
+        if self.show_debug_plot:
             self.update_debug_plot()
 
 def main(args=None):
