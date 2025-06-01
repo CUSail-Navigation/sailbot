@@ -74,7 +74,7 @@ export class UIManager {
                 const values = input.split(',').map(v => parseInt(v.trim(), 10));
 
                 if (values.length === 3 && values.every(v => !isNaN(v))) {
-                    this.publishHsvLower(values);
+                    this.rosConnection.publishHsvLower(values);
                     console.log(`Setting HSV lower to: [${values.join(', ')}]`);
                     document.getElementById('hsv-lower-input').value = '';
                 } else {
@@ -93,7 +93,7 @@ export class UIManager {
                 const values = input.split(',').map(v => parseInt(v.trim(), 10));
 
                 if (values.length === 3 && values.every(v => !isNaN(v))) {
-                    this.publishHsvUpper(values);
+                    this.rosConnection.publishHsvUpper(values);
                     console.log(`Setting HSV upper to: [${values.join(', ')}]`);
                     document.getElementById('hsv-upper-input').value = '';
                 } else {
@@ -109,7 +109,7 @@ export class UIManager {
             const input = document.getElementById('detection-threshold-input').value;
 
             if (input && !isNaN(input)) {
-                this.publishDetectionThreshold(parseInt(input, 10));
+                this.rosConnection.publishDetectionThreshold(parseInt(input, 10));
                 console.log(`Setting detection threshold to: ${input}`);
                 document.getElementById('detection-threshold-input').value = '';
             } else {
