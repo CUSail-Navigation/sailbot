@@ -17,7 +17,7 @@ sailbot: #Namespace
       ros__parameters:
          simulated: true # NOTE: this needs to be true for now while radio is not working
 
-   main_algo:
+   algo:
       ros__parameters:
          tacking_buffer: 10
          debug: True

@@ -22,7 +22,7 @@ sailbot: #Namespace
                - "42.877381,-77.007830"
                - "42.876394,-77.006820"
 
-   main_algo:
+   algo:
       ros__parameters:
          tacking_buffer: 1
          debug: True

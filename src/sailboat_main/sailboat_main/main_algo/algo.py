@@ -250,7 +250,10 @@ class Algo(Node):
                 self.current_destination = self.current_waypoint
                 self.sail_state = SailState.NORMAL
             elif self.tack_time_tracker > self.tacking_buffer:
-                if self.boat_in_nogo_zone():
+                if np.abs(self.heading_difference) > self.no_go_zone:
+                    self.current_destination = self.current_waypoint
+                    self.sail_state = SailState.NORMAL
+                elif self.boat_in_nogo_zone():
                     self.current_destination = self.calculate_tacking_point()
                     self.tack_time_tracker = 0 # reset time tracker
                     self.sail_state = SailState.TACK
@@ -321,18 +324,20 @@ class Algo(Node):
             self.get_logger().error(f'Error in Lat Long: {str(e)}') 
 
         # calculate the no-go zone centerline
-        centerline = (self.absolute_wind_dir + 180) % 360
-
+      #  centerline = (self.absolute_wind_dir + 180) % 360
+        #wind difference: angle between the absolute wind direction and the target waypoint. 
+        wind_diff = (self.current_location.target_bearing_to(self.current_destination) - self.absolute_wind_dir + 180) % 360 - 180
+        self.get_logger().info(f'Wind Difference: {wind_diff}')
         # tack left or right depending on the angle from the middling line
-        if(self.wind_direction < 180):
+        if(wind_diff > 0):
             #tack on right
-            tack_angle = (centerline- self.no_go_zone) % 360
-            approach_angle = (self.no_go_zone + centerline) % 360
+            tack_angle = (self.absolute_wind_dir- self.no_go_zone) % 360
+            approach_angle = (self.no_go_zone + self.absolute_wind_dir) % 360
 
         else:
             #tack on left
-            tack_angle = (self.no_go_zone + centerline) % 360
-            approach_angle = (centerline- self.no_go_zone) % 360
+            tack_angle = (self.no_go_zone + self.absolute_wind_dir) % 360
+            approach_angle = (self.absolute_wind_dir- self.no_go_zone) % 360
 
         # calculate tacking point as intersection of the tack vector and the approach vector
         vec1 = np.array([np.cos(np.deg2rad(tack_angle)), np.sin(np.deg2rad(tack_angle))])
