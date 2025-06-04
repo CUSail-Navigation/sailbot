@@ -349,21 +349,21 @@ export class ROSConnection {
 
         this.hsvLowerTopic = new ROSLIB.Topic({
             ros: this.ros,
-            name: 'update_hsv_lower',
+            name: '/sailbot/update_hsv_lower',
             messageType: 'std_msgs/Int32MultiArray',
             throttle_rate: this.BASE_THROTTLE_RATE
         });
 
         this.hsvUpperTopic = new ROSLIB.Topic({
             ros: this.ros,
-            name: 'update_hsv_upper',
+            name: '/sailbot/update_hsv_upper',
             messageType: 'std_msgs/Int32MultiArray',
             throttle_rate: this.BASE_THROTTLE_RATE
         });
 
         this.detectionThresholdTopic = new ROSLIB.Topic({
             ros: this.ros,
-            name: 'update_detection_threshold',
+            name: '/sailbot/update_detection_threshold',
             messageType: 'std_msgs/Int32',
             throttle_rate: this.BASE_THROTTLE_RATE
         });
