@@ -158,7 +158,7 @@ class StationKeepingNode(Node):
         self.get_logger().info(f'Sending waypoints to queue: {points}')
         if isinstance(points[0], UTMPoint):
             points = [pt.to_latlon() for pt in points]
-        formatted = ';'.join(f'{pt.longitude},{pt.latitude}' for pt in points)
+        formatted = ';'.join(f'{pt.latitude},{pt.longitude}' for pt in points)
 
         client = self.create_client(Waypoint, 'mutate_waypoint_queue')
         if not client.wait_for_service(timeout_sec=3.0):
