@@ -65,6 +65,7 @@ class StationKeepingNode(Node):
         self.curr_location = None
         self.wind_angle_deg = None
         self.rectangle_corners = []
+        self.sail_points = []
         self.in_rectangle = False
         self.timer_started = False
         self.current_mode = 'manual'
@@ -79,12 +80,11 @@ class StationKeepingNode(Node):
             StationRectangle, 'station_rectangle', self.station_rectangle_callback, 10)
 
         self.timer_5min = None
-        self.timer_30sec = self.create_timer(
-            30.0, self.update_perpendicular_waypoints)
 
     def station_rectangle_callback(self, msg):
         self.rectangle_corners = [LatLongPoint(p.y, p.x).to_utm() for p in msg.corners]
-        self.get_logger().info("Received updated station-keeping rectangle corners.")
+        self.sail_points = [LatLongPoint(p.y, p.x).to_utm() for p in msg.sail_points]
+        self.get_logger().info("Received updated station-keeping rectangle corners and sail points.")
         center = self.compute_center()
         self.send_waypoints_to_queue([center])
 
@@ -108,8 +108,8 @@ class StationKeepingNode(Node):
         self.in_rectangle = False
         self.timer_started = False
         self.rectangle_corners = []
+        self.sail_points = []
         self.get_logger().info("Station keeping state reset.")
-
 
     def curr_gps_callback(self, msg):
         self.curr_location = LatLongPoint(
@@ -119,6 +119,8 @@ class StationKeepingNode(Node):
                 self.in_rectangle = True
                 self.timer_started = True
                 self.get_logger().info("Entered rectangle. Starting 5 min timer.")
+                # Send the sail points to the waypoint queue
+                self.send_waypoints_to_queue(self.sail_points)
                 self.timer_5min = Timer(300.0, self.exit_rectangle)
                 self.timer_5min.start()
 
@@ -135,24 +137,6 @@ class StationKeepingNode(Node):
         xs = [p.easting for p in self.rectangle_corners]
         ys = [p.northing for p in self.rectangle_corners]
         return min(xs) <= point.easting <= max(xs) and min(ys) <= point.northing <= max(ys)
-
-    def update_perpendicular_waypoints(self):
-        if self.current_mode != 'station_keeping' or not self.in_rectangle or self.wind_angle_deg is None:
-            return
-
-        center = self.compute_center()
-        bearing_rad = math.radians((self.wind_angle_deg + 90) % 360)
-        dx = 5 * math.cos(bearing_rad)
-        dy = 5 * math.sin(bearing_rad)
-
-        wp1 = UTMPoint(
-            center.easting + dx, center.northing + dy,
-            center.zone_number, center.zone_letter)
-        wp2 = UTMPoint(
-            center.easting - dx, center.northing - dy,
-            center.zone_number, center.zone_letter)
-
-        self.send_waypoints_to_queue([wp1, wp2])
 
     def send_waypoints_to_queue(self, points):
         self.get_logger().info(f'Sending waypoints to queue: {points}')
@@ -203,7 +187,6 @@ class StationKeepingNode(Node):
         proj_e = a.easting + ab.easting * t
         proj_n = a.northing + ab.northing * t
         return UTMPoint(proj_e, proj_n, a.zone_number, a.zone_letter)
-
 
 def main(args=None):
     rclpy.init(args=args)

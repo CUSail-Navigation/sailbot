@@ -14,7 +14,8 @@ class ModeManagerNode(Node):
 
         # Current mode and its parameters
         self.current_mode = "manual"
-        self.station_rect = []  # List of 4 geometry_msgs/Point
+        self.station_rect = []  # List of 4 geometry_msgs/Point for rectangle corners
+        self.sail_points = []  # List of 2 geometry_msgs/Point for sailing between
         self.search_center = None  # geometry_msgs/Point
 
         # Publisher for mode name
@@ -39,6 +40,7 @@ class ModeManagerNode(Node):
     def publish_station_rect(self):
         msg = StationRectangle()
         msg.corners = self.station_rect
+        msg.sail_points = self.sail_points
         self.station_rect_pub.publish(msg)
 
     def publish_search_center(self):
@@ -58,13 +60,14 @@ class ModeManagerNode(Node):
         self.current_mode = mode
 
         if mode == "station_keeping":
-            # Expect exactly 4 points
-            if len(request.station_rect_points) != 4:
+            # Expect exactly 4 points for rectangle and 2 points for sailing
+            if len(request.station_rect_points) != 6:
                 response.success = False
-                response.message = "Station keeping mode requires exactly 4 points."
+                response.message = "Station keeping mode requires exactly 6 points (4 for rectangle, 2 for sailing)."
                 return response
-            self.station_rect = request.station_rect_points
-            self.get_logger().info(f"[ModeManager] Station keeping with 4 rectangle points.")
+            self.station_rect = request.station_rect_points[:4]
+            self.sail_points = request.station_rect_points[4:]
+            self.get_logger().info(f"[ModeManager] Station keeping with 4 rectangle points and 2 sail points.")
 
         elif mode == "search":
             self.search_center = request.search_center_point
@@ -73,6 +76,7 @@ class ModeManagerNode(Node):
         elif mode == "manual":
             # Clear parameters
             self.station_rect = []
+            self.sail_points = []
             self.search_center = None
             self.get_logger().info("[ModeManager] Manual mode activated.")
 
