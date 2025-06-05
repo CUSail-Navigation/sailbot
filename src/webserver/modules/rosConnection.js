@@ -35,7 +35,8 @@ export class ROSConnection {
                 console.error('Please enter a valid ROS URL.');
             }
         });
-
+        
+        // FIXME: Eventually (after comp) these should go somewhere else, I think
         // Individual sail control
         document.getElementById('sail-submit').addEventListener('click', () => {
             const sailAngle = document.getElementById('sail-input');
@@ -86,6 +87,69 @@ export class ROSConnection {
             } else {
                 alert('Please enter a rudder angle.');
             }
+        });
+
+        // Station Keeping Mode
+        document.getElementById('submit-station-rectangle').addEventListener('click', () => {
+            console.log("Submitting station keeping rectangle");
+            const latLonPairs = [1, 2, 3, 4].map(i => {
+                const lat = parseFloat(document.getElementById(`sk-corner${i}-lat`).value);
+                const lon = parseFloat(document.getElementById(`sk-corner${i}-lon`).value);
+                return { x: lon, y: lat, z: 0.0 };  // ROS Point: x=lon, y=lat
+            });
+
+            // Add sail points
+            const sailPoint1 = {
+                x: parseFloat(document.getElementById('sk-sail1-lon').value),
+                y: parseFloat(document.getElementById('sk-sail1-lat').value),
+                z: 0.0
+            };
+            const sailPoint2 = {
+                x: parseFloat(document.getElementById('sk-sail2-lon').value),
+                y: parseFloat(document.getElementById('sk-sail2-lat').value),
+                z: 0.0
+            };
+
+            if (latLonPairs.some(pt => isNaN(pt.x) || isNaN(pt.y)) || 
+                isNaN(sailPoint1.x) || isNaN(sailPoint1.y) ||
+                isNaN(sailPoint2.x) || isNaN(sailPoint2.y)) {
+                alert("Please enter all points with valid latitude and longitude values.");
+                return;
+            }
+            
+            console.log("Station keeping rectangle points:", latLonPairs);
+            console.log("Sail points:", [sailPoint1, sailPoint2]);
+            const request = new ROSLIB.ServiceRequest({
+                mode: "station_keeping",
+                station_rect_points: [...latLonPairs, sailPoint1, sailPoint2],
+                search_center_point: { x: 0.0, y: 0.0, z: 0.0 } // dummy value
+            });
+
+            this.setModeService.callService(request, (result) => {
+                if (result.success) {
+                    console.log("Mode set to station_keeping:", result.message);
+                } else {
+                    alert("Failed to set mode: " + result.message);
+                }
+            });
+        });
+
+        // Cancel Station Keeping Mode
+        document.getElementById('cancel-station-keeping').addEventListener('click', () => {
+            if (!this.setModeService) {
+                alert("ROS not connected. Please connect to ROS first.");
+                return;
+            }
+            const request = new ROSLIB.ServiceRequest({
+                mode: "manual"
+            });
+            this.setModeService.callService(request, (result) => {
+                if (result.success) {
+                    console.log("Mode set to manual:", result.message);
+                } else {
+                    alert("Failed to set mode: " + result.message);
+                }
+            });
         });
         
         // Initialize current control mode from button
@@ -299,6 +363,14 @@ export class ROSConnection {
                 this.waypointManager.syncWaypointQueueFromBackend();
             }
         });
+
+        // Initialize set mode service
+        this.setModeService = new ROSLIB.Service({
+            ros: this.ros,
+            name: 'sailbot/set_mode',
+            serviceType: 'sailboat_interface/srv/SetModeWithParams'
+        });
+
 
         // Initialize waypoint service
         this.waypointService = new ROSLIB.Service({

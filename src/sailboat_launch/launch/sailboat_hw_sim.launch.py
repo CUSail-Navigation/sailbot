@@ -77,6 +77,22 @@ def generate_launch_description():
       parameters=[config]
    )
 
+   mode_manager_cmd = Node(
+      package='sailbot_events',
+      executable='mode_manager',
+      name='mode_manager',
+      namespace='sailbot',
+      parameters=[config]
+   )
+
+   station_keeping_cmd = Node(
+      package='sailbot_events',
+      executable='station_keeping',
+      name='station_keeping',
+      namespace='sailbot',
+      parameters=[config]
+   )
+
    rosbridge_node = Node(
         package='rosbridge_server',
         executable='rosbridge_websocket',
@@ -102,6 +118,10 @@ def generate_launch_description():
    # Togglable rc control
    ld.add_action(radio_cmd) # SIM
    ld.add_action(mux_cmd)
+
+   # Event algos
+   ld.add_action(mode_manager_cmd)
+   ld.add_action(station_keeping_cmd)
 
    # Telemetry
    ld.add_action(rosbridge_node)
