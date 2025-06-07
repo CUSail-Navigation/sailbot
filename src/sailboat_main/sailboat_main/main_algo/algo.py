@@ -233,16 +233,12 @@ class Algo(Node):
         Update the state of the algorithm. This function is called when the state changes.
         """
         if self.sail_state == SailState.NORMAL:
-            if self.boat_in_nogo_zone():
-                if np.abs(self.heading_difference) > self.no_go_zone:
-                    pass
-                else:
-                    self.current_destination = self.calculate_tacking_point()
-                    self.tack_time_tracker = 0
-                    self.sail_state = SailState.TACK
+            if self.waypoint_in_nogo_zone():
+                self.current_destination = self.calculate_tacking_point()
+                self.tack_time_tracker = 0
+                self.sail_state = SailState.TACK
             else:
                 pass
-
         elif self.sail_state == SailState.TACK:
             # if we reached the tacking point, switch to normal sailing
             if self.current_location.distance_to(self.current_destination) < self.POP_RADIUS:
@@ -250,16 +246,13 @@ class Algo(Node):
                 self.current_destination = self.current_waypoint
                 self.sail_state = SailState.NORMAL
             elif self.tack_time_tracker > self.tacking_buffer:
-                if np.abs(self.heading_difference) > self.no_go_zone:
+                if not self.waypoint_in_nogo_zone():
                     self.current_destination = self.current_waypoint
                     self.sail_state = SailState.NORMAL
-                elif self.boat_in_nogo_zone():
+                else:
                     self.current_destination = self.calculate_tacking_point()
                     self.tack_time_tracker = 0 # reset time tracker
                     self.sail_state = SailState.TACK
-                else:
-                    self.current_destination = self.current_waypoint
-                    self.sail_state = SailState.NORMAL
             else:
                 self.tack_time_tracker += self.timer_period # keep tacking
             
@@ -306,11 +299,7 @@ class Algo(Node):
         """
         Calcualte tacking point to begin tacking. uses winddir + dest
         Assuming that the boat is heading towards the positive x-axis and the destination
-
-        Precondition: self.waypoint_in_nogo_zone() is true. self.tacking is false. self.current_location is not None. self.current_destination is not None. self.wind_direction is not None.
         """
-
-        assert self.boat_in_nogo_zone(), "Boat not in nogo zone"
         assert self.current_location is not None, "Current location is None"
         assert self.current_destination is not None, "Current destination is None"
         assert self.wind_direction is not None, "Wind direction is None"
@@ -323,13 +312,13 @@ class Algo(Node):
         except Exception as e:
             self.get_logger().error(f'Error in Lat Long: {str(e)}') 
 
-        # calculate the no-go zone centerline
-      #  centerline = (self.absolute_wind_dir + 180) % 360
         #wind difference: angle between the absolute wind direction and the target waypoint. 
-        wind_diff = (self.current_location.target_bearing_to(self.current_destination) - self.absolute_wind_dir + 180) % 360 - 180
+        opposite_wind_dir = (self.absolute_wind_dir + 180) % 360 # the angles work out due to symmetry
+        wind_diff = ( self.current_location.target_bearing_to(self.current_waypoint) - opposite_wind_dir + 180) % 360 - 180
+
         self.get_logger().info(f'Wind Difference: {wind_diff}')
         # tack left or right depending on the angle from the middling line
-        if(wind_diff > 0):
+        if(wind_diff < 0):
             #tack on right
             tack_angle = (self.absolute_wind_dir- self.no_go_zone) % 360
             approach_angle = (self.no_go_zone + self.absolute_wind_dir) % 360
@@ -347,7 +336,7 @@ class Algo(Node):
         self.get_logger().info(f'Vector 2: {vec2}')
 
         P1 = np.array([self.current_location.easting, self.current_location.northing])
-        P2 = np.array([self.current_destination.easting, self.current_destination.northing])
+        P2 = np.array([self.current_waypoint.easting, self.current_waypoint.northing])
 
         # intersection of two lines
         A = np.column_stack((vec1, -vec2))
@@ -377,7 +366,21 @@ class Algo(Node):
             return False
         return (180 - self.no_go_zone < self.wind_direction < 180 + self.no_go_zone)
 
-    # ========================= Callbacks & Publishers =========================
+    def waypoint_in_nogo_zone(self):
+        """
+        Check if the current waypoint is in the no-go zone based on the wind direction
+        """
+        if self.current_waypoint is None or self.wind_direction is None or self.absolute_wind_dir is None:
+            return False
+
+        target_bearing = self.current_location.target_bearing_to(self.current_waypoint)
+        opposite_wind_dir = (self.absolute_wind_dir + 180) % 360 # the angles work out dw
+
+        diff = (target_bearing - opposite_wind_dir + 180) % 360 - 180
+        self.get_logger().info(f'=========================================================Diff: {abs(diff) < self.no_go_zone}')
+        return abs(diff) < self.no_go_zone    
+    
+# ========================= Callbacks & Publishers =========================
 
     def current_waypoint_callback(self, msg):
         """
@@ -479,6 +482,7 @@ class Algo(Node):
         """
         self.wind_direction = msg.data
         self.absolute_wind_dir = (self.wind_direction + self.heading_direction) % 360
+        self.get_logger().info(f'Wind Direction: {self.wind_direction}, Absolute Wind Direction: {self.absolute_wind_dir}')
 
     def heading_direction_callback(self, msg):
         """
