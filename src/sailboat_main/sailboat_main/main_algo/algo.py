@@ -219,7 +219,6 @@ class Algo(Node):
         # update heading difference: heading_direction - target_bearing
         self.heading_difference = np.mod(self.heading_direction -
                                          self.current_location.target_bearing_to(self.current_destination) + 180, 360) - 180
-        self.get_logger().info(f'Heading Difference: {self.heading_difference}')
 
         if self.sail_state == SailState.NORMAL:
             self.set_normal_rudder()
@@ -332,9 +331,6 @@ class Algo(Node):
         vec1 = np.array([np.cos(np.deg2rad(tack_angle)), np.sin(np.deg2rad(tack_angle))])
         vec2 = -np.array([np.cos(np.deg2rad(approach_angle)), np.sin(np.deg2rad(approach_angle))])
 
-        self.get_logger().info(f'Vector 1: {vec1}')
-        self.get_logger().info(f'Vector 2: {vec2}')
-
         P1 = np.array([self.current_location.easting, self.current_location.northing])
         P2 = np.array([self.current_waypoint.easting, self.current_waypoint.northing])
 
@@ -345,7 +341,6 @@ class Algo(Node):
         t_vals = np.linalg.solve(A, b)
 
         tacking_point = P1 + t_vals[0] * vec1
-        self.get_logger().info(f'Tacking Point: {tacking_point}')
 
         tp = UTMPoint(easting=tacking_point[0], northing=tacking_point[1], 
                       zone_number=self.current_location.zone_number, zone_letter=self.current_location.zone_letter)
@@ -377,7 +372,6 @@ class Algo(Node):
         opposite_wind_dir = (self.absolute_wind_dir + 180) % 360 # the angles work out dw
 
         diff = (target_bearing - opposite_wind_dir + 180) % 360 - 180
-        self.get_logger().info(f'=========================================================Diff: {abs(diff) < self.no_go_zone}')
         return abs(diff) < self.no_go_zone    
     
 # ========================= Callbacks & Publishers =========================
