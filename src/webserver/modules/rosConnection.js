@@ -280,13 +280,13 @@ export class ROSConnection {
         });
 
         // Subscribe to current mode
-        this.controlModeTopic = new ROSLIB.Topic({
+        this.eventModeTopic = new ROSLIB.Topic({
             ros: this.ros,
             name: '/sailbot/current_mode',
             messageType: 'std_msgs/String',
             throttle_rate: this.BASE_THROTTLE_RATE,
         });
-        this.controlModeTopic.subscribe((message) => {
+        this.eventModeTopic.subscribe((message) => {
             updateValue('event-mode-value', message.data);
             if (this.uiManager) {
                 this.uiManager.conditionalRender();
