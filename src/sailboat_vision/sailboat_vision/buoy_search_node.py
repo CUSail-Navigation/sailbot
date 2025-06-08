@@ -7,7 +7,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import NavSatFix
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Vector3
-from std_msgs.msg import Int32
+from std_msgs.msg import String, Int32
 from rclpy.task import Future
 from typing import Optional
 
@@ -220,6 +220,14 @@ class BuoySearch(Node):
             '/buoy_position',
             self.buoy_position_callback,
             10)
+        
+        # Subscription for mode
+        self.current_mode = 'manual'  # Default mode
+        self.mode_sub = self.create_subscription(
+            String,
+            'current_mode',
+            self.mode_callback,
+            10)
 
         # Internal state
         self.wind_dir = None
@@ -268,6 +276,8 @@ class BuoySearch(Node):
 
     def buoy_position_callback(self, msg):
         """Callback to handle buoy position updates from the camera."""
+        if self.current_mode != 'search':
+            return
         if self.particle_filter is None:
             self.get_logger().info('Buoy detected. Initializing particle filter.')
             self.initialize_particle_filter()
@@ -279,11 +289,34 @@ class BuoySearch(Node):
 
         # Perform one full filter step using the relative bearing
         self.perform_particle_filter_step(relative_bearing, observed_range)
+        
+    def mode_callback(self, msg) :
+        new_mode = msg.data
+        if self.current_mode == 'search' and new_mode != 'search':
+            self.get_logger().info(f"[Buoy search node] Exiting search mode due to mode change to '{new_mode}'.")
+            self.reset_search()
 
+        self.current_mode = new_mode
+
+        if self.current_mode == 'search':
+            self.get_logger().info("[Buoy search node] Search mode activated.")
+    
+    def reset_search(self):
+        """
+        Reset the search state, including the particle filter and waypoints.
+        """
+        self.get_logger().info("Resetting search state.")
+        self.particle_filter = None
+        self.waypoints = []
+        self.center = None
+        self.search_direction = None
+            
     def set_waypoints(self, waypoints):
         """
         Send a request to the webserver to set its waypoint queue.
         """
+        if self.current_mode != 'search':
+            return
         self.cli = self.create_client(Waypoint, 'mutate_waypoint_queue')
         while not self.cli.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Waypoint service not available, waiting...')
@@ -317,6 +350,8 @@ class BuoySearch(Node):
                 
     def perform_particle_filter_step(self, relative_bearing: float, observed_range: float):
         """Perform one step of the particle filter process."""
+        if self.current_mode != 'search':
+            return
         if self.heading_dir is not None:
             global_bearing = (self.heading_dir - relative_bearing) % 360
         else:
@@ -396,6 +431,8 @@ class BuoySearch(Node):
 
     def initialize_particle_filter(self):
         """Initialize the particle filter with particles over the search area."""
+        if self.current_mode != 'search':
+            return
         if self.curr_loc is not None:
             self.particle_filter = ParticleFilter(
                 num_particles=self.num_particles,
@@ -412,6 +449,8 @@ class BuoySearch(Node):
         """
         Initialize a search pattern that zigzags across a circle.
         """
+        if self.current_mode != 'search':
+            return
         expansion_step = 20
         max_radius = 100
         direction = 1

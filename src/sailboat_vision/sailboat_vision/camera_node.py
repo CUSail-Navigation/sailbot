@@ -5,7 +5,7 @@ import pyrealsense2 as rs
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Point
-from std_msgs.msg import Int32
+from std_msgs.msg import String, Int32, Float32
 from std_msgs.msg import Int32MultiArray
 
 from sailboat_vision.buoy_detection import BuoyDetectorCV
@@ -46,6 +46,7 @@ class BuoyDetectorNode(Node):
             10)
 
         self.position_publisher = self.create_publisher(Point, '/buoy_position', 10)
+        self.buoy_distance_publisher = self.create_publisher(Float32, '/buoy_distance', 10)
 
         self.timer = self.create_timer(self.timer_period, self.process_frame)
 
@@ -58,11 +59,15 @@ class BuoyDetectorNode(Node):
         self.align = rs.align(rs.stream.color)
 
         self.detector = BuoyDetectorCV(self.hsv_lower, self.hsv_upper, self.detection_threshold, self.show_frames)
+        self.current_mode = "manual"  # Default mode
+        self.current_mode_sub = self.create_subscription(String,'current_mode',self.mode_callback,10)
 
         self.get_logger().info('Buoy Detector Node Initialized')
 
     def process_frame(self):
         """Check if a buoy is in the camera frame and calculate its position"""
+        if self.current_mode != 'search': 
+            return
 
         frames = self.pipeline.wait_for_frames()
 
@@ -87,6 +92,14 @@ class BuoyDetectorNode(Node):
         point_msg.x, point_msg.z, point_msg.y = rs.rs2_deproject_pixel_to_point(depth_intrinsics, buoy_center, depth)
         self.position_publisher.publish(point_msg)
         self.get_logger().info(f'Detected buoy at: ({point_msg.x, point_msg.y, point_msg.z})')
+
+        # Calculate distance to buoy
+        buoy_distance = math.sqrt(point_msg.x**2 + point_msg.y**2)
+        buoy_distance_msg = Float32()
+        buoy_distance_msg.data = buoy_distance
+        self.buoy_distance_publisher.publish(buoy_distance_msg)
+        self.get_logger().info(f'Buoy distance: {buoy_distance_msg.data}')
+
 
     def update_detector_params(self):
         """Update the CV detector parameters dynamically."""
@@ -115,6 +128,17 @@ class BuoyDetectorNode(Node):
     def detection_threshold_callback(self, msg: Int32):
         self.detection_threshold = msg.data
         self.update_detector_params()
+        
+    def mode_callback(self, msg) :
+        new_mode = msg.data
+        if self.current_mode == 'search' and new_mode != 'search':
+            self.get_logger().info(f"Exiting search mode due to mode change to '{new_mode}'.")
+
+        self.current_mode = new_mode
+
+        if self.current_mode == 'search':
+            self.get_logger().info("Search mode activated.")
+           
 
 def main(args=None):
     rclpy.init(args=args)
