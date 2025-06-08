@@ -10,13 +10,13 @@ export class ROSConnection {
         this.waypointService = null;
         this.currentControlMode = null;
         this.BASE_THROTTLE_RATE = 1000;
-        
+
         // Dependencies - set by main.js
         this.waypointManager = null;
         this.mapFunctions = null;
         this.dialManager = null;
         this.uiManager = null;
-        
+
         this.setupEventListeners();
     }
 
@@ -35,7 +35,7 @@ export class ROSConnection {
                 console.error('Please enter a valid ROS URL.');
             }
         });
-        
+
         // FIXME: Eventually (after comp) these should go somewhere else, I think
         // Individual sail control
         document.getElementById('sail-submit').addEventListener('click', () => {
@@ -45,11 +45,11 @@ export class ROSConnection {
                 // Clamp sail angle to [0, 90]
                 let angle = parseInt(sailAngle.value, 10);
                 angle = Math.max(0, Math.min(90, angle));
-            
+
                 const sailMessage = new ROSLIB.Message({
                     data: angle
                 });
-                
+
                 if (this.webserverSailTopic) {
                     this.webserverSailTopic.publish(sailMessage);
                     console.log(`Published sail angle: ${sailAngle.value}`);
@@ -66,7 +66,7 @@ export class ROSConnection {
         // Individual rudder control
         document.getElementById('rudder-submit').addEventListener('click', () => {
             const rudderAngle = document.getElementById('rudder-input');
-            
+
             if (rudderAngle && rudderAngle.value) {
                 // Clamp rudder angle to [-25, 25]
                 let angle = parseInt(rudderAngle.value, 10);
@@ -75,7 +75,7 @@ export class ROSConnection {
                 const rudderMessage = new ROSLIB.Message({
                     data: angle
                 });
-                
+
                 if (this.webserverRudderTopic) {
                     this.webserverRudderTopic.publish(rudderMessage);
                     console.log(`Published rudder angle: ${rudderAngle.value}`);
@@ -110,13 +110,13 @@ export class ROSConnection {
                 z: 0.0
             };
 
-            if (latLonPairs.some(pt => isNaN(pt.x) || isNaN(pt.y)) || 
+            if (latLonPairs.some(pt => isNaN(pt.x) || isNaN(pt.y)) ||
                 isNaN(sailPoint1.x) || isNaN(sailPoint1.y) ||
                 isNaN(sailPoint2.x) || isNaN(sailPoint2.y)) {
                 alert("Please enter all points with valid latitude and longitude values.");
                 return;
             }
-            
+
             console.log("Station keeping rectangle points:", latLonPairs);
             console.log("Sail points:", [sailPoint1, sailPoint2]);
             const request = new ROSLIB.ServiceRequest({
@@ -151,7 +151,57 @@ export class ROSConnection {
                 }
             });
         });
-        
+
+        // CV mode
+        document.getElementById('submit-cv-rectangle').addEventListener('click', () => {
+            console.log("Submitting dummy cv rectangle");
+            // const latLonPairs = { x: 0.0, y: 0.0, z: 0.0 };
+
+            // const sailPoint1cv = {
+            //     x: 0.0,
+            //     y: 0.0,
+            //     z: 0.0
+            // };
+            // const sailPoint2cv = {
+            //     x: 0.0,
+            //     y: 0.0,
+            //     z: 0.0
+            // };
+
+            const request = new ROSLIB.ServiceRequest({
+                mode: "search",
+                // cv_rect_points: [...latLonPairs, sailPoint1cv, sailPoint2cv],
+                // search_center_point: { x: 0.0, y: 0.0, z: 0.0 } // dummy value
+            });
+
+            this.setModeService.callService(request, (result) => {
+                if (result.success) {
+                    console.log("Mode set to search:", result.message);
+                } else {
+                    alert("Failed to set mode: " + result.message);
+                }
+            });
+        })
+
+        // Cancel Computer Vision
+        document.getElementById('cancel-cv-rectangle').addEventListener('click', () => {
+            if (!this.setModeService) {
+                alert("ROS not connected. Please connect to ROS first.");
+                return;
+            }
+            const request = new ROSLIB.ServiceRequest({
+                mode: "manual"
+            });
+            this.setModeService.callService(request, (result) => {
+                if (result.success) {
+                    console.log("Mode set to manual:", result.message);
+                } else {
+                    alert("Failed to set mode: " + result.message);
+                }
+            });
+        });
+
+
         // Initialize current control mode from button
         document.addEventListener('DOMContentLoaded', () => {
             const modeButton = document.getElementById("mode-button");
@@ -226,6 +276,20 @@ export class ROSConnection {
             updateValue('control-mode-value', message.data);
             if (this.uiManager) {
                 this.uiManager.conditionalRender();
+            }
+        });
+
+        // Subscribe to buoy distance topic
+        const buoyDistTopic = new ROSLIB.Topic({
+            ros: this.ros,
+            name: '/sailbot/buoy_distance',
+            messageType: 'std_msgs/Int32',
+            throttle_rate: this.BASE_THROTTLE_RATE,
+        });
+        buoyDistTopic.subscribe((message) => {
+            updateValue('buoy-dist-value', message.data);
+            if (this.uiManager) {
+                this.uiManager.updateBuoyBool();
             }
         });
 
@@ -458,11 +522,11 @@ export class ROSConnection {
         const formattedHeading = heading.toFixed(6);
 
         document.getElementById('heading-value').innerText = formattedHeading;
-        
+
         if (this.dialManager) {
             this.dialManager.updateHeadAngle(formattedHeading, 'heading-value-dial');
         }
-        
+
         if (this.mapFunctions) {
             this.mapFunctions.updateSailboatHeading(heading);
         }
@@ -493,7 +557,7 @@ export class ROSConnection {
 
     publishControlMode(mode) {
         this.currentControlMode = mode;
-        
+
         if (this.controlModeTopic) {
             const message = new ROSLIB.Message({ data: mode.toLowerCase() });
             this.controlModeTopic.publish(message);

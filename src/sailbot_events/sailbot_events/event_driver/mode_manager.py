@@ -22,8 +22,9 @@ class ModeManagerNode(Node):
         self.mode_pub = self.create_publisher(String, 'current_mode', 10)
         # Publisher for station rectangle message
         self.station_rect_pub = self.create_publisher(StationRectangle, 'station_rectangle', 10)
-        # Publisher for search center point
-        self.search_center_pub = self.create_publisher(Point, 'search_center_point', 10)
+
+        # Publisher for search center point -- TODO for next year
+        # self.search_center_pub = self.create_publisher(Point, 'search_center_point', 10)
 
         # Service to set mode and parameters
         self.set_mode_srv = self.create_service(SetModeWithParams, 'set_mode', self.set_mode_callback)
@@ -42,10 +43,6 @@ class ModeManagerNode(Node):
         msg.corners = self.station_rect
         msg.sail_points = self.sail_points
         self.station_rect_pub.publish(msg)
-
-    def publish_search_center(self):
-        if self.search_center:
-            self.search_center_pub.publish(self.search_center)
 
     def set_mode_callback(self, request, response):
         mode = request.mode.lower()
@@ -70,8 +67,10 @@ class ModeManagerNode(Node):
             self.get_logger().info(f"[ModeManager] Station keeping with 4 rectangle points and 2 sail points.")
 
         elif mode == "search":
-            self.search_center = request.search_center_point
-            self.get_logger().info(f"[ModeManager] Search mode with center point ({self.search_center.y}, {self.search_center.x})")
+            pass
+            # TODO for next year
+            # self.search_center = request.search_center_point
+            # self.get_logger().info(f"[ModeManager] Search mode with center point ({self.search_center.y}, {self.search_center.x})")
 
         elif mode == "manual":
             # Clear parameters
