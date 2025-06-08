@@ -151,6 +151,56 @@ export class ROSConnection {
                 }
             });
         });
+
+        // CV mode
+        document.getElementById('submit-cv-rectangle').addEventListener('click', () => {
+            console.log("Submitting dummy cv rectangle");
+            // const latLonPairs = { x: 0.0, y: 0.0, z: 0.0 };
+
+            // const sailPoint1cv = {
+            //     x: 0.0,
+            //     y: 0.0,
+            //     z: 0.0
+            // };
+            // const sailPoint2cv = {
+            //     x: 0.0,
+            //     y: 0.0,
+            //     z: 0.0
+            // };
+
+            const request = new ROSLIB.ServiceRequest({
+                mode: "search",
+                // cv_rect_points: [...latLonPairs, sailPoint1cv, sailPoint2cv],
+                // search_center_point: { x: 0.0, y: 0.0, z: 0.0 } // dummy value
+            });
+
+            this.setModeService.callService(request, (result) => {
+                if (result.success) {
+                    console.log("Mode set to search:", result.message);
+                } else {
+                    alert("Failed to set mode: " + result.message);
+                }
+            });
+        })
+
+        // Cancel Computer Vision
+        document.getElementById('cancel-cv-rectangle').addEventListener('click', () => {
+            if (!this.setModeService) {
+                alert("ROS not connected. Please connect to ROS first.");
+                return;
+            }
+            const request = new ROSLIB.ServiceRequest({
+                mode: "manual"
+            });
+            this.setModeService.callService(request, (result) => {
+                if (result.success) {
+                    console.log("Mode set to manual:", result.message);
+                } else {
+                    alert("Failed to set mode: " + result.message);
+                }
+            });
+        });
+
         
         // Initialize current control mode from button
         document.addEventListener('DOMContentLoaded', () => {
@@ -224,6 +274,20 @@ export class ROSConnection {
         });
         this.controlModeTopic.subscribe((message) => {
             updateValue('control-mode-value', message.data);
+            if (this.uiManager) {
+                this.uiManager.conditionalRender();
+            }
+        });
+
+        // Subscribe to buoy distance topic
+        const buoyDistTopic = new ROSLIB.Topic({
+            ros: this.ros,
+            name: 'sailbot/buoy_distance',
+            messageType: 'sensor_msgs/NavSatFix',
+            throttle_rate: this.BASE_THROTTLE_RATE
+        });
+        this.buoyDistTopic.subscribe((message) => {
+            updateValue('buoy-dist-value', message.data);
             if (this.uiManager) {
                 this.uiManager.conditionalRender();
             }

@@ -435,12 +435,20 @@
             <div class="table-container">
                 <div class="table-heading" onclick="toggleSection(this)">
                     <h1>Computer Vision <span class="toggle-icon">+</span></h1>
-                    <div class="collapsible-section hidden">
-                        <div class="button-group">
-                            <button type="button" id="submit-station-rectangle">Activate CV</button>
+                </div>
+                <div class="collapsible-section hidden">
+                    <div class="table">
+                        <div class="status">
+                            <div class="status-row">
+                                <span class="status-label">Buoy Distance:</span>
+                                <span class="status-value" id="buoy-dist-value">N/A</span>
+                            </div>
                         </div>
                         <div class="button-group">
-                            <button type="button" id="cancel-station-keeping">End CV</button>
+                            <button type="button" id="submit-cv-rectangle">Activate CV</button>
+                        </div>
+                        <div class="button-group">
+                            <button type="button" id="cancel-cv-rectangle">End CV</button>
                         </div>
                     </div>
                 </div>
