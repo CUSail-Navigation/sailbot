@@ -191,6 +191,22 @@ export class UIManager {
         }
     }
 
+    // Alert when buoy distance value is <= 2
+    alertBuoyDistance() {
+        const buoyDistanceEl = document.getElementById('buoy-dist-value');
+        const redFlagImg = document.getElementById('red-flag-image');
+    
+        if (!buoyDistanceEl || !redFlagImg) return;
+    
+        const distance = parseFloat(buoyDistanceEl.innerText);
+    
+        if (isNaN(distance)) {
+            redFlagImg.style.display = 'block';
+        } else {
+            redFlagImg.style.display = 'none';
+        }
+    }
+
     // Utility method to show connection status
     updateConnectionStatus(connected, url = '') {
         const statusElement = document.getElementById('connection-status');
