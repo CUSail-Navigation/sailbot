@@ -22,6 +22,8 @@ setup(
         'console_scripts': [
             'event_driver = sailbot_events.event_driver.event_driver_node:main',
             'waypoint_service = sailbot_events.event_driver.waypoint_service:main',
+            'mode_manager = sailbot_events.event_driver.mode_manager:main',
+            'station_keeping = sailbot_events.event_driver.station_keeping:main',
         ],
     },
 )

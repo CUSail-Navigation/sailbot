@@ -3,7 +3,7 @@ export class UIManager {
     constructor(rosConnection, dialManager) {
         this.rosConnection = rosConnection;
         this.dialManager = dialManager;
-        
+
         this.setupEventListeners();
         this.initializeControlMode();
     }
@@ -11,7 +11,7 @@ export class UIManager {
     setupEventListeners() {
         // ROS connection button
         this.setupROSConnection();
-        
+
         // Algorithm runtime parameters
         this.setupAlgoParams();
     }
@@ -43,7 +43,7 @@ export class UIManager {
             if (noGoZoneInput && !isNaN(noGoZoneInput)) {
                 this.rosConnection.publishNoGoZone(parseInt(noGoZoneInput));
                 console.log(`Setting no-go zone to: ${noGoZoneInput}°`);
-                
+
                 // Clear input after successful submission
                 document.getElementById('no-go-zone-input').value = '';
             } else {
@@ -58,7 +58,7 @@ export class UIManager {
             if (neutralZoneInput && !isNaN(neutralZoneInput)) {
                 this.rosConnection.publishNeutralZone(parseInt(neutralZoneInput));
                 console.log(`Setting neutral zone to: ${neutralZoneInput}°`);
-                
+
                 // Clear input after successful submission
                 document.getElementById('neutral-zone-input').value = '';
             } else {
@@ -74,7 +74,7 @@ export class UIManager {
                 const values = input.split(',').map(v => parseInt(v.trim(), 10));
 
                 if (values.length === 3 && values.every(v => !isNaN(v))) {
-                    this.publishHsvLower(values);
+                    this.rosConnection.publishHsvLower(values);
                     console.log(`Setting HSV lower to: [${values.join(', ')}]`);
                     document.getElementById('hsv-lower-input').value = '';
                 } else {
@@ -93,7 +93,7 @@ export class UIManager {
                 const values = input.split(',').map(v => parseInt(v.trim(), 10));
 
                 if (values.length === 3 && values.every(v => !isNaN(v))) {
-                    this.publishHsvUpper(values);
+                    this.rosConnection.publishHsvUpper(values);
                     console.log(`Setting HSV upper to: [${values.join(', ')}]`);
                     document.getElementById('hsv-upper-input').value = '';
                 } else {
@@ -109,7 +109,7 @@ export class UIManager {
             const input = document.getElementById('detection-threshold-input').value;
 
             if (input && !isNaN(input)) {
-                this.publishDetectionThreshold(parseInt(input, 10));
+                this.rosConnection.publishDetectionThreshold(parseInt(input, 10));
                 console.log(`Setting detection threshold to: ${input}`);
                 document.getElementById('detection-threshold-input').value = '';
             } else {
@@ -157,7 +157,7 @@ export class UIManager {
         const controlModeVal = document.getElementById("control-mode-value").innerText.trim().toLowerCase();
         const algoVals = document.querySelectorAll(".algo-mode");
         const rcVals = document.querySelectorAll(".rc-mode");
-        
+
         if (controlModeVal === "algorithm" || controlModeVal === "algo") {
             algoVals.forEach(el => {
                 el.style.display = "flex";
@@ -191,6 +191,32 @@ export class UIManager {
         }
     }
 
+    // Alert when buoy distance value is <= 2
+    /*
+    alertBuoyDistance() {
+        const buoyDistanceEl = document.getElementById('buoy-dist-value');
+        const redFlagImg = document.getElementById('red-flag-image');
+
+        if (!buoyDistanceEl || !redFlagImg) return;
+
+        const distance = parseFloat(buoyDistanceEl.innerText);
+
+        redFlagImg.style.display = 'block';
+    } */
+
+    updateBuoyBool() {
+        const distanceText = document.getElementById("buoy-dist-value").textContent;
+        const distance = parseFloat(distanceText);
+
+        const boolElement = document.getElementById("buoy-dist-bool");
+
+        if (!isNaN(distance)) {
+            boolElement.textContent = distance <= 2 ? "True" : "False";
+        } else {
+            boolElement.textContent = "N/A";
+        }
+    }
+
     // Utility method to show connection status
     updateConnectionStatus(connected, url = '') {
         const statusElement = document.getElementById('connection-status');
@@ -212,17 +238,17 @@ export class UIManager {
         notification.className = `notification ${type}`;
         notification.textContent = message;
         notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 10px 20px;
-            border-radius: 5px;
-            z-index: 1000;
-            font-weight: bold;
-            ${type === 'error' ? 'background: #ff6b6b; color: white;' : 
-              type === 'success' ? 'background: #51cf66; color: white;' : 
-              'background: #339af0; color: white;'}
-        `;
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 10px 20px;
+                border-radius: 5px;
+                z-index: 1000;
+                font-weight: bold;
+                ${type === 'error' ? 'background: #ff6b6b; color: white;' :
+                type === 'success' ? 'background: #51cf66; color: white;' :
+                    'background: #339af0; color: white;'}
+            `;
 
         document.body.appendChild(notification);
 
@@ -238,7 +264,7 @@ export class UIManager {
     clearAllInputs() {
         const inputs = [
             'waypoint-latitude',
-            'waypoint-longitude', 
+            'waypoint-longitude',
             'buoy-latitude',
             'buoy-longitude',
             'no-go-zone-input',

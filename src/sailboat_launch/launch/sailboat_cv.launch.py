@@ -7,21 +7,18 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
    """
-   This launch file simulates the hardware components of the sailboat. With the
-   exception of real hardware, this launch file simulates the entire system 
-   end-to-end. 
-
-   The vectornav node simulates the IMU and GPS data with randomization sensor
-   outputs within a reasonable range. The teensy node simulates telemetry data
-   and control commands are logged.
+   This launch file is the nominal case for the sailboat. It requires real hardware, 
+   and exposes a rosbridge websocket for telemetry. The control mode can be toggled
+   between autonomous and remote control. The mux node is used to multiplex the 
+   control mode and the control sources.
    """
    config = os.path.join(
       get_package_share_directory('sailboat_launch'),
       'config',
-      'config_sim.yaml'
+      'config.yaml'
       )
-
-   vectornav_cmd = Node(
+      
+   gps_cmd = Node(
       package='sailboat_sensors',
       executable='vectornav',
       name='vectornav',
@@ -30,20 +27,12 @@ def generate_launch_description():
    )
 
    teensy_cmd = Node(
-      package='sailboat_main',
-      executable='teensy',
-      name='teensy',
-      namespace='sailbot',
-      parameters=[config]
-   )
-
-   radio_cmd = Node(
-      package='sailboat_main',
-      executable='radio',
-      name='radio',
-      namespace='sailbot',
-      parameters=[config]
-   )
+         package='sailboat_main',
+         executable='teensy',
+         name='teensy',
+         namespace='sailbot',
+         parameters=[config]
+      )
 
    mux_cmd = Node(
       package='sailboat_main',
@@ -77,22 +66,6 @@ def generate_launch_description():
       parameters=[config]
    )
 
-   mode_manager_cmd = Node(
-      package='sailbot_events',
-      executable='mode_manager',
-      name='mode_manager',
-      namespace='sailbot',
-      parameters=[config]
-   )
-
-   station_keeping_cmd = Node(
-      package='sailbot_events',
-      executable='station_keeping',
-      name='station_keeping',
-      namespace='sailbot',
-      parameters=[config]
-   )
-
    rosbridge_node = Node(
         package='rosbridge_server',
         executable='rosbridge_websocket',
@@ -103,12 +76,36 @@ def generate_launch_description():
         }]
     )
 
+   radio_cmd = Node(
+      package='sailboat_main',
+      executable='radio',
+      name='radio',
+      namespace='sailbot',
+      parameters=[config]
+   )
 
+   camera_node = Node(
+      package='sailboat_vision',
+      executable='buoy_detection',
+      name='buoy_detection',
+      namespace='sailbot',
+      parameters=[config]
+   )
+
+
+   search_node = Node(
+      package='sailboat_vision',
+      executable='buoy_search',
+      name='buoy_search',
+      namespace='sailbot',
+      parameters=[config]
+   )
+   
    ld = LaunchDescription()
 
-   # HW peripherals 
-   ld.add_action(vectornav_cmd) # SIM
-   ld.add_action(teensy_cmd) # SIM
+   # HW peripherals
+   ld.add_action(gps_cmd)
+   ld.add_action(teensy_cmd)
 
    # Autonomous sailing
    ld.add_action(main_algo_cmd)
@@ -116,14 +113,14 @@ def generate_launch_description():
    ld.add_action(waypoint_service_cmd)
 
    # Togglable rc control
-   ld.add_action(radio_cmd) # SIM
+   ld.add_action(radio_cmd)
    ld.add_action(mux_cmd)
-
-   # Event algos
-   ld.add_action(mode_manager_cmd)
-   ld.add_action(station_keeping_cmd)
 
    # Telemetry
    ld.add_action(rosbridge_node)
+
+   # Computer Vision
+   ld.add_action(camera_node)
+   ld.add_action(search_node)
 
    return ld
