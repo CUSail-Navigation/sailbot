@@ -3,7 +3,7 @@ export class UIManager {
     constructor(rosConnection, dialManager) {
         this.rosConnection = rosConnection;
         this.dialManager = dialManager;
-        
+
         this.setupEventListeners();
         this.initializeControlMode();
     }
@@ -11,7 +11,7 @@ export class UIManager {
     setupEventListeners() {
         // ROS connection button
         this.setupROSConnection();
-        
+
         // Algorithm runtime parameters
         this.setupAlgoParams();
     }
@@ -43,7 +43,7 @@ export class UIManager {
             if (noGoZoneInput && !isNaN(noGoZoneInput)) {
                 this.rosConnection.publishNoGoZone(parseInt(noGoZoneInput));
                 console.log(`Setting no-go zone to: ${noGoZoneInput}°`);
-                
+
                 // Clear input after successful submission
                 document.getElementById('no-go-zone-input').value = '';
             } else {
@@ -58,7 +58,7 @@ export class UIManager {
             if (neutralZoneInput && !isNaN(neutralZoneInput)) {
                 this.rosConnection.publishNeutralZone(parseInt(neutralZoneInput));
                 console.log(`Setting neutral zone to: ${neutralZoneInput}°`);
-                
+
                 // Clear input after successful submission
                 document.getElementById('neutral-zone-input').value = '';
             } else {
@@ -157,7 +157,7 @@ export class UIManager {
         const controlModeVal = document.getElementById("control-mode-value").innerText.trim().toLowerCase();
         const algoVals = document.querySelectorAll(".algo-mode");
         const rcVals = document.querySelectorAll(".rc-mode");
-        
+
         if (controlModeVal === "algorithm" || controlModeVal === "algo") {
             algoVals.forEach(el => {
                 el.style.display = "flex";
@@ -192,18 +192,28 @@ export class UIManager {
     }
 
     // Alert when buoy distance value is <= 2
+    /*
     alertBuoyDistance() {
         const buoyDistanceEl = document.getElementById('buoy-dist-value');
         const redFlagImg = document.getElementById('red-flag-image');
-    
+
         if (!buoyDistanceEl || !redFlagImg) return;
-    
+
         const distance = parseFloat(buoyDistanceEl.innerText);
-    
-        if (isNaN(distance)) {
-            redFlagImg.style.display = 'block';
+
+        redFlagImg.style.display = 'block';
+    } */
+
+    updateBuoyBool() {
+        const distanceText = document.getElementById("buoy-dist-value").textContent;
+        const distance = parseFloat(distanceText);
+
+        const boolElement = document.getElementById("buoy-dist-bool");
+
+        if (!isNaN(distance)) {
+            boolElement.textContent = distance <= 2 ? "True" : "False";
         } else {
-            redFlagImg.style.display = 'none';
+            boolElement.textContent = "N/A";
         }
     }
 
@@ -228,17 +238,17 @@ export class UIManager {
         notification.className = `notification ${type}`;
         notification.textContent = message;
         notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 10px 20px;
-            border-radius: 5px;
-            z-index: 1000;
-            font-weight: bold;
-            ${type === 'error' ? 'background: #ff6b6b; color: white;' : 
-              type === 'success' ? 'background: #51cf66; color: white;' : 
-              'background: #339af0; color: white;'}
-        `;
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 10px 20px;
+                border-radius: 5px;
+                z-index: 1000;
+                font-weight: bold;
+                ${type === 'error' ? 'background: #ff6b6b; color: white;' :
+                type === 'success' ? 'background: #51cf66; color: white;' :
+                    'background: #339af0; color: white;'}
+            `;
 
         document.body.appendChild(notification);
 
@@ -254,7 +264,7 @@ export class UIManager {
     clearAllInputs() {
         const inputs = [
             'waypoint-latitude',
-            'waypoint-longitude', 
+            'waypoint-longitude',
             'buoy-latitude',
             'buoy-longitude',
             'no-go-zone-input',

@@ -289,7 +289,7 @@ export class ROSConnection {
         buoyDistTopic.subscribe((message) => {
             updateValue('buoy-dist-value', message.data);
             if (this.uiManager) {
-                this.uiManager.alertBuoyDistance();
+                this.uiManager.updateBuoyBool();
             }
         });
 
