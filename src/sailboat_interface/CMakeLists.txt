@@ -17,9 +17,12 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/SailTail.msg"
-  "srv/Waypoint.srv"
   "msg/AlgoDebug.msg"
+  "msg/Mode.msg"
+  "msg/StationRectangle.msg"
 
+  "srv/Waypoint.srv"
+  "srv/SetModeWithParams.srv"
   DEPENDENCIES std_msgs sensor_msgs # Add packages that above messages depend on, in this case geometry_msgs for Sphere.msg
 )
 

@@ -83,6 +83,22 @@ def generate_launch_description():
       namespace='sailbot',
       parameters=[config]
    )
+
+   mode_manager_cmd = Node(
+      package='sailbot_events',
+      executable='mode_manager',
+      name='mode_manager',
+      namespace='sailbot',
+      parameters=[config]
+   )
+
+   station_keeping_cmd = Node(
+      package='sailbot_events',
+      executable='station_keeping',
+      name='station_keeping',
+      namespace='sailbot',
+      parameters=[config]
+   )
    
    ld = LaunchDescription()
 
@@ -94,6 +110,10 @@ def generate_launch_description():
    ld.add_action(main_algo_cmd)
    ld.add_action(trim_sail_cmd)
    ld.add_action(waypoint_service_cmd)
+
+   # Event Drivers
+   ld.add_action(mode_manager_cmd)
+   ld.add_action(station_keeping_cmd)
 
    # Togglable rc control
    ld.add_action(radio_cmd)
