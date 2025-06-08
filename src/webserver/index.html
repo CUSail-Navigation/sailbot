@@ -138,7 +138,7 @@
                     <h1>CV Tuning Params <span class="toggle-icon">+</span></h1>
                 </div>
                 <div class="collapsible-section hidden">
-                    <div class="waypoint-buoy-container">
+                    <div class="tuning-table">
                         <!-- HSV Lower Input -->
                         <div class="waypoint-buoy-table">
                             <div class="status-row-input second">
@@ -227,7 +227,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="table-container">
                 <div class="table-heading" onclick="toggleSection(this)">
                     <h1>Sail & Rudder Input <span class="toggle-icon">+</span></h1>
@@ -367,28 +367,32 @@
                                 <span class="status-label">Corner 1:</span>
                                 <div class="input-group">
                                     <input type="number" id="sk-corner1-lat" placeholder="Latitude" step="any" required>
-                                    <input type="number" id="sk-corner1-lon" placeholder="Longitude" step="any" required>
+                                    <input type="number" id="sk-corner1-lon" placeholder="Longitude" step="any"
+                                        required>
                                 </div>
                             </div>
                             <div class="status-row-input second">
                                 <span class="status-label">Corner 2:</span>
                                 <div class="input-group">
                                     <input type="number" id="sk-corner2-lat" placeholder="Latitude" step="any" required>
-                                    <input type="number" id="sk-corner2-lon" placeholder="Longitude" step="any" required>
+                                    <input type="number" id="sk-corner2-lon" placeholder="Longitude" step="any"
+                                        required>
                                 </div>
                             </div>
                             <div class="status-row-input second">
                                 <span class="status-label">Corner 3:</span>
                                 <div class="input-group">
                                     <input type="number" id="sk-corner3-lat" placeholder="Latitude" step="any" required>
-                                    <input type="number" id="sk-corner3-lon" placeholder="Longitude" step="any" required>
+                                    <input type="number" id="sk-corner3-lon" placeholder="Longitude" step="any"
+                                        required>
                                 </div>
                             </div>
                             <div class="status-row-input second">
                                 <span class="status-label">Corner 4:</span>
                                 <div class="input-group">
                                     <input type="number" id="sk-corner4-lat" placeholder="Latitude" step="any" required>
-                                    <input type="number" id="sk-corner4-lon" placeholder="Longitude" step="any" required>
+                                    <input type="number" id="sk-corner4-lon" placeholder="Longitude" step="any"
+                                        required>
                                 </div>
                             </div>
                             <div class="status-row-input second">
@@ -409,7 +413,8 @@
                                 <button type="button" id="submit-station-rectangle">Activate Station Keeping</button>
                             </div>
                             <div class="button-group">
-                                <button type="button" id="cancel-station-keeping">End Station Keeping (Manual Mode)</button>
+                                <button type="button" id="cancel-station-keeping">End Station Keeping (Manual
+                                    Mode)</button>
                             </div>
                         </div>
                     </div>
@@ -458,10 +463,11 @@
 
     <!-- Load the modular JavaScript -->
     <script type="module" src="main.js"></script>
-    
+
     <!-- Google Maps API - will call window.initMap when ready -->
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBuFSxZ-m0FA2FubP6t7irEPSklGe7oGV0&callback=window.initMap">
-    </script>
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBuFSxZ-m0FA2FubP6t7irEPSklGe7oGV0&callback=window.initMap">
+        </script>
 </body>
 
 </html>
