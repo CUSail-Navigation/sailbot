@@ -17,6 +17,9 @@ class UTMPoint:
         self.zone_number = zone_number
         self.zone_letter = zone_letter
 
+        # TODO: Dynamically calculate this?
+        self.exit_point = LatLongPoint(0.0, 0.0)  # Replace with actual lat, lon
+
     def to_latlon(self):
         latitude, longitude = utm.to_latlon(
             self.easting, self.northing, self.zone_number, self.zone_letter)
@@ -69,6 +72,9 @@ class StationKeepingNode(Node):
         self.in_rectangle = False
         self.timer_started = False
         self.current_mode = 'manual'
+
+        # TODO: for next year, dynamically set this based on wind?
+        self.exit_point = LatLongPoint(42.276409, -71.758351) 
 
         self.subscription_curr_loc = self.create_subscription(
             NavSatFix, '/gps', self.curr_gps_callback, 10)
@@ -164,29 +170,32 @@ class StationKeepingNode(Node):
 
     def exit_rectangle(self):
         self.get_logger().info("5 min timer done. Exiting station keeping.")
-        if not self.curr_location:
-            return
-        best_point = None
-        min_dist = float('inf')
-        corners = self.rectangle_corners
-        for i in range(len(corners)):
-            a = corners[i]
-            b = corners[(i + 1) % len(corners)]
-            proj = self.project_to_segment(self.curr_location, a, b)
-            d = proj.distance_to(self.curr_location)
-            if d < min_dist:
-                min_dist = d
-                best_point = proj
-        self.send_waypoints_to_queue([best_point])
+        self.send_waypoints_to_queue([self.exit_point])
 
-    def project_to_segment(self, p, a, b):
-        ap = p - a
-        ab = b - a
-        ab_len2 = ab.easting**2 + ab.northing**2
-        t = max(0, min(1, (ap.easting * ab.easting + ap.northing * ab.northing) / ab_len2))
-        proj_e = a.easting + ab.easting * t
-        proj_n = a.northing + ab.northing * t
-        return UTMPoint(proj_e, proj_n, a.zone_number, a.zone_letter)
+    #     self.get_logger().info("5 min timer done. Exiting station keeping.")
+    #     if not self.curr_location:
+    #         return
+    #     best_point = None
+    #     min_dist = float('inf')
+    #     corners = self.rectangle_corners
+    #     for i in range(len(corners)):
+    #         a = corners[i]
+    #         b = corners[(i + 1) % len(corners)]
+    #         proj = self.project_to_segment(self.curr_location, a, b)
+    #         d = proj.distance_to(self.curr_location)
+    #         if d < min_dist:
+    #             min_dist = d
+    #             best_point = proj
+    #     self.send_waypoints_to_queue([best_point])
+
+    # def project_to_segment(self, p, a, b):
+    #     ap = p - a
+    #     ab = b - a
+    #     ab_len2 = ab.easting**2 + ab.northing**2
+    #     t = max(0, min(1, (ap.easting * ab.easting + ap.northing * ab.northing) / ab_len2))
+    #     proj_e = a.easting + ab.easting * t
+    #     proj_n = a.northing + ab.northing * t
+    #     return UTMPoint(proj_e, proj_n, a.zone_number, a.zone_letter)
 
 def main(args=None):
     rclpy.init(args=args)
