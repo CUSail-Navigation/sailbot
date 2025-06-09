@@ -174,10 +174,17 @@ class Algo(Node):
             10)
         
         #Subscription for runtime neutral zone adjustments
-        self.subscription_no_go_zone = self.create_subscription(
+        self.subscription_neutral_zone = self.create_subscription(
             Int32, 
             'neutral_zone',
             self.neutral_zone_callback,
+            10)
+        
+        #Subscription for runtime neutral zone adjustments
+        self.subscription_tacking_buffer = self.create_subscription(
+            Int32, 
+            'tacking_buffer',
+            self.tacking_buffer_callback,
             10)
         
         # Publisher for rudder angle
@@ -499,6 +506,13 @@ class Algo(Node):
         """
         self.neutral_zone = msg.data
         self.get_logger().info(f'Neutral Zone: {self.neutral_zone}')
+
+    def tacking_buffer_callback(self, msg):
+        """
+        TODO: add a description for this callback
+        """
+        self.tacking_buffer = msg.data
+        self.get_logger().info(f'Tacking Buffer: {self.tacking_buffer}')
         
 def main(args=None):
     rclpy.init(args=args)

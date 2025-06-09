@@ -43,9 +43,6 @@ export class UIManager {
             if (noGoZoneInput && !isNaN(noGoZoneInput)) {
                 this.rosConnection.publishNoGoZone(parseInt(noGoZoneInput));
                 console.log(`Setting no-go zone to: ${noGoZoneInput}°`);
-
-                // Clear input after successful submission
-                document.getElementById('no-go-zone-input').value = '';
             } else {
                 alert('Please enter a valid numeric value for the no-go zone.');
             }
@@ -58,11 +55,20 @@ export class UIManager {
             if (neutralZoneInput && !isNaN(neutralZoneInput)) {
                 this.rosConnection.publishNeutralZone(parseInt(neutralZoneInput));
                 console.log(`Setting neutral zone to: ${neutralZoneInput}°`);
-
-                // Clear input after successful submission
-                document.getElementById('neutral-zone-input').value = '';
             } else {
                 alert('Please enter a valid numeric value for the neutral zone.');
+            }
+        });
+
+        // Neutral zone parameter
+        document.getElementById('tacking-buffer-submit').addEventListener('click', () => {
+            const tackingBufferInput = document.getElementById('tacking-buffer-input').value;
+
+            if (tackingBufferInput && !isNaN(tackingBufferInput)) {
+                this.rosConnection.publishTackingBuffer(parseInt(tackingBufferInput));
+                console.log(`Setting tacking buffer to: ${tackingBufferInput}°`);
+            } else {
+                alert('Please enter a valid numeric value for the tacking buffer.');
             }
         });
 

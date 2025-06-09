@@ -7,6 +7,7 @@ export class ROSConnection {
         this.webserverSailTopic = null;
         this.noGoZoneTopic = null;
         this.neutralZoneTopic = null;
+        this.tackingBufferTopic = null;
         this.waypointService = null;
         this.currentControlMode = null;
         this.BASE_THROTTLE_RATE = 1000;
@@ -497,6 +498,13 @@ export class ROSConnection {
             throttle_rate: this.BASE_THROTTLE_RATE
         });
 
+        this.tackingBufferTopic = new ROSLIB.Topic({
+            ros: this.ros,
+            name: '/sailbot/tacking_buffer',
+            messageType: 'std_msgs/Int32',
+            throttle_rate: this.BASE_THROTTLE_RATE
+        });
+
         this.hsvLowerTopic = new ROSLIB.Topic({
             ros: this.ros,
             name: '/sailbot/update_hsv_lower',
@@ -594,6 +602,14 @@ export class ROSConnection {
             const message = new ROSLIB.Message({ data: parseInt(value, 10) });
             this.neutralZoneTopic.publish(message);
             console.log(`Published to neutralZoneTopic: ${value}`);
+        }
+    }
+
+    publishTackingBuffer(value) {
+        if (this.tackingBufferTopic) {
+            const message = new ROSLIB.Message({ data: parseInt(value, 10) });
+            this.tackingBufferTopic.publish(message);
+            console.log(`Published to tackingBufferTopic: ${value}`);
         }
     }
 
