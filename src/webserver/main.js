@@ -24,11 +24,11 @@ let sailPath;
 // Google Maps initialization - called directly by Maps API
 window.initMap = function() {
     console.log("Initializing map...");
-    const defaultLocation = { lat: 42.45, lng: -76.474 }; // Ithaca, NY
+    const defaultLocation = { lat: 42.276848, lng: -71.756323 }; // Lake Quinsigamond 
 
     map = new google.maps.Map(document.getElementById("map"), {
         center: defaultLocation,
-        zoom: 12,
+        zoom: 15,
     });
 
     // Mouse position tracking
