@@ -89,7 +89,6 @@ class Teensy(Node):
 
             # Write rudder angle to file in append mode
             try:
-                import os
                 file_path = '/home/ros2_user/ros2_ws/src/log/' + 'rudder_angle_log.txt'
                 self.get_logger().info(f"Writing rudder angle to file {file_path}")
 
