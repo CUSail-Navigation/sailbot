@@ -87,6 +87,16 @@ class Teensy(Node):
             rudder_angle_msg.data = data["rudder_angle"]
             self.actual_rudder_angle_pub.publish(rudder_angle_msg)
 
+            # Write rudder angle to file in append mode
+            try:
+                file_path = '/home/ros2_user/ros2_ws/src/log/' + 'rudder_angle_log.txt'
+                self.get_logger().info(f"Writing rudder angle to file {file_path}")
+
+                with open(file_path, 'a') as f:
+                    f.write(f"{rudder_angle_msg.data}\n")
+            except Exception as e:
+                self.get_logger().warn(f"Failed to write rudder angle to file: {e}")
+
             dropped_packets_msg = Int32()
             dropped_packets_msg.data = data["dropped_packets"]
             self.dropped_packets_pub.publish(dropped_packets_msg)
