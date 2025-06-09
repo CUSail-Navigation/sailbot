@@ -249,8 +249,6 @@ class BuoySearch(Node):
         if self.show_debug_plot:
             self.setup_debug_plot()
         
-        self.initialize_search_pattern()
-        
         self.get_logger().info('Buoy search algo started successfully')
 
     def curr_gps_callback(self, msg):
@@ -300,6 +298,7 @@ class BuoySearch(Node):
 
         if self.current_mode == 'search':
             self.get_logger().info("[Buoy search node] Search mode activated.")
+            self.initialize_search_pattern()  # Ensure search pattern is initialized on entering search mode
     
     def reset_search(self):
         """
