@@ -494,7 +494,7 @@ class Algo(Node):
         self.wind_direction = msg.data
         if self.heading_direction is not None:
             self.absolute_wind_dir = (self.wind_direction + self.heading_direction) % 360
-        self.get_logger().info(f'Wind Direction: {self.wind_direction}, Absolute Wind Direction: {self.absolute_wind_dir}')
+            self.get_logger().info(f'Wind Direction: {self.wind_direction}, Absolute Wind Direction: {self.absolute_wind_dir}')
 
     def heading_direction_callback(self, msg):
         """
