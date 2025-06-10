@@ -116,8 +116,6 @@ class Algo(Node):
     tack_no_go_zone : int = 60 # anglular size of the no-go-zone on one side of the boat's centerline
     neutral_zone: int = 15 
 
-    post_tack_buffer : int = 15 # buffer to wait after tacking before switching back to normal sailing
-
     # Physical Parameters
     MAX_RUDDER_ANGLE : int = 25 # max rudder angle in degrees
     NEUTRAL_RUDDER_ANGLE : int = 0 
@@ -264,15 +262,21 @@ class Algo(Node):
                 self.tack_time_tracker = 0
             self.tack_time_tracker += self.timer_period
         elif self.sail_state == SailState.TACK:
+            if self.tack_time_tracker > self.tacking_buffer:
+                self.sail_state = SailState.NORMAL
+                self.tack_time_tracker = 0
+                self.current_destination = self.current_waypoint
             # if we reached the tacking point, switch to normal sailing
-            if self.turn_left:
+            elif self.turn_left:
                 if self.heading_difference > 0:
                     self.sail_state = SailState.NORMAL
                     self.tack_time_tracker = 0
             else:
                 if self.heading_difference < 0:
-                    self.sail_state = SailState.NORMAL
+                    self.sail_state = SailState.NORMALf
                     self.tack_time_tracker = 0
+
+            self.tack_time_tracker += self.timer_period
        
         else:
             self.get_logger().info("Unknown state")
@@ -300,10 +304,11 @@ class Algo(Node):
         """
             Sails normally to REACHABLE destination (assumes not in no-go etc.)
         """
-        if(not self.boat_in_nogo_zone()):
-            rudder_angle = np.round(self.heading_difference / 180 * 20)
-        else: # this handles the case where we need to push out of the no-go zone but do not need a tacking point
-            rudder_angle = self.MAX_RUDDER_ANGLE if self.heading_difference >= 0 else -self.MAX_RUDDER_ANGLE
+        # if(not self.boat_in_nogo_zone()):
+        #     rudder_angle = np.round(self.heading_difference / 180 * 20)
+        # else: # this handles the case where we need to push out of the no-go zone but do not need a tacking point
+        #     rudder_angle = self.MAX_RUDDER_ANGLE if self.heading_difference >= 0 else -self.MAX_RUDDER_ANGLE
+        rudder_angle = np.round(self.heading_difference / 180 * 20)
 
         # rudder_angle = int(rudder_angle // 5 * 5)  # round to nearest 5 degrees
 
