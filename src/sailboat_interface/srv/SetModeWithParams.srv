@@ -3,10 +3,10 @@ string mode  # "manual", "station_keeping", or "search"
 # Parameters vary by mode:
 
 # For "station_keeping", fill station_rect_points (in order)
-geometry_msgs/Point[] station_rect_points  # 4 lat-long-alt points (alt=0)
+geometry_msgs/Point[] station_rect_points  # 4 lat-long points
 
 # For "search", provide a center point
-geometry_msgs/Point search_center_point  # lat-long-alt (alt=0)
+geometry_msgs/Point search_center_point  # lat-long
 
 ---
 bool success
