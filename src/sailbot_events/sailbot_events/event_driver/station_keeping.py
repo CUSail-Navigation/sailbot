@@ -90,14 +90,24 @@ class StationKeepingNode(Node):
     def station_rectangle_callback(self, msg):
         self.rectangle_corners = [LatLongPoint(p.y, p.x).to_utm() for p in msg.corners]
         self.get_logger().info("Received updated station-keeping rectangle corners and sail points.")
-        self.center = self.compute_center()
+        # self.center = self.compute_center()
 
         ## waypoint is 5 meters west of the center (for comp 6/10/2025)
         # TODO: make this dynamic based on wind direction?
-        waypoint = UTMPoint(self.center.easting - 5,
-                            self.center.northing,
-                            self.center.zone_number,
-                            self.center.zone_letter)
+        # waypoint = UTMPoint(self.center.easting - 5,
+        #                     self.center.northing,
+        #                     self.center.zone_number,
+        #                     self.center.zone_letter)
+
+        # third buoy is northwest corner
+        northwest_corner = self.rectangle_corners[2]
+        waypoint  = UTMPoint(
+            northwest_corner.easting + 5,
+            northwest_corner.northing - 5,
+            northwest_corner.zone_number,
+            northwest_corner.zone_letter
+        )
+
         self.send_waypoints_to_queue([waypoint])
 
     def mode_callback(self, msg):
