@@ -274,7 +274,7 @@ class Algo(Node):
                     self.tack_time_tracker = 0
             else:
                 if self.heading_difference < 0:
-                    self.sail_state = SailState.NORMALf
+                    self.sail_state = SailState.NORMAL
                     self.tack_time_tracker = 0
 
             self.tack_time_tracker += self.timer_period
@@ -487,7 +487,7 @@ class Algo(Node):
             self.dist_to_dest = self.current_location.distance_to(self.current_waypoint)
             self.get_logger().info(f'Distance to destination: {self.dist_to_dest}')
             # if we have reached our waypoint, pop it off 
-            if self.dist_to_dest < 5:
+            if self.dist_to_dest < 3:
                 if self.current_mode != 'station_keeping':
                     self.get_logger().info('=============================== Waypoint popped ===============================')
                     self.pop_waypoint()
