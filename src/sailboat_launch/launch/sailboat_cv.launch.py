@@ -101,7 +101,19 @@ def generate_launch_description():
       parameters=[config]
    )
    
+   
+   mode_manager_cmd = Node(
+      package='sailbot_events',
+      executable='mode_manager',
+      name='mode_manager',
+      namespace='sailbot',
+      parameters=[config]
+   )
+   
    ld = LaunchDescription()
+   
+   #Event drivers
+   ld.add_action(mode_manager_cmd)
 
    # HW peripherals
    ld.add_action(gps_cmd)

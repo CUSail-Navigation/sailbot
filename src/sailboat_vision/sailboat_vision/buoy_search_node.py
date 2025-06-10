@@ -450,11 +450,12 @@ class BuoySearch(Node):
         """
         if self.current_mode != 'search':
             return
+        self.get_logger().info('HELP!!!!')
         expansion_step = 20
         max_radius = 100
         direction = 1
 
-        self.center = self.center if self.center is not None else LatLongPoint(42.44415534324632, -76.48367002684182).to_utm()
+        center = LatLongPoint(42.276848, -71.756323).to_utm()
         self.search_direction = self.search_direction if self.search_direction is not None else 0
 
         search_pattern = []
@@ -467,8 +468,8 @@ class BuoySearch(Node):
         
         search_pattern_waypoints = []
         rotation_angle = math.radians(self.search_direction)
-        easting_translation = self.center.easting
-        northing_translation = self.center.northing
+        easting_translation = center.easting
+        northing_translation = center.northing
 
         for x, y in search_pattern:
             easting = x * math.cos(rotation_angle) - y * math.sin(rotation_angle)
@@ -477,13 +478,14 @@ class BuoySearch(Node):
             northing += northing_translation
 
             try:
-                new_waypoint = UTMPoint(easting, northing, self.center.zone_number, self.center.zone_letter).to_latlon()
+                new_waypoint = UTMPoint(easting, northing, center.zone_number, center.zone_letter).to_latlon()
             except utm.error.OutOfRangeError: # Catches when between different UTM zones
                 self.get_logger().warn(f"Invalid UTM")
                 return
     
             search_pattern_waypoints.append((new_waypoint.latitude, new_waypoint.longitude))
         self.set_waypoints(search_pattern_waypoints)
+        self.get_logger().info('HELP 2!!!!')
 
         if self.show_debug_plot:
             self.update_debug_plot()
