@@ -450,7 +450,6 @@ class BuoySearch(Node):
         """
         if self.current_mode != 'search':
             return
-        self.get_logger().info('HELP!!!!')
         expansion_step = 20
         max_radius = 100
         direction = 1
@@ -485,7 +484,6 @@ class BuoySearch(Node):
     
             search_pattern_waypoints.append((new_waypoint.latitude, new_waypoint.longitude))
         self.set_waypoints(search_pattern_waypoints)
-        self.get_logger().info('HELP 2!!!!')
 
         if self.show_debug_plot:
             self.update_debug_plot()
