@@ -68,7 +68,7 @@ class StationKeepingNode(Node):
         self.curr_location = None
         self.wind_angle_deg = None
         self.rectangle_corners = []
-        self.sail_points = []
+        self.center = None
         self.in_rectangle = False
         self.timer_started = False
         self.current_mode = 'manual'
@@ -89,10 +89,16 @@ class StationKeepingNode(Node):
 
     def station_rectangle_callback(self, msg):
         self.rectangle_corners = [LatLongPoint(p.y, p.x).to_utm() for p in msg.corners]
-        self.sail_points = [LatLongPoint(p.y, p.x).to_utm() for p in msg.sail_points]
         self.get_logger().info("Received updated station-keeping rectangle corners and sail points.")
-        center = self.compute_center()
-        self.send_waypoints_to_queue([center])
+        self.center = self.compute_center()
+
+        ## waypoint is 5 meters west of the center (for comp 6/10/2025)
+        # TODO: make this dynamic based on wind direction?
+        waypoint = UTMPoint(self.center.easting - 5,
+                            self.center.northing,
+                            self.center.zone_number,
+                            self.center.zone_letter)
+        self.send_waypoints_to_queue([waypoint])
 
     def mode_callback(self, msg):
         new_mode = msg.data
@@ -114,7 +120,7 @@ class StationKeepingNode(Node):
         self.in_rectangle = False
         self.timer_started = False
         self.rectangle_corners = []
-        self.sail_points = []
+        self.center = None
         self.get_logger().info("Station keeping state reset.")
 
     def curr_gps_callback(self, msg):
@@ -126,7 +132,6 @@ class StationKeepingNode(Node):
                 self.timer_started = True
                 self.get_logger().info("Entered rectangle. Starting 5 min timer.")
                 # Send the sail points to the waypoint queue
-                self.send_waypoints_to_queue(self.sail_points)
                 self.timer_5min = Timer(300.0, self.exit_rectangle)
                 self.timer_5min.start()
 
@@ -171,31 +176,6 @@ class StationKeepingNode(Node):
     def exit_rectangle(self):
         self.get_logger().info("5 min timer done. Exiting station keeping.")
         self.send_waypoints_to_queue([self.exit_point])
-
-    #     self.get_logger().info("5 min timer done. Exiting station keeping.")
-    #     if not self.curr_location:
-    #         return
-    #     best_point = None
-    #     min_dist = float('inf')
-    #     corners = self.rectangle_corners
-    #     for i in range(len(corners)):
-    #         a = corners[i]
-    #         b = corners[(i + 1) % len(corners)]
-    #         proj = self.project_to_segment(self.curr_location, a, b)
-    #         d = proj.distance_to(self.curr_location)
-    #         if d < min_dist:
-    #             min_dist = d
-    #             best_point = proj
-    #     self.send_waypoints_to_queue([best_point])
-
-    # def project_to_segment(self, p, a, b):
-    #     ap = p - a
-    #     ab = b - a
-    #     ab_len2 = ab.easting**2 + ab.northing**2
-    #     t = max(0, min(1, (ap.easting * ab.easting + ap.northing * ab.northing) / ab_len2))
-    #     proj_e = a.easting + ab.easting * t
-    #     proj_n = a.northing + ab.northing * t
-    #     return UTMPoint(proj_e, proj_n, a.zone_number, a.zone_letter)
 
 def main(args=None):
     rclpy.init(args=args)

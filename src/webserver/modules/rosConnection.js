@@ -91,6 +91,7 @@ export class ROSConnection {
         });
 
         // Station Keeping Mode
+        // TODO: Move this out of rosConnection.js to separate file
         document.getElementById('submit-station-rectangle').addEventListener('click', () => {
             console.log("Submitting station keeping rectangle");
             const latLonPairs = [1, 2, 3, 4].map(i => {
@@ -99,31 +100,11 @@ export class ROSConnection {
                 return { x: lon, y: lat, z: 0.0 };  // ROS Point: x=lon, y=lat
             });
 
-            // Add sail points
-            const sailPoint1 = {
-                x: parseFloat(document.getElementById('sk-sail1-lon').value),
-                y: parseFloat(document.getElementById('sk-sail1-lat').value),
-                z: 0.0
-            };
-            const sailPoint2 = {
-                x: parseFloat(document.getElementById('sk-sail2-lon').value),
-                y: parseFloat(document.getElementById('sk-sail2-lat').value),
-                z: 0.0
-            };
-
-            if (latLonPairs.some(pt => isNaN(pt.x) || isNaN(pt.y)) ||
-                isNaN(sailPoint1.x) || isNaN(sailPoint1.y) ||
-                isNaN(sailPoint2.x) || isNaN(sailPoint2.y)) {
-                alert("Please enter all points with valid latitude and longitude values.");
-                return;
-            }
-
             console.log("Station keeping rectangle points:", latLonPairs);
-            console.log("Sail points:", [sailPoint1, sailPoint2]);
             const request = new ROSLIB.ServiceRequest({
                 mode: "station_keeping",
-                station_rect_points: [...latLonPairs, sailPoint1, sailPoint2],
-                search_center_point: { x: 0.0, y: 0.0, z: 0.0 } // dummy value
+                station_rect_points: [...latLonPairs],
+                search_center_point: { x: 0.0, y: 0.0, z: 0.0 } // dummy value TODO: get rid of this line
             });
 
             this.setModeService.callService(request, (result) => {
