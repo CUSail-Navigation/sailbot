@@ -98,6 +98,16 @@ class StationKeepingNode(Node):
                             self.center.northing,
                             self.center.zone_number,
                             self.center.zone_letter)
+
+        # third buoy is northwest corner
+        # northwest_corner = self.rectangle_corners[2]
+        # waypoint  = UTMPoint(
+        #     northwest_corner.easting + 10,
+        #     northwest_corner.northing - 10,
+        #     northwest_corner.zone_number,
+        #     northwest_corner.zone_letter
+        # )
+
         self.send_waypoints_to_queue([waypoint])
 
     def mode_callback(self, msg):
@@ -110,6 +120,9 @@ class StationKeepingNode(Node):
 
         if self.current_mode == 'station_keeping':
             self.get_logger().info("Station keeping mode activated.")
+        
+        self.timer_5min = Timer(290.0, self.exit_rectangle)
+        self.timer_5min.start()
 
     def reset_station_keeping(self):
         if self.timer_5min:
@@ -126,14 +139,15 @@ class StationKeepingNode(Node):
     def curr_gps_callback(self, msg):
         self.curr_location = LatLongPoint(
             msg.latitude, msg.longitude).to_utm()
-        if self.current_mode == 'station_keeping' and not self.timer_started:
-            if self.is_inside_rectangle(self.curr_location):
-                self.in_rectangle = True
-                self.timer_started = True
-                self.get_logger().info("Entered rectangle. Starting 5 min timer.")
-                # Send the sail points to the waypoint queue
-                self.timer_5min = Timer(300.0, self.exit_rectangle)
-                self.timer_5min.start()
+        # if self.current_mode == 'station_keeping' and not self.timer_started:
+        #     pass
+            # if self.is_inside_rectangle(self.curr_location):
+            #     self.in_rectangle = True
+            #     self.timer_started = True
+            #     self.get_logger().info("Entered rectangle. Starting 5 min timer.")
+            #     # Send the sail points to the waypoint queue
+            #     self.timer_5min = Timer(290.0, self.exit_rectangle)
+            #     self.timer_5min.start()
 
     def wind_callback(self, msg):
         self.wind_angle_deg = msg.data
