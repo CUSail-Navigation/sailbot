@@ -258,6 +258,7 @@ class Algo(Node):
                     self.turn_left = True
 
                 self.sail_state = SailState.TACK
+                self.tack_time_tracker = 0
             elif self.tack_time_tracker > self.tacking_buffer:
                 self.tack_time_tracker = 0
             self.tack_time_tracker += self.timer_period
