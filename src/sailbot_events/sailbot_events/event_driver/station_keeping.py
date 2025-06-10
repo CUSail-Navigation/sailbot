@@ -132,7 +132,7 @@ class StationKeepingNode(Node):
                 self.timer_started = True
                 self.get_logger().info("Entered rectangle. Starting 5 min timer.")
                 # Send the sail points to the waypoint queue
-                self.timer_5min = Timer(300.0, self.exit_rectangle)
+                self.timer_5min = Timer(290.0, self.exit_rectangle)
                 self.timer_5min.start()
 
     def wind_callback(self, msg):
