@@ -27,8 +27,8 @@ sailbot: #Namespace
          hsv_lower: [0, 127, 63]
          hsv_upper: [12, 255, 255] 
          detection_threshold: 100
-         show_frames: true
+         show_frames: false
    
    buoy_search:
       ros__parameters:
-         show_debug_plot: true
+         show_debug_plot: false
