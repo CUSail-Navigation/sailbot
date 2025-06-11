@@ -389,7 +389,7 @@ class BuoySearch(Node):
                 self.estimate_distance_pub.publish(estim_distance_msg)
                 if abs(estim_distance) < 3:
                     self.get_logger().info("BANG BANG")
-                    self.current_mode = 'manual'
+                    # self.current_mode = 'manual'
                     mode_msg = String()
                     mode_msg.data = "controller_app"
                     self.control_mode_pub.publish(mode_msg)

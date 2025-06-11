@@ -217,7 +217,7 @@ export class UIManager {
         const boolElement = document.getElementById("buoy-dist-bool");
 
         if (!isNaN(distance)) {
-            boolElement.textContent = distance <= 2 ? "True" : "False";
+            boolElement.textContent = distance <= 3 ? "True" : "False";
         } else {
             boolElement.textContent = "N/A";
         }
