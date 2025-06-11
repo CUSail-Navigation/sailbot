@@ -6,6 +6,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import NavSatFix
 from geometry_msgs.msg import Vector3
 from std_msgs.msg import Int32
+from std_msgs.msg import String
 from std_msgs.msg import Bool
 from rclpy.task import Future
 from typing import Optional
@@ -108,6 +109,7 @@ class Algo(Node):
     state : SailState = SailState.NORMAL
     current_destination : Optional[UTMPoint] = None
     tacking_point : Optional[UTMPoint] = None
+    current_mode : str = 'manual'
 
     # Algorithm Parameters (angles calculated in degrees in one direction symmetric around the centerline)
     tacking_buffer : int = 30 
@@ -174,10 +176,24 @@ class Algo(Node):
             10)
         
         #Subscription for runtime neutral zone adjustments
-        self.subscription_no_go_zone = self.create_subscription(
+        self.subscription_neutral_zone = self.create_subscription(
             Int32, 
             'neutral_zone',
             self.neutral_zone_callback,
+            10)
+        
+        #Subscription for runtime neutral zone adjustments
+        self.subscription_tacking_buffer = self.create_subscription(
+            Int32, 
+            'tacking_buffer',
+            self.tacking_buffer_callback,
+            10)
+        
+        # Subscription for the mode 
+        self.mode_subscription = self.create_subscription(
+            String,
+            'current_mode',
+            self.mode_callback,
             10)
         
         # Publisher for rudder angle
@@ -466,17 +482,19 @@ class Algo(Node):
             self.get_logger().info(f'Distance to destination: {self.dist_to_dest}')
             # if we have reached our waypoint, pop it off 
             if self.dist_to_dest < 5:
-                self.get_logger().info('=============================== Waypoint popped ===============================')
-                self.pop_waypoint()
-                self.current_destination = None
+                if self.current_mode != 'station_keeping':
+                    self.get_logger().info('=============================== Waypoint popped ===============================')
+                    self.pop_waypoint()
+                    self.current_destination = None
 
     def wind_callback(self, msg):
         """
         Use the wind data from msg to assign value to self.wind_direction
         """
         self.wind_direction = msg.data
-        self.absolute_wind_dir = (self.wind_direction + self.heading_direction) % 360
-        self.get_logger().info(f'Wind Direction: {self.wind_direction}, Absolute Wind Direction: {self.absolute_wind_dir}')
+        if self.heading_direction is not None:
+            self.absolute_wind_dir = (self.wind_direction + self.heading_direction) % 360
+            self.get_logger().info(f'Wind Direction: {self.wind_direction}, Absolute Wind Direction: {self.absolute_wind_dir}')
 
     def heading_direction_callback(self, msg):
         """
@@ -499,7 +517,20 @@ class Algo(Node):
         """
         self.neutral_zone = msg.data
         self.get_logger().info(f'Neutral Zone: {self.neutral_zone}')
-        
+
+    def tacking_buffer_callback(self, msg):
+        """
+        TODO: add a description for this callback
+        """
+        self.tacking_buffer = msg.data
+        self.get_logger().info(f'Tacking Buffer: {self.tacking_buffer}')
+
+    def mode_callback(self, msg):
+        """
+        Callback to update the current mode of the algorithm.
+        """
+        self.current_mode = msg.data      
+
 def main(args=None):
     rclpy.init(args=args)
     main_algo = Algo()
