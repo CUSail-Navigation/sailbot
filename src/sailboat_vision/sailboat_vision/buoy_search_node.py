@@ -7,7 +7,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import NavSatFix
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Vector3
-from std_msgs.msg import String, Int32, Float32
+from std_msgs.msg import String, Int32, Float32, Bool
 from rclpy.task import Future
 from typing import Optional
 
@@ -189,9 +189,12 @@ class BuoySearch(Node):
     curr_dest : Optional[UTMPoint]
     diff : Optional[float]
     dist_to_dest : Optional[float]
+    found_buoy: bool = False
 
     def __init__(self):
         super().__init__('buoy_search')
+
+        
 
         #Subscription for current location
         self.subscription_curr_loc = self.create_subscription(
@@ -232,6 +235,12 @@ class BuoySearch(Node):
         self.estimate_distance_pub = self.create_publisher(
             Float32,
             'buoy_distance',
+            10
+        )
+
+        self.found_buoy_pub = self.create_publisher(
+            Bool,
+            'found_buoy',
             10
         )
 
@@ -409,9 +418,12 @@ class BuoySearch(Node):
 
             self.get_logger().info(f"Estimated buoy position: {estimated_buoy}")
 
-            
 
             # Push the estimated position as a waypoint
+            # Flag we found the buoy
+            self.found_buoy = True
+            self.found_buoy_pub.publish(Bool(data=self.found_buoy))
+
             estimated_buoy_latlon = estimated_buoy.to_latlon()
             self.set_waypoints([[estimated_buoy_latlon.latitude, estimated_buoy_latlon.longitude]])
         else:
