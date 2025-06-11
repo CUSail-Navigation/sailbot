@@ -487,7 +487,7 @@ class Algo(Node):
             self.dist_to_dest = self.current_location.distance_to(self.current_waypoint)
             self.get_logger().info(f'Distance to destination: {self.dist_to_dest}')
             # if we have reached our waypoint, pop it off 
-            if self.dist_to_dest < 3:
+            if self.dist_to_dest < 10:
                 if self.current_mode != 'station_keeping':
                     self.get_logger().info('=============================== Waypoint popped ===============================')
                     self.pop_waypoint()
