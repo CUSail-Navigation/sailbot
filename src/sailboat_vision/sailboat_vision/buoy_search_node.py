@@ -7,7 +7,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import NavSatFix
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Vector3
-from std_msgs.msg import String, Int32
+from std_msgs.msg import String, Int32, Float32
 from rclpy.task import Future
 from typing import Optional
 
@@ -217,7 +217,7 @@ class BuoySearch(Node):
         # Subscription for buoy position
         self.subscription_buoy_pos = self.create_subscription(
             Point,
-            '/buoy_position',
+            'buoy_position',
             self.buoy_position_callback,
             10)
         
@@ -228,6 +228,23 @@ class BuoySearch(Node):
             'current_mode',
             self.mode_callback,
             10)
+
+        self.estimate_distance_pub = self.create_publisher(
+            Float32,
+            'buoy_distance',
+            10
+        )
+
+        self.control_mode_pub = self.create_publisher(
+            String,
+            'control_mode',
+            10
+        )
+
+
+        # Publishers to finish at the buoy
+        self.rudder_pub = self.create_publisher(Int32, 'rudder_angle', 10)
+        self.sail_pub = self.create_publisher(Int32, 'sail', 10)
 
         # Internal state
         self.wind_dir = None
@@ -366,11 +383,33 @@ class BuoySearch(Node):
             estimated_x, estimated_y = self.particle_filter.estimate()
             try:
                 estimated_buoy = UTMPoint(estimated_x, estimated_y, self.curr_loc.zone_number, self.curr_loc.zone_letter)
+                estim_distance = estimated_buoy.distance_to(self.curr_loc)
+                estim_distance_msg = Float32()
+                estim_distance_msg.data = estim_distance
+                self.estimate_distance_pub.publish(estim_distance_msg)
+                if abs(estim_distance) < 3:
+                    self.get_logger().info("BANG BANG")
+                    self.current_mode = 'manual'
+                    mode_msg = String()
+                    mode_msg.data = "controller_app"
+                    self.control_mode_pub.publish(mode_msg)
+                    
+                    sail_out_msg = Int32()
+                    tail_neutral_msg = Int32()
+
+                    sail_out_msg.data = 90
+                    tail_neutral_msg.data = 0
+
+                    self.rudder_pub.publish(tail_neutral_msg)
+                    self.sail_pub.publish(sail_out_msg)
+
             except utm.error.OutOfRangeError: # Catches when between different UTM zones
                 self.get_logger().warn(f"Invalid UTM")
                 return
 
             self.get_logger().info(f"Estimated buoy position: {estimated_buoy}")
+
+            
 
             # Push the estimated position as a waypoint
             estimated_buoy_latlon = estimated_buoy.to_latlon()
