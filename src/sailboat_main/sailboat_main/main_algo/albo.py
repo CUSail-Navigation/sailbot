@@ -495,6 +495,8 @@ class Algo(Node):
             self.dist_to_dest = self.current_location.distance_to(self.current_waypoint)
             self.get_logger().info(f'Distance to destination: {self.dist_to_dest}')
             # if we have reached our waypoint, pop it off 
+            if self.found_buoy:
+                self.get_logger().info('Not popping due to found_buoy = True')
             if self.dist_to_dest < 10:
                 if self.current_mode != 'station_keeping' and self.found_buoy is False:
                     self.get_logger().info('=============================== Waypoint popped ===============================')
@@ -550,6 +552,7 @@ class Algo(Node):
         Callback to update the found buoy status.
         """
         self.found_buoy = msg.data   
+        self.get_logger().info(f'Setting found_buoy: {self.found_buoy}')
         
 def main(args=None):
     rclpy.init(args=args)
