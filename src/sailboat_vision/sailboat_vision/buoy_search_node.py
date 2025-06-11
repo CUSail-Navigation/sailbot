@@ -489,7 +489,7 @@ class BuoySearch(Node):
         """
         if self.current_mode != 'search':
             return
-        expansion_step = 20
+        expansion_step = 45
         max_radius = 100
         direction = 1
 

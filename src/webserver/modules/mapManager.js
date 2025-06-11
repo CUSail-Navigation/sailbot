@@ -101,8 +101,8 @@ export class MapManager {
         const timestamp = Date.now();
         this.sailPlanCoordinates.push({ lat: latitude, lng: longitude, timestamp });
 
-        // Filter out points older than 60 seconds
-        const oneMinuteAgo = Date.now() - 60000;
+        // Filter out points older than 600 seconds
+        const oneMinuteAgo = Date.now() - 600000;
         this.sailPlanCoordinates = this.sailPlanCoordinates.filter(coord => coord.timestamp >= oneMinuteAgo);
 
         // Update the polyline
