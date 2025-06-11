@@ -493,7 +493,7 @@ class BuoySearch(Node):
         max_radius = 100
         direction = 1
 
-        center = LatLongPoint(42.276848, -71.756323).to_utm()
+        center = LatLongPoint(42.27538, -71.75590).to_utm()
         self.search_direction = self.search_direction if self.search_direction is not None else 0
 
         search_pattern = []
