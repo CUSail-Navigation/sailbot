@@ -421,6 +421,7 @@ class BuoySearch(Node):
 
             # Push the estimated position as a waypoint
             # Flag we found the buoy
+            self.get_logger().info(f"Publishing found_buoy")
             self.found_buoy = True
             self.found_buoy_pub.publish(Bool(data=self.found_buoy))
 

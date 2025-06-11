@@ -197,7 +197,7 @@ class Algo(Node):
         
         # Subscription for found buoy 
         self.mode_subscription = self.create_subscription(
-            String,
+            Bool,
             'found_buoy',
             self.found_buoy_callback,
             10)
