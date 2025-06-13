@@ -23,7 +23,7 @@ def generate_launch_description():
       executable='vectornav',
       name='vectornav',
       namespace='sailbot',
-      parameters=[config]
+      parameters=[{'use_fake_data': True}]
    )
 
    teensy_cmd = Node(
@@ -44,8 +44,8 @@ def generate_launch_description():
 
    main_algo_cmd  = Node(
       package='sailboat_main',
-      executable='albo',
-      name='albo',
+      executable='algo',
+      name='algo',
       namespace='sailbot',
       parameters=[config]
    )

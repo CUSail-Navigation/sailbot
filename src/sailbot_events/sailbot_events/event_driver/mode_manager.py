@@ -80,7 +80,7 @@ class ModeManagerNode(Node):
         if mode == "station_keeping":
             self.publish_station_rect()
         elif mode == "search":
-            self.publish_search_center()
+            pass
 
         response.success = True
         response.message = f"Switched to '{mode}' mode and parameters published."

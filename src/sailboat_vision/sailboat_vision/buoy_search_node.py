@@ -7,7 +7,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import NavSatFix
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Vector3
-from std_msgs.msg import String, Int32
+from std_msgs.msg import String, Int32, Float32, Bool
 from rclpy.task import Future
 from typing import Optional
 
@@ -189,9 +189,12 @@ class BuoySearch(Node):
     curr_dest : Optional[UTMPoint]
     diff : Optional[float]
     dist_to_dest : Optional[float]
+    found_buoy: bool = False
 
     def __init__(self):
         super().__init__('buoy_search')
+
+        
 
         #Subscription for current location
         self.subscription_curr_loc = self.create_subscription(
@@ -217,7 +220,7 @@ class BuoySearch(Node):
         # Subscription for buoy position
         self.subscription_buoy_pos = self.create_subscription(
             Point,
-            '/buoy_position',
+            'buoy_position',
             self.buoy_position_callback,
             10)
         
@@ -228,6 +231,29 @@ class BuoySearch(Node):
             'current_mode',
             self.mode_callback,
             10)
+
+        self.estimate_distance_pub = self.create_publisher(
+            Float32,
+            'buoy_distance',
+            10
+        )
+
+        self.found_buoy_pub = self.create_publisher(
+            Bool,
+            'found_buoy',
+            10
+        )
+
+        self.control_mode_pub = self.create_publisher(
+            String,
+            'control_mode',
+            10
+        )
+
+
+        # Publishers to finish at the buoy
+        self.rudder_pub = self.create_publisher(Int32, 'rudder_angle', 10)
+        self.sail_pub = self.create_publisher(Int32, 'sail', 10)
 
         # Internal state
         self.wind_dir = None
@@ -248,8 +274,6 @@ class BuoySearch(Node):
         self.show_debug_plot = False
         if self.show_debug_plot:
             self.setup_debug_plot()
-        
-        self.initialize_search_pattern()
         
         self.get_logger().info('Buoy search algo started successfully')
 
@@ -300,6 +324,7 @@ class BuoySearch(Node):
 
         if self.current_mode == 'search':
             self.get_logger().info("[Buoy search node] Search mode activated.")
+            self.initialize_search_pattern()  # Ensure search pattern is initialized on entering search mode
     
     def reset_search(self):
         """
@@ -367,13 +392,39 @@ class BuoySearch(Node):
             estimated_x, estimated_y = self.particle_filter.estimate()
             try:
                 estimated_buoy = UTMPoint(estimated_x, estimated_y, self.curr_loc.zone_number, self.curr_loc.zone_letter)
+                estim_distance = estimated_buoy.distance_to(self.curr_loc)
+                estim_distance_msg = Float32()
+                estim_distance_msg.data = estim_distance
+                self.estimate_distance_pub.publish(estim_distance_msg)
+                if abs(estim_distance) < 3:
+                    self.get_logger().info("BANG BANG")
+                    # self.current_mode = 'manual'
+                    mode_msg = String()
+                    mode_msg.data = "controller_app"
+                    self.control_mode_pub.publish(mode_msg)
+                    
+                    sail_out_msg = Int32()
+                    tail_neutral_msg = Int32()
+
+                    sail_out_msg.data = 90
+                    tail_neutral_msg.data = 0
+
+                    self.rudder_pub.publish(tail_neutral_msg)
+                    self.sail_pub.publish(sail_out_msg)
+
             except utm.error.OutOfRangeError: # Catches when between different UTM zones
                 self.get_logger().warn(f"Invalid UTM")
                 return
 
             self.get_logger().info(f"Estimated buoy position: {estimated_buoy}")
 
+
             # Push the estimated position as a waypoint
+            # Flag we found the buoy
+            self.get_logger().info(f"Publishing found_buoy")
+            self.found_buoy = True
+            self.found_buoy_pub.publish(Bool(data=self.found_buoy))
+
             estimated_buoy_latlon = estimated_buoy.to_latlon()
             self.set_waypoints([[estimated_buoy_latlon.latitude, estimated_buoy_latlon.longitude]])
         else:
@@ -451,11 +502,11 @@ class BuoySearch(Node):
         """
         if self.current_mode != 'search':
             return
-        expansion_step = 20
+        expansion_step = 45
         max_radius = 100
         direction = 1
 
-        self.center = self.center if self.center is not None else LatLongPoint(42.44415534324632, -76.48367002684182).to_utm()
+        center = LatLongPoint(42.27538, -71.75590).to_utm()
         self.search_direction = self.search_direction if self.search_direction is not None else 0
 
         search_pattern = []
@@ -468,8 +519,8 @@ class BuoySearch(Node):
         
         search_pattern_waypoints = []
         rotation_angle = math.radians(self.search_direction)
-        easting_translation = self.center.easting
-        northing_translation = self.center.northing
+        easting_translation = center.easting
+        northing_translation = center.northing
 
         for x, y in search_pattern:
             easting = x * math.cos(rotation_angle) - y * math.sin(rotation_angle)
@@ -478,7 +529,7 @@ class BuoySearch(Node):
             northing += northing_translation
 
             try:
-                new_waypoint = UTMPoint(easting, northing, self.center.zone_number, self.center.zone_letter).to_latlon()
+                new_waypoint = UTMPoint(easting, northing, center.zone_number, center.zone_letter).to_latlon()
             except utm.error.OutOfRangeError: # Catches when between different UTM zones
                 self.get_logger().warn(f"Invalid UTM")
                 return

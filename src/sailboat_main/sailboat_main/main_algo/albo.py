@@ -110,6 +110,7 @@ class Algo(Node):
     current_destination : Optional[UTMPoint] = None
     tacking_point : Optional[UTMPoint] = None
     current_mode : str = 'manual'
+    found_buoy : bool = False
 
     # Algorithm Parameters (angles calculated in degrees in one direction symmetric around the centerline)
     tacking_buffer : int = 15 
@@ -192,6 +193,13 @@ class Algo(Node):
             String,
             'current_mode',
             self.mode_callback,
+            10)
+        
+        # Subscription for found buoy 
+        self.mode_subscription = self.create_subscription(
+            Bool,
+            'found_buoy',
+            self.found_buoy_callback,
             10)
         
         # Publisher for rudder angle
@@ -487,8 +495,10 @@ class Algo(Node):
             self.dist_to_dest = self.current_location.distance_to(self.current_waypoint)
             self.get_logger().info(f'Distance to destination: {self.dist_to_dest}')
             # if we have reached our waypoint, pop it off 
-            if self.dist_to_dest < 3:
-                if self.current_mode != 'station_keeping':
+            if self.found_buoy:
+                self.get_logger().info('Not popping due to found_buoy = True')
+            if self.dist_to_dest < 10:
+                if self.current_mode != 'station_keeping' and self.found_buoy is False:
                     self.get_logger().info('=============================== Waypoint popped ===============================')
                     self.pop_waypoint()
                     self.current_destination = None
@@ -535,7 +545,14 @@ class Algo(Node):
         """
         Callback to update the current mode of the algorithm.
         """
-        self.current_mode = msg.data    
+        self.current_mode = msg.data   
+
+    def found_buoy_callback(self, msg):
+        """
+        Callback to update the found buoy status.
+        """
+        self.found_buoy = msg.data   
+        self.get_logger().info(f'Setting found_buoy: {self.found_buoy}')
         
 def main(args=None):
     rclpy.init(args=args)

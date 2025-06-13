@@ -45,8 +45,8 @@ class BuoyDetectorNode(Node):
             self.detection_threshold_callback,
             10)
 
-        self.position_publisher = self.create_publisher(Point, '/buoy_position', 10)
-        self.buoy_distance_publisher = self.create_publisher(Float32, '/buoy_distance', 10)
+        self.position_publisher = self.create_publisher(Point, 'buoy_position', 10)
+        # self.buoy_distance_publisher = self.create_publisher(Float32, 'buoy_distance', 10)
 
         self.timer = self.create_timer(self.timer_period, self.process_frame)
 
@@ -94,11 +94,11 @@ class BuoyDetectorNode(Node):
         self.get_logger().info(f'Detected buoy at: ({point_msg.x, point_msg.y, point_msg.z})')
 
         # Calculate distance to buoy
-        buoy_distance = math.sqrt(point_msg.x**2 + point_msg.y**2)
-        buoy_distance_msg = Float32()
-        buoy_distance_msg.data = buoy_distance
-        self.buoy_distance_publisher.publish(buoy_distance_msg)
-        self.get_logger().info(f'Buoy distance: {buoy_distance_msg.data}')
+        # buoy_distance = math.sqrt(point_msg.x**2 + point_msg.y**2)
+        # buoy_distance_msg = Float32()
+        # buoy_distance_msg.data = buoy_distance
+        # self.buoy_distance_publisher.publish(buoy_distance_msg)
+        # self.get_logger().info(f'Buoy distance: {buoy_distance_msg.data}')
 
 
     def update_detector_params(self):

@@ -279,7 +279,7 @@ export class ROSConnection {
         const buoyDistTopic = new ROSLIB.Topic({
             ros: this.ros,
             name: '/sailbot/buoy_distance',
-            messageType: 'std_msgs/Int32',
+            messageType: 'std_msgs/Float32',
             throttle_rate: this.BASE_THROTTLE_RATE,
         });
         buoyDistTopic.subscribe((message) => {
