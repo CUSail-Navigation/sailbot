@@ -4,7 +4,7 @@ from ultralytics import YOLO
 
 class YOLOBuoyDetector:
     def __init__(self, detection_treshold=0.6, show_frames=False):
-        self.model = YOLO("yolo_training/buoy2.pt")
+        self.model = YOLO("buoy2.pt")
         self.detection_treshold = detection_treshold
         self.show_frames = show_frames
     
