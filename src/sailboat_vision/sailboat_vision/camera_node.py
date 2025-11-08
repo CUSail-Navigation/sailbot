@@ -1,4 +1,5 @@
 import cv2
+from datetime import datetime
 import math
 import numpy as np
 import pyrealsense2 as rs
@@ -80,6 +81,11 @@ class BuoyDetectorNode(Node):
 
         # Check color frame for buoy
         color_image = np.asanyarray(color_frame.get_data())
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        file_path = f'images/image_{timestamp}.jpg'
+        cv2.imwrite(file_path, color_image)
+
         buoy_center, _ = self.detector.process_frame(color_image)
         if not buoy_center:
             self.get_logger().info(f'No buoy detected')
