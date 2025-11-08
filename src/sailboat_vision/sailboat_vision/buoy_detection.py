@@ -1,11 +1,45 @@
 import cv2
 import numpy as np
+from ultralytics import YOLO
 
-class BuoyDetectorCV:
-    def __init__(self, hsv_lower=None, hsv_upper=None, detection_threshold=100, show_frames=False):
+class YOLOBuoyDetector:
+    def __init__(self, detection_treshold=0.6, show_frames=False):
+        self.model = YOLO("yolo_training/buoy2.pt")
+        self.detection_treshold = detection_treshold
+        self.show_frames = show_frames
+    
+    def update_parameters(self, detection_threshold=None):
+        if detection_threshold is not None:
+            self.detection_threshold = detection_threshold
+    
+    def center(self, box):
+        x1, y1, x2, y2 = box.xyxy[0]
+        return (int((x1 + x2) / 2), int((y1 + y2) / 2))
+
+    def process_frame(self, frame):
+        max_conf = 0
+        max_conf_box_center = None
+        results = self.model(frame, stream=True, conf=self.detection_threshold)
+        for result in results:
+            for box in result.boxes:
+                box_center = self.center(box)
+                if box.conf > max_conf:
+                    max_conf = box.conf
+                    max_conf_box_center = box_center
+                if self.show_frames:
+                    cv2.rectangle(frame, (int(box.xyxy[0][0]), int(box.xyxy[0][1])),
+                                (int(box.xyxy[0][2]), int(box.xyxy[0][3])), (255, 0, 0), 3)
+                    cv2.putText(frame, f"{result.names[int(box.cls[0])]} {round(float(box.conf), 2)}",
+                                (int(box.xyxy[0][0]), int(box.xyxy[0][1]) - 10),
+                                cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 0), 3)
+                    cv2.circle(frame, box_center, 3, (255, 0, 0), -1)
+        return max_conf_box_center, frame
+
+class OpenCVBuoyDetector:
+    def __init__(self, detection_threshold=100, show_frames=False):
         # Initialize parameters with defaults or provided values
-        self.hsv_lower = np.array(hsv_lower if hsv_lower else [0, 127, 63])
-        self.hsv_upper = np.array(hsv_upper if hsv_upper else [20, 255, 255] )
+        self.hsv_lower = np.array([0, 127, 63])
+        self.hsv_upper = np.array([20, 255, 255])
         self.detection_threshold = detection_threshold
         self.show_frames = show_frames
     

@@ -8,7 +8,7 @@ from geometry_msgs.msg import Point
 from std_msgs.msg import String, Int32, Float32
 from std_msgs.msg import Int32MultiArray
 
-from sailboat_vision.buoy_detection import BuoyDetectorCV
+from sailboat_vision.buoy_detection import YOLOBuoyDetector
 
 class BuoyDetectorNode(Node):
     def __init__(self):
@@ -58,7 +58,7 @@ class BuoyDetectorNode(Node):
         self.pipeline.start(config)
         self.align = rs.align(rs.stream.color)
 
-        self.detector = BuoyDetectorCV(self.hsv_lower, self.hsv_upper, self.detection_threshold, self.show_frames)
+        self.detector = YOLOBuoyDetector(self.detection_threshold, self.show_frames)
         self.current_mode = "manual"  # Default mode
         self.current_mode_sub = self.create_subscription(String,'current_mode',self.mode_callback,10)
 
@@ -103,7 +103,7 @@ class BuoyDetectorNode(Node):
 
     def update_detector_params(self):
         """Update the CV detector parameters dynamically."""
-        self.detector.update_parameters(self.hsv_lower, self.hsv_upper, self.detection_threshold)
+        self.detector.update_parameters(self.detection_threshold)
         self.get_logger().info(f"Updated parameters: HSV Lower: {self.hsv_lower}, HSV Upper: {self.hsv_upper}, Detection Threshold: {self.detection_threshold}")
 
     def destroy_node(self):
