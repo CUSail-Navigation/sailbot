@@ -39,10 +39,10 @@ class BuoyDetector:
     def run(self):
         while True:
             ret, frame = self.cap.read()
-            results = self.detect(frame)
             if not ret:
                 print("Failed to grab frame")
-                break
+                continue
+            results = self.detect(frame)
             self.show(frame, results)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
