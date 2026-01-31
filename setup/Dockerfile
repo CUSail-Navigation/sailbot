@@ -146,3 +146,31 @@ RUN sudo apt update \
 # Set the entry point to run the setup script on container start
 ENTRYPOINT ["/home/ros2_user/setup_ros.sh"]
 
+# Build and install librealsense from source (ARM64)
+RUN apt-get update && apt-get install -y \
+    git \
+    cmake \
+    build-essential \
+    libusb-1.0-0-dev \
+    libglfw3-dev \
+    libgtk-3-dev \
+    libgl1-mesa-dev \
+    libssl-dev \
+    python3-dev \
+    python3-numpy \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN git clone https://github.com/IntelRealSense/librealsense.git /tmp/librealsense \
+    && cd /tmp/librealsense \
+    && mkdir build && cd build \
+    && cmake .. \
+        -DBUILD_PYTHON_BINDINGS=ON \
+        -DPYTHON_EXECUTABLE=/usr/bin/python3 \
+        -DBUILD_EXAMPLES=OFF \
+        -DBUILD_GRAPHICAL_EXAMPLES=OFF \
+        -DFORCE_LIBUVC=ON \
+    && make -j$(nproc) \
+    && make install \
+    && ldconfig \
+    && rm -rf /tmp/librealsense
