@@ -4,6 +4,7 @@
   <name>cpp_files</name>
   <version>0.0.0</version>
   <description>C++ sailing algorithm (main_algo port)</description>
+  <maintainer email="nl545@cornell.edu">nicole luor</maintainer>
   <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
