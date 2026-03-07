@@ -3,8 +3,8 @@
 <package format="3">
   <name>cpp_files</name>
   <version>0.0.0</version>
-  <description>Main Algorithm in C++</description>
-  <maintainer email="kainizhner@gmail.com">Kai Nizhner</maintainer>
+  <description>C++ sailing algorithm (main_algo port)</description>
+  <maintainer email="nl545@cornell.edu">nicole luor</maintainer>
   <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
