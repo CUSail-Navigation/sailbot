@@ -19,6 +19,69 @@ function getRosUrlFromQuery() {
     return 'ws://localhost:9090';
 }
 
+function isDemoMode() {
+    return new URLSearchParams(window.location.search).get('demo') === '1';
+}
+
+/** Fake data for testing without ROS. Run with viewer.html?demo=1 */
+function startDemoMode() {
+    const baseLat = 42.276848;
+    const baseLon = -71.756323;
+    let t = 0;
+    const set = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = value;
+    };
+
+    const tick = () => {
+        t += 1;
+        const lat = baseLat + 0.0001 * Math.sin(t * 0.05);
+        const lon = baseLon + 0.0001 * Math.cos(t * 0.03);
+        const heading = (45 + t * 2) % 360;
+
+        updateSailboatPosition(lat, lon, heading);
+        updateCurrentDestination(baseLat + 0.0003, baseLon + 0.0002);
+
+        set('event-mode-value', 'waypoint_following');
+        set('control-mode-value', 'Algo');
+        set('sail-value', String(35 + (t % 15)));
+        set('rudder-angle-value', String(-5 + (t % 10)));
+        set('algo-rudder-value', String(-3 + (t % 6)));
+        set('algo-sail-value', String(40 + (t % 10)));
+        set('radio-rudder-value', '0');
+        set('radio-sail-value', '0');
+        set('wind-angle-value', String(120 + (t % 30)));
+        set('heading-value', heading.toFixed(2));
+        set('latitude-value', lat.toFixed(6));
+        set('longitude-value', lon.toFixed(6));
+        set('actual-sail-angle-value', String(34 + (t % 8)));
+        set('actual-rudder-angle-value', String(-4 + (t % 8)));
+        set('dropped-packets-value', String(t % 3));
+        set('tacking-value', t % 10 > 7 ? 'true' : 'false');
+        set('heading-dir-value', t % 2 ? 'port' : 'starboard');
+        set('diff-value', String((t * 1.5) % 20));
+        set('curr-dest-value', `${(baseLat + 0.0003).toFixed(6)}, ${(baseLon + 0.0002).toFixed(6)}`);
+        set('dist-value', String((15 - (t % 10)).toFixed(1)));
+        set('no-go-zone-value', '45');
+        set('neutral-zone-value', '15');
+        set('buoy-dist-value', String(5 + (t % 8)));
+        set('buoy-dist-bool', (t % 8) <= 2 ? 'True' : 'False');
+    };
+
+    tick();
+    setInterval(tick, 1000);
+    console.log('Demo mode: fake data updating every 1s (no ROS connection).');
+
+    const header = document.querySelector('.viewer-header h1');
+    if (header) {
+        const badge = document.createElement('span');
+        badge.className = 'view-only-badge';
+        badge.style.color = '#0a0';
+        badge.textContent = ' — Demo mode (fake data)';
+        header.appendChild(badge);
+    }
+}
+
 function updateSailboatPosition(latitude, longitude, heading = null) {
     const sailboatLocation = { lat: latitude, lng: longitude };
 
@@ -140,6 +203,7 @@ window.initMap = function () {
     rosUrlInput.value = getRosUrlFromQuery();
 
     document.getElementById('connect-to-ros').addEventListener('click', () => {
+        if (isDemoMode()) return;
         const url = rosUrlInput.value.trim();
         if (url) {
             rosConnection.connectToROS(url);
@@ -150,4 +214,8 @@ window.initMap = function () {
     rosUrlInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') document.getElementById('connect-to-ros').click();
     });
+
+    if (isDemoMode()) {
+        startDemoMode();
+    }
 };
