@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sailbot Dashboard (View Only)</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
+</head>
+
+<body>
+    <div class="main-container">
+        <div class="left-column">
+            <div class="map-container">
+                <div class="map-content">
+                    <div id="map"></div>
+                    <div class="mouse-position">
+                        <div id="mouse-pos">Mouse position</div>
+                    </div>
+                </div>
+                <div class="waypoint-list">
+                    <span class="status-label">Waypoints:</span>
+                    <span class="status-value" id="waypoint-list"></span>
+                </div>
+            </div>
+        </div>
+        <div class="right-column">
+            <div class="table-container viewer-header">
+                <h1>Sailbot Dashboard <span class="view-only-badge">View only</span></h1>
+            </div>
+            <div class="table-container">
+                <div class="table-heading" onclick="toggleSection(this)">
+                    <h1>Connect to ROS <span class="toggle-icon">−</span></h1>
+                </div>
+                <div class="collapsible-section">
+                    <div class="table">
+                        <div class="status-row">
+                            <span class="status-label">ROS URL:</span>
+                            <div class="input-group">
+                                <input type="url" id="ros-url" name="ros-url" inputmode="url"
+                                    placeholder="e.g. ws://localhost:9090" required>
+                            </div>
+                        </div>
+                        <div class="button-group">
+                            <button type="button" id="connect-to-ros">Connect</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-container">
+                <div class="table-heading" onclick="toggleSection(this)">
+                    <h1>Sailbot Status Dashboard <span class="toggle-icon">+</span></h1>
+                </div>
+                <div class="collapsible-section hidden">
+                    <div class="table status">
+                        <div class="status-row">
+                            <span class="status-label">Event Mode:</span>
+                            <span class="status-value" id="event-mode-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Control Mode:</span>
+                            <span class="status-value" id="control-mode-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Sail Angle:</span>
+                            <span class="status-value" id="sail-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Rudder Angle:</span>
+                            <span class="status-value" id="rudder-angle-value">N/A</span>
+                        </div>
+                        <div class="status-row algo-mode">
+                            <span class="status-label">Algo Rudder:</span>
+                            <span class="status-value" id="algo-rudder-value">N/A</span>
+                        </div>
+                        <div class="status-row algo-mode">
+                            <span class="status-label">Algo Sail:</span>
+                            <span class="status-value" id="algo-sail-value">N/A</span>
+                        </div>
+                        <div class="status-row rc-mode">
+                            <span class="status-label">Radio Rudder:</span>
+                            <span class="status-value" id="radio-rudder-value">N/A</span>
+                        </div>
+                        <div class="status-row rc-mode">
+                            <span class="status-label">Radio Sail:</span>
+                            <span class="status-value" id="radio-sail-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Wind Angle:</span>
+                            <span class="status-value" id="wind-angle-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Heading Angle:</span>
+                            <span class="status-value" id="heading-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Sailboat Latitude:</span>
+                            <span class="status-value" id="latitude-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Sailboat Longitude:</span>
+                            <span class="status-value" id="longitude-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Actual Sail Angle:</span>
+                            <span class="status-value" id="actual-sail-angle-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Actual Rudder Angle:</span>
+                            <span class="status-value" id="actual-rudder-angle-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Dropped Packets:</span>
+                            <span class="status-value" id="dropped-packets-value">N/A</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-container">
+                <div class="table-heading" onclick="toggleSection(this)">
+                    <h1>Algo Debugger <span class="toggle-icon">+</span></h1>
+                </div>
+                <div class="collapsible-section hidden">
+                    <div class="status table">
+                        <div class="status-row">
+                            <span class="status-label">Tacking:</span>
+                            <span class="status-value" id="tacking-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Heading Direction:</span>
+                            <span class="status-value" id="heading-dir-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Heading Difference:</span>
+                            <span class="status-value" id="diff-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Current Destination:</span>
+                            <span class="status-value" id="curr-dest-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Distance to Destination:</span>
+                            <span class="status-value" id="dist-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">No-Go Zone:</span>
+                            <span class="status-value" id="no-go-zone-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Neutral Zone:</span>
+                            <span class="status-value" id="neutral-zone-value">N/A</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-container">
+                <div class="table-heading" onclick="toggleSection(this)">
+                    <h1>Computer Vision <span class="toggle-icon">+</span></h1>
+                </div>
+                <div class="collapsible-section hidden">
+                    <div class="table">
+                        <div class="status">
+                            <div class="status-row">
+                                <span class="status-label">Buoy Distance:</span>
+                                <span class="status-value" id="buoy-dist-value">N/A</span>
+                            </div>
+                        </div>
+                        <div class="status">
+                            <div class="status-row">
+                                <span class="status-label">Buoy Bool:</span>
+                                <span class="status-value" id="buoy-dist-bool">N/A</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="viewerMain.js"></script>
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAxFCeNbATdtAuq9AlVC5iuCAiDf3E2clA&callback=window.initMap">
+    </script>
+</body>
+
+</html>

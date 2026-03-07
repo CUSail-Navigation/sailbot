@@ -1,6 +1,6 @@
 // modules/waypointManager.js - Waypoint management
 export class WaypointManager {
-    constructor(map) {
+    constructor(map, options = {}) {
         this.map = map;
         this.waypoints = [];
         this.waypointMarkers = {};
@@ -9,8 +9,11 @@ export class WaypointManager {
         this.draggedIndex = null;
         this.draggedElement = null;
         this.waypointService = null; // Will be set by ROSConnection
-        
-        this.setupEventListeners();
+        this.readOnly = !!options.readOnly;
+
+        if (!this.readOnly) {
+            this.setupEventListeners();
+        }
         this.initializeWaypointPath();
     }
 
@@ -19,8 +22,9 @@ export class WaypointManager {
     }
 
     setupEventListeners() {
-        // Manual waypoint submission
-        document.getElementById('submit-waypoint').addEventListener('click', () => {
+        const submitBtn = document.getElementById('submit-waypoint');
+        if (!submitBtn) return;
+        submitBtn.addEventListener('click', () => {
             const latitude = document.getElementById('waypoint-latitude').value;
             const longitude = document.getElementById('waypoint-longitude').value;
 
@@ -140,12 +144,14 @@ export class WaypointManager {
                         title: `Waypoint (${lat}, ${lng})`,
                     });
 
-                    marker.addListener("click", () => {
-                        const index = this.waypoints.indexOf(key);
-                        if (index !== -1) {
-                            this.deleteWaypoint(index);
-                        }
-                    });
+                    if (!this.readOnly) {
+                        marker.addListener("click", () => {
+                            const index = this.waypoints.indexOf(key);
+                            if (index !== -1) {
+                                this.deleteWaypoint(index);
+                            }
+                        });
+                    }
 
                     this.waypointMarkers[key] = marker;
                 });
@@ -162,13 +168,16 @@ export class WaypointManager {
 
     displayWaypoints() {
         const waypointListElement = document.getElementById('waypoint-list');
+        if (!waypointListElement) return;
         waypointListElement.innerHTML = '';
 
         this.waypoints.forEach((waypoint, index) => {
             const waypointElement = document.createElement('div');
             waypointElement.classList.add('waypoint-item');
-            waypointElement.setAttribute('draggable', true);
-            waypointElement.setAttribute('data-index', index);
+            if (!this.readOnly) {
+                waypointElement.setAttribute('draggable', true);
+                waypointElement.setAttribute('data-index', index);
+            }
 
             const waypointText = document.createElement('div');
             waypointText.classList.add('waypoint-coord');
@@ -188,19 +197,20 @@ export class WaypointManager {
             waypointText.appendChild(lngSpan);
             waypointElement.appendChild(waypointText);
 
-            const deleteButton = document.createElement('button');
-            deleteButton.textContent = 'Delete';
-            deleteButton.classList.add('delete-button');
-            deleteButton.addEventListener('click', () => {
-                this.deleteWaypoint(index);
-            });
-            waypointElement.appendChild(deleteButton);
+            if (!this.readOnly) {
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.classList.add('delete-button');
+                deleteButton.addEventListener('click', () => {
+                    this.deleteWaypoint(index);
+                });
+                waypointElement.appendChild(deleteButton);
 
-            // Drag and drop handlers
-            waypointElement.addEventListener('dragstart', (e) => this.handleDragStart(e));
-            waypointElement.addEventListener('dragover', (e) => this.handleDragOver(e));
-            waypointElement.addEventListener('drop', (e) => this.handleDrop(e));
-            waypointElement.addEventListener('dragend', (e) => this.handleDragEnd(e));
+                waypointElement.addEventListener('dragstart', (e) => this.handleDragStart(e));
+                waypointElement.addEventListener('dragover', (e) => this.handleDragOver(e));
+                waypointElement.addEventListener('drop', (e) => this.handleDrop(e));
+                waypointElement.addEventListener('dragend', (e) => this.handleDragEnd(e));
+            }
 
             waypointListElement.appendChild(waypointElement);
         });
