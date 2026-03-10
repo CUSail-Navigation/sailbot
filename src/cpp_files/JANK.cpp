@@ -1,13 +1,16 @@
+// Standard imports.
 #include <string>
 #include <sstream>
 #include <optional>
 #include <cmath>
-#include <rclcpp/rclcpp.hpp> // Main ROS imports; the others are below here.
+// ROS imports.
+#include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
 #include <std_msgs/msg/int32.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <std_msgs/msg/bool.hpp>
+// Custom messages.
 //#include "sailboat_interface/msg/algo_debug.hpp" //todo this is giving me errors
 
 class LatLongPoint;
