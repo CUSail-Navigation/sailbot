@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.22.1)
-project(jank_algo)
-
+project(cpp_files)
 set(CMAKE_CXX_STANDARD 20)
 
 # Find the ROS 2 core packages.
@@ -10,11 +9,12 @@ find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 
-add_executable(jank_algo
+add_executable(cpp_files
         JANK.cpp
 )
 
-ament_target_dependencies(jank_algo
+# Find the ROS 2 core packages part 2.
+ament_target_dependencies(cpp_files
         rclcpp
         std_msgs
         geometry_msgs
@@ -22,14 +22,14 @@ ament_target_dependencies(jank_algo
 )
 
 # Link the ROS 2 libraries to the executable.
-target_link_libraries(jank_algo
+target_link_libraries(cpp_files
     rclcpp
     std_msgs
     geometry_msgs
     sensor_msgs
 )
 
-install(TARGETS jank_algo
+install(TARGETS cpp_files
   DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
