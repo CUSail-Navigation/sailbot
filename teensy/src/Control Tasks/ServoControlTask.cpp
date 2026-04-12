@@ -61,7 +61,7 @@ uint32_t ServoControlTask::sail_to_pwm(uint8_t angle) {
     float mainsheet_len = sqrtf( 2 * b * b * (1 - cosf(angle * 0.017453)) ); // 0.017453 = pi/180.
 
     // Final PWM = (PWM_per_turn * num_turns + base_PWM) where num_turns = mainsheet_len / servo_wheel_circumference.
-    return (uint32_t) ( 229.3f * (mainsheet_len / 2.05f) + 600 );                                                       //todo consider adding some offsets. consider adding constants to file
+    return (uint32_t) ( 229.3f * (mainsheet_len / 12.927f) + 600 );                                                     //todo consider adding some offsets. consider adding constants to file
 }
 
 void ServoControlTask::actuate_servo(Servo &servo, uint32_t pwm) {
