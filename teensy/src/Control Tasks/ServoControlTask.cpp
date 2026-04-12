@@ -23,7 +23,7 @@ void ServoControlTask::execute() {
 
         // Update sfr values based on incoming serial data if checks pass.
         if (sail_angle >= constants::servo::MAINSAIL_MIN_ANGLE && sail_angle <= constants::servo::MAINSAIL_MAX_ANGLE) {
-            sfr::servo::sail_angle = sail_angle;
+            sfr::servo::sail_angle = sail_angle;                                                                        //todo rename these too? --> fix up sfr.cpp?
             sfr::servo::sail_pwm = sail_to_pwm(sail_angle);
 
             actuate_servo(mainsail_servo, sfr::servo::sail_pwm);
@@ -56,7 +56,7 @@ uint32_t ServoControlTask::rudder_to_pwm(uint8_t angle) {
  */
 uint32_t ServoControlTask::mainsail_to_pwm(uint8_t angle) {
     // Use the law of cosines (get length of mainsheet relative to "all-in").
-    // In this case, we have c = sqrt(b^2 + b^2 - 2*b*b*cos(angle)) where b is the length of boom.
+    // In this case, we have c = sqrt(b^2 + b^2 - 2*b*b*cos(angle)) where b is the length of boom (cm).
     uint8_t b = 1;                                                                                                      //todo find real value
     float mainsheet_len = sqrtf( 2 * b * b * (1 - cosf(angle * 0.017453)) ); // 0.017453 = pi/180.
 
@@ -83,6 +83,7 @@ uint32_t jib2_to_pwm(uint8_t angle) {
     return 0;
 }
 
+/** Send \code pwm\endcode to \code servo\endcode, thereby changing its angle. */
 void ServoControlTask::actuate_servo(Servo &servo, uint32_t pwm) {
     servo.write(pwm);
 }
