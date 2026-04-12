@@ -24,7 +24,7 @@ void ServoControlTask::execute() {
         // Update sfr values based on incoming serial data if checks pass.
         if (sail_angle >= constants::servo::MAINSAIL_MIN_ANGLE && sail_angle <= constants::servo::MAINSAIL_MAX_ANGLE) {
             sfr::servo::sail_angle = sail_angle;                                                                        //todo rename these too? --> fix up sfr.cpp?
-            sfr::servo::sail_pwm = sail_to_pwm(sail_angle);
+            sfr::servo::sail_pwm = mainsail_to_pwm(sail_angle);
 
             actuate_servo(mainsail_servo, sfr::servo::sail_pwm);
         }
