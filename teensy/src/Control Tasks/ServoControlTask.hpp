@@ -1,11 +1,9 @@
 #pragma once
 #include <Servo.h>
-
 #include "constants.hpp"
 #include "sfr.hpp"
 
-class ServoControlTask
-{
+class ServoControlTask {
 public:
     ServoControlTask();
     void execute();
@@ -19,6 +17,4 @@ private:
 
     Servo sail_servo;
     Servo rudder_servo;
-
-    
 };
