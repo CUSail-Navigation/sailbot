@@ -8,7 +8,7 @@
  */
 ServoControlTask::ServoControlTask() {
     sail_servo.attach(constants::servo::SAIL_PIN, constants::servo::SAIL_MIN_PULSE, constants::servo::SAIL_MAX_PULSE);
-    rudder_servo.attach(constants::servo::RUDDER_PIN, constants::servo::RUDDER_MIN_PULSE, constants::servo::RUDDER_MID_PULSE, constants::servo::RUDDER_MAX_PULSE); //todo what does this do? but since I added the last 3 constants I put them here
+    rudder_servo.attach(constants::servo::RUDDER_PIN, constants::servo::RUDDER_MIN_PULSE, constants::servo::RUDDER_MAX_PULSE);
 
     // (2025-2026) Pre-set the sail to "all-in", rudder to center.
     actuate_servo(sail_servo, constants::servo::SAIL_MIN_PULSE);
@@ -30,7 +30,7 @@ void ServoControlTask::execute() {
         }
         if (rudder_angle >= constants::servo::RUDDER_MIN_ANGLE && rudder_angle <= constants::servo::RUDDER_MAX_ANGLE) {
             sfr::servo::rudder_angle = rudder_angle;
-            sfr::servo::rudder_pwm = tail_to_pwm(rudder_angle);
+            sfr::servo::rudder_pwm = rudder_to_pwm(rudder_angle);
 
             actuate_servo(rudder_servo, sfr::servo::rudder_pwm);
         }
@@ -44,8 +44,9 @@ void ServoControlTask::execute() {
  * @param angle the goal angle to set the rudder to.
  * @return the PWM to actuate the servo to.
  */
-uint32_t ServoControlTask::tail_to_pwm(uint8_t angle) { //todo why is this called tail_to_pwm? --> change to rudder_to_pwm?
-    return map(angle, constants::servo::RUDDER_MIN_ANGLE, constants::servo::RUDDER_MAX_ANGLE, 850, 2150);
+uint32_t ServoControlTask::rudder_to_pwm(uint8_t angle) {
+    return map(angle, constants::servo::RUDDER_MIN_ANGLE, constants::servo::RUDDER_MAX_ANGLE,
+               constants::servo::RUDDER_MIN_PULSE, constants::servo::RUDDER_MAX_PULSE);
 }
 
 /** Maps a goal sail angle to a servo PWM.
