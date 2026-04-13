@@ -1,20 +1,16 @@
 #include "sfr.hpp"
 
-namespace sfr
-{
-    namespace anemometer
-    {
+namespace sfr {
+    namespace anemometer {
         uint16_t wind_angle = 0;
     }
-    namespace servo
-    {
-        uint8_t sail_angle = 0;
+    namespace servo {
+        uint8_t mainsail_angle = 0;
         uint8_t rudder_angle = 0;
-        uint32_t sail_pwm = 0;   // FIXME: is this a PWM value? set to whatever corresponds to angle of 0
-        uint32_t rudder_pwm = 0; // FIXME: is this a PWM value? set to whatever corresponds to angle of 0
+        uint32_t mainsail_pwm = 0;  // FIXME: is this a PWM value? set to whatever corresponds to angle of 0    //todo should we rope the constants into here?
+        uint32_t rudder_pwm = 0;    // FIXME: is this a PWM value? set to whatever corresponds to angle of 0
     }
-    namespace serial
-    {
+    namespace serial {
         bool update_servos = false;
 
         uint8_t dropped_packets = 0;

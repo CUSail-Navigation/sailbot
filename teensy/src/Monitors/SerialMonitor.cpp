@@ -23,7 +23,7 @@ void SerialMonitor::execute()
             buffer_index = 0;
             packet_started = false;
             sfr::serial::update_servos = true;
-            sfr::servo::sail_angle = sfr::serial::buffer[0];
+            sfr::servo::mainsail_angle = sfr::serial::buffer[0];
             sfr::servo::rudder_angle = sfr::serial::buffer[1];
         }
         else if (packet_started)

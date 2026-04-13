@@ -18,15 +18,16 @@ ServoControlTask::ServoControlTask() {
 void ServoControlTask::execute() {
     // Check if we have new serial data to update the servos.
     if (sfr::serial::update_servos) {
-        uint8_t sail_angle = sfr::serial::buffer[0];
+        uint8_t mainsail_angle = sfr::serial::buffer[0];
         uint8_t rudder_angle = sfr::serial::buffer[1];
 
         // Update sfr values based on incoming serial data if checks pass.
-        if (sail_angle >= constants::servo::MAINSAIL_MIN_ANGLE && sail_angle <= constants::servo::MAINSAIL_MAX_ANGLE) {
-            sfr::servo::sail_angle = sail_angle;                                                                        //todo rename these too? --> fix up sfr.cpp?
-            sfr::servo::sail_pwm = mainsail_to_pwm(sail_angle);
+        if (mainsail_angle >= constants::servo::MAINSAIL_MIN_ANGLE &&
+            mainsail_angle <= constants::servo::MAINSAIL_MAX_ANGLE) {
+            sfr::servo::mainsail_angle = mainsail_angle;
+            sfr::servo::mainsail_pwm = mainsail_to_pwm(mainsail_angle);
 
-            actuate_servo(mainsail_servo, sfr::servo::sail_pwm);
+            actuate_servo(mainsail_servo, sfr::servo::mainsail_pwm);
         }
         if (rudder_angle >= constants::servo::RUDDER_MIN_ANGLE && rudder_angle <= constants::servo::RUDDER_MAX_ANGLE) {
             sfr::servo::rudder_angle = rudder_angle;
