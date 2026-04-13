@@ -1,10 +1,8 @@
 #pragma once
-
 #include "sfr.hpp"
 #include "constants.hpp"
 
-class SerialMonitor
-{
+class SerialMonitor {
 public:
     SerialMonitor();
     void execute();

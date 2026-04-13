@@ -1,7 +1,7 @@
 #include "ServoControlTask.hpp"
 
 /**
- *  Construct a ServoControlTask and initialize all servos to default values.
+ *  Construct a \code ServoControlTask\endcode and initialize all servos to default values.
  */
 ServoControlTask::ServoControlTask() {
     mainsail_servo.attach(constants::servo::MAINSAIL_PIN, constants::servo::MAINSAIL_MIN_PULSE, constants::servo::MAINSAIL_MAX_PULSE);
@@ -22,20 +22,18 @@ void ServoControlTask::execute() {
     if (sfr::serial::update_servos) {
         uint8_t mainsail_angle = sfr::serial::buffer[0];
         uint8_t rudder_angle = sfr::serial::buffer[1];
-        //TODO get values for jib_port_angle and jib_stb_angle
+        //TODO get values for jib_port_angle and jib_stb_angle ==> this involves changing the buffer and more
 
         // Update sfr values based on incoming serial data if checks pass.
         if (mainsail_angle >= constants::servo::MAINSAIL_MIN_ANGLE &&
             mainsail_angle <= constants::servo::MAINSAIL_MAX_ANGLE) {
             sfr::servo::mainsail_angle = mainsail_angle;
             sfr::servo::mainsail_pwm = mainsail_to_pwm(mainsail_angle);
-
             actuate_servo(mainsail_servo, sfr::servo::mainsail_pwm);
         }
         if (rudder_angle >= constants::servo::RUDDER_MIN_ANGLE && rudder_angle <= constants::servo::RUDDER_MAX_ANGLE) {
             sfr::servo::rudder_angle = rudder_angle;
             sfr::servo::rudder_pwm = rudder_to_pwm(rudder_angle);
-
             actuate_servo(rudder_servo, sfr::servo::rudder_pwm);
         }
         //TODO update sfr values for jib_port_servo and jib_stb_servo.
@@ -57,7 +55,7 @@ uint32_t ServoControlTask::rudder_to_pwm(uint8_t angle) {
 
 /** Maps a goal mainsail angle to a \code mainsail_servo\endcode PWM.
  *
- * @param angle the goal angle to set the sail to.
+ * @param angle the goal angle to set the mainsail to.
  * @return the PWM to actuate \code mainsail_servo\endcode to.
  */
 uint32_t ServoControlTask::mainsail_to_pwm(uint8_t angle) {
@@ -88,7 +86,7 @@ uint32_t ServoControlTask::jib_stb_to_pwm(uint8_t angle) {
     return 0; //TODO
 }
 
-/** Send \code pwm\endcode to \code servo\endcode, thereby changing its angle. */
+/** Send \code pwm\endcode to \code servo\endcode, thereby changing \code servo\endcode 's angle. */
 void ServoControlTask::actuate_servo(Servo &servo, uint32_t pwm) {
     servo.write(pwm);
 }
