@@ -1,14 +1,11 @@
 #pragma once
-
 #include "Monitors/AnemometerMonitor.hpp"
 #include "Monitors/SerialMonitor.hpp"
 #include "Control Tasks/ServoControlTask.hpp"
 #include "Control Tasks/SerialControlTask.hpp"
-
 #include "sfr.hpp"
 
-class MainControlLoop
-{
+class MainControlLoop {
 public:
     MainControlLoop();
     void execute();

@@ -2,11 +2,10 @@
 
 MainControlLoop mcl;
 
-void setup()
-{
+void setup() {
   Serial.begin(constants::serial::BAUD_RATE);
 }
-void loop()
-{
+
+void loop() {
   mcl.execute();
 }

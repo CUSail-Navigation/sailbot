@@ -16,9 +16,8 @@ namespace constants {
 
         constexpr uint8_t RUDDER_MIN_ANGLE = 0;
         constexpr uint8_t RUDDER_MAX_ANGLE = 130;       // (2025-2026) 0-130 range = -65 to +65 degrees.
-        // (2025-2026) Rudder servo pulse widths (µs) for attach(), mapping, and writes. This is the
-        // range that corresponds to full rudder travel on our hull linkage—not the generic 600-2400 
-        // span for the servo class.
+        // (2025-2026) Rudder servo pulse widths (µs) for attach(), mapping, and writes. This is the range that
+        // corresponds to full rudder travel on our hull linkage—not the generic 600-2400 span for the servo class.
         constexpr uint32_t RUDDER_MIN_PULSE = 850;
         constexpr uint32_t RUDDER_MAX_PULSE = 2150;
         constexpr uint32_t RUDDER_MID_PULSE = (RUDDER_MIN_PULSE + RUDDER_MAX_PULSE) / 2; // Amidships.
