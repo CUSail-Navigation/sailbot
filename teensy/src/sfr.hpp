@@ -8,10 +8,15 @@ namespace sfr {
         extern uint16_t wind_angle;
     }
     namespace servo {
-        extern uint8_t mainsail_angle;
         extern uint8_t rudder_angle;
-        extern uint32_t mainsail_pwm;
+        extern uint8_t mainsail_angle;
+        extern uint8_t jib_port_angle;
+        extern uint8_t jib_stb_angle;
+
         extern uint32_t rudder_pwm;
+        extern uint32_t mainsail_pwm;
+        extern uint32_t jib_port_pwm;
+        extern uint32_t jib_stb_pwm;
     }
     namespace serial {
         extern bool update_servos;

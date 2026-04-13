@@ -6,10 +6,12 @@
 ServoControlTask::ServoControlTask() {
     mainsail_servo.attach(constants::servo::MAINSAIL_PIN, constants::servo::MAINSAIL_MIN_PULSE, constants::servo::MAINSAIL_MAX_PULSE);
     rudder_servo.attach(constants::servo::RUDDER_PIN, constants::servo::RUDDER_MIN_PULSE, constants::servo::RUDDER_MAX_PULSE);
+    //TODO attach jib_port_servo and jib_stb_servo
 
-    // (2025-2026) Pre-set the sail to "all-in", and rudder to center.
+    // (2025-2026) Pre-set the mainsail to "all-in", and rudder to center.
     actuate_servo(mainsail_servo, constants::servo::MAINSAIL_MIN_PULSE);
     actuate_servo(rudder_servo, constants::servo::RUDDER_MID_PULSE);
+    //TODO actualize jib_port_servo and jib_stb_servo
 }
 
 /**
@@ -20,6 +22,7 @@ void ServoControlTask::execute() {
     if (sfr::serial::update_servos) {
         uint8_t mainsail_angle = sfr::serial::buffer[0];
         uint8_t rudder_angle = sfr::serial::buffer[1];
+        //TODO get values for jib_port_angle and jib_stb_angle
 
         // Update sfr values based on incoming serial data if checks pass.
         if (mainsail_angle >= constants::servo::MAINSAIL_MIN_ANGLE &&
@@ -35,6 +38,8 @@ void ServoControlTask::execute() {
 
             actuate_servo(rudder_servo, sfr::servo::rudder_pwm);
         }
+        //TODO update sfr values for jib_port_servo and jib_stb_servo.
+        //TODO note that these are linked, so the logic should be linked too. Only one should be "working" at a time.
 
         sfr::serial::update_servos = false; // Reset flag for the next update.
     }
@@ -58,30 +63,29 @@ uint32_t ServoControlTask::rudder_to_pwm(uint8_t angle) {
 uint32_t ServoControlTask::mainsail_to_pwm(uint8_t angle) {
     // Use the law of cosines (get length of mainsheet relative to "all-in").
     // In this case, we have c = sqrt(b^2 + b^2 - 2*b*b*cos(angle)) where b is the length of boom (cm).
-    uint8_t b = 1;                                                                                                      //todo find real value
+    uint8_t b = 1;                                                                                                      //TODO find real value
     float mainsheet_len = sqrtf( 2 * b * b * (1 - cosf(angle * 0.017453)) ); // 0.017453 = pi/180.
 
     // Final PWM = (PWM_per_turn * num_turns + base_PWM) where num_turns = mainsheet_len / servo_wheel_circumference.
-    return (uint32_t) ( 229.3f * (mainsheet_len / 12.927f) + constants::servo::MAINSAIL_MIN_PULSE );                    //todo consider adding some offsets + consider adding constants to file
+    return (uint32_t) ( 229.3f * (mainsheet_len / 12.927f) + constants::servo::MAINSAIL_MIN_PULSE );                    //TODO consider adding some offsets + consider adding constants to file
 }
 
-//TODO: for both jib servos: must initialize in ServoControlTask(), add update logic to in execute(), and add constants for in constants.hpp.
-/** Maps a goal sail angle for the jib, on the port side, to a \code jib_servo1\endcode PWM.
+/** Maps a goal sail angle for the jib, on the port side, to a \code jib_port_servo\endcode PWM.
  *
- * @param angle the goal angle to set the jib to on the PORT side of the boat.
- * @return the PWM to actuate \code jib_servo1\endcode to.
+ * @param angle the goal angle to set the jib to on the port side of the boat.
+ * @return the PWM to actuate \code jib_port_servo\endcode to.
  */
-uint32_t jib1_to_pwm(uint8_t angle) {
-    return 0;
+uint32_t ServoControlTask::jib_port_to_pwm(uint8_t angle) {
+    return 0; //TODO
 }
 
-/** Maps a goal sail angle for the jib, on the starboard side, to a \code jib_servo2\endcode PWM.
+/** Maps a goal sail angle for the jib, on the starboard side, to a \code jib_stb_servo\endcode PWM.
  *
- * @param angle the goal angle to set the jib to on the PORT side of the boat.
- * @return the PWM to actuate \code jib_servo2\endcode to.
+ * @param angle the goal angle to set the jib to on the starboard side of the boat.
+ * @return the PWM to actuate \code jib_stb_servo\endcode to.
  */
-uint32_t jib2_to_pwm(uint8_t angle) {
-    return 0;
+uint32_t ServoControlTask::jib_stb_to_pwm(uint8_t angle) {
+    return 0; //TODO
 }
 
 /** Send \code pwm\endcode to \code servo\endcode, thereby changing its angle. */
