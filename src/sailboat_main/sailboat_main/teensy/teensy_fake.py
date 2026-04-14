@@ -14,6 +14,8 @@ class TeensyFake:
         self.wind_step = random.uniform(-5, 5) 
         self.last_sail = 0
         self.last_rudder = 0
+        self.last_jib_port = 0
+        self.last_jib_stb = 0
         self.dropped_packets = 0
 
         print("Simulated TeensyFake initialized")
@@ -26,6 +28,8 @@ class TeensyFake:
         data["wind_angle"] = self._generate_random_wind()
         data["sail_angle"] = self.last_sail
         data["rudder_angle"] = self.last_rudder
+        data["jib_port_angle"] = self.last_jib_port
+        data["jib_stb_angle"] = self.last_jib_stb
         data["dropped_packets"] = self.dropped_packets
 
         return random.randint(0,1)
@@ -46,7 +50,7 @@ class TeensyFake:
         return int(self.wind_angle)
     
 
-    def send_command(self, sail, rudder):
+    def send_command(self, sail, rudder, jib_port=0, jib_stb=0):
         """
         Send a properly formatted command packet to the servo.
 
@@ -58,12 +62,20 @@ class TeensyFake:
             sail = max(min(sail, 127), -128)
             rudder = max(min(rudder, 127), -128)
         
-            # convert sail and tail to signed 8-bit integers (bytes)
+            # convert control values to signed 8-bit integers (bytes)
             sail_byte = sail & 0xFF if sail >= 0 else (sail + 256) & 0xFF
             rudder_byte = rudder & 0xFF if rudder >= 0 else (rudder + 256) & 0xFF
+            # Placeholder: don't enforce jib bounds until command convention is finalized.
+            jib_port_byte = int(jib_port) & 0xFF
+            jib_stb_byte = int(jib_stb) & 0xFF
 
-            # create the packet: [start flag] [sail] [tail] [end flag]
-            command_packet = bytearray([self.START_BYTE, sail_byte, rudder_byte, self.END_BYTE])
+            # create the packet: [start flag] [sail] [rudder] [jib_port] [jib_stb] [end flag]
+            command_packet = bytearray([self.START_BYTE, sail_byte, rudder_byte, jib_port_byte, jib_stb_byte, self.END_BYTE])
+
+            self.last_sail = int(sail)
+            self.last_rudder = int(rudder)
+            self.last_jib_port = int(jib_port)
+            self.last_jib_stb = int(jib_stb)
 
             # send the packet over serial
             return 0   

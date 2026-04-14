@@ -6,12 +6,14 @@
 ServoControlTask::ServoControlTask() {
     mainsail_servo.attach(constants::servo::MAINSAIL_PIN, constants::servo::MAINSAIL_MIN_PULSE, constants::servo::MAINSAIL_MAX_PULSE);
     rudder_servo.attach(constants::servo::RUDDER_PIN, constants::servo::RUDDER_MIN_PULSE, constants::servo::RUDDER_MAX_PULSE);
-    //TODO attach jib_port_servo and jib_stb_servo
+    jib_port_servo.attach(constants::servo::JIB_PORT_PIN, constants::servo::JIB_PORT_MIN_PULSE, constants::servo::JIB_PORT_MAX_PULSE);
+    jib_stb_servo.attach(constants::servo::JIB_STB_PIN, constants::servo::JIB_STB_MIN_PULSE, constants::servo::JIB_STB_MAX_PULSE);
 
     // (2025-2026) Pre-set the mainsail to "all-in", and rudder to center.
     actuate_servo(mainsail_servo, constants::servo::MAINSAIL_MIN_PULSE);
     actuate_servo(rudder_servo, constants::servo::RUDDER_MID_PULSE);
-    //TODO actualize jib_port_servo and jib_stb_servo
+    actuate_servo(jib_port_servo, constants::servo::JIB_PORT_MIN_PULSE);
+    actuate_servo(jib_stb_servo, constants::servo::JIB_STB_MIN_PULSE);
 }
 
 /**
@@ -22,7 +24,8 @@ void ServoControlTask::execute() {
     if (sfr::serial::update_servos) {
         uint8_t mainsail_angle = sfr::serial::buffer[0];
         uint8_t rudder_angle = sfr::serial::buffer[1];
-        //TODO get values for jib_port_angle and jib_stb_angle ==> this involves changing the buffer and more
+        uint8_t jib_port_angle = sfr::serial::buffer[2];
+        uint8_t jib_stb_angle = sfr::serial::buffer[3];
 
         // Update sfr values based on incoming serial data if checks pass.
         if (mainsail_angle >= constants::servo::MAINSAIL_MIN_ANGLE &&
@@ -36,8 +39,13 @@ void ServoControlTask::execute() {
             sfr::servo::rudder_pwm = rudder_to_pwm(rudder_angle);
             actuate_servo(rudder_servo, sfr::servo::rudder_pwm);
         }
-        //TODO update sfr values for jib_port_servo and jib_stb_servo.
-        //TODO note that these are linked, so the logic should be linked too. Only one should be "working" at a time.
+        // (Temporary) Store jib command bytes from serial so we can plumb data end-to-end.
+        sfr::servo::jib_port_angle = jib_port_angle;
+        sfr::servo::jib_stb_angle = jib_stb_angle;
+        // TODO(jib-logic): Validate jib angles against constants::servo::JIB_MIN_ANGLE / JIB_MAX_ANGLE.
+        // TODO(jib-logic): Compute and set sfr::servo::jib_port_pwm, then actuate jib_port_servo.
+        // TODO(jib-logic): Compute and set sfr::servo::jib_stb_pwm, then actuate jib_stb_servo.
+        // TODO(jib-logic): Enforce linked behavior so only one jib side is active at a time.
 
         sfr::serial::update_servos = false; // Reset flag for the next update.
     }
@@ -74,7 +82,8 @@ uint32_t ServoControlTask::mainsail_to_pwm(uint8_t angle) {
  * @return the PWM to actuate \code jib_port_servo\endcode to.
  */
 uint32_t ServoControlTask::jib_port_to_pwm(uint8_t angle) {
-    return 0; //TODO
+    return map(angle, constants::servo::JIB_MIN_ANGLE, constants::servo::JIB_MAX_ANGLE,
+               constants::servo::JIB_PORT_MIN_PULSE, constants::servo::JIB_PORT_MAX_PULSE);
 }
 
 /** Maps a goal sail angle for the jib, on the starboard side, to a \code jib_stb_servo\endcode PWM.
@@ -83,7 +92,8 @@ uint32_t ServoControlTask::jib_port_to_pwm(uint8_t angle) {
  * @return the PWM to actuate \code jib_stb_servo\endcode to.
  */
 uint32_t ServoControlTask::jib_stb_to_pwm(uint8_t angle) {
-    return 0; //TODO
+    return map(angle, constants::servo::JIB_MIN_ANGLE, constants::servo::JIB_MAX_ANGLE,
+               constants::servo::JIB_STB_MIN_PULSE, constants::servo::JIB_STB_MAX_PULSE);
 }
 
 /** Send \code pwm\endcode to \code servo\endcode, thereby changing \code servo\endcode 's angle. */

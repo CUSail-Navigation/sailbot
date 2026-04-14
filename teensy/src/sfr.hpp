@@ -24,6 +24,6 @@ namespace sfr {
 
         extern uint8_t dropped_packets;
 
-        extern uint8_t buffer[2];
+        extern uint8_t buffer[4];
     }
 }

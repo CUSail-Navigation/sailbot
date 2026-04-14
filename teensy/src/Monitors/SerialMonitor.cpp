@@ -6,6 +6,8 @@ SerialMonitor::SerialMonitor()
 {}
 
 void SerialMonitor::execute() {
+    // RX packet format (between start/end flags):
+    // [0]=mainsail_angle, [1]=rudder_angle, [2]=jib_port_angle, [3]=jib_stb_angle
     while (Serial.available()) {
         uint8_t incoming_byte = Serial.read();
         // Only set flags if packet start byte is correct.
@@ -21,6 +23,8 @@ void SerialMonitor::execute() {
             sfr::serial::update_servos = true;
             sfr::servo::mainsail_angle = sfr::serial::buffer[0];
             sfr::servo::rudder_angle = sfr::serial::buffer[1];
+            sfr::servo::jib_port_angle = sfr::serial::buffer[2];
+            sfr::servo::jib_stb_angle = sfr::serial::buffer[3];
         }
         else if (packet_started) {
             // Store a data byte into the buffer.
