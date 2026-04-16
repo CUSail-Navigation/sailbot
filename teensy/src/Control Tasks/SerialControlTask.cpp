@@ -19,6 +19,8 @@ void SerialControlTask::execute()
             constants::serial::TX_START_FLAG,
             sfr::anemometer::wind_angle >> 8,
             sfr::anemometer::wind_angle & 0xFF,
+            sfr::anemometer::wind_speed >> 8,
+            sfr::anemometer::wind_speed & 0xFF,
             sfr::servo::sail_angle,
             sfr::servo::rudder_angle,
             sfr::serial::dropped_packets,

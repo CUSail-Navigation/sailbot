@@ -9,7 +9,7 @@ class TeensyHardware:
 
     START_BYTE = 0xff
     END_BYTE = 0xee
-    PACKET_LENGTH = 5
+    PACKET_LENGTH = 7
 
     def __init__(self, port):
         self.port = port
@@ -37,6 +37,7 @@ class TeensyHardware:
             elif incoming_byte == self.END_BYTE.to_bytes(1, 'big') and len(self.buffer) == self.PACKET_LENGTH:
                 self.packet_started = False
                 data["wind_angle"], \
+                data["wind_speed_mph"], \
                 data["sail_angle"], \
                 data["rudder_angle"], \
                 data["dropped_packets"] = self._parse_packet(self.buffer)
@@ -59,20 +60,23 @@ class TeensyHardware:
         """
         wind_angle = (packet[0] << 8) | packet[1]
 
-        # uint8_t to int8_t conversion
-        if packet[2] >= 128:
-            sail_angle = packet[2] - 256
-        else:
-            sail_angle = packet[2]
-        # uint8_t to int8_t conversion
-        if packet[3] >= 128:
-            rudder_angle = packet[3] - 256
-        else:
-            rudder_angle = packet[3]
+        # Teensy sends wind speed as uint16 in units of MPH*100
+        wind_speed_mph = ((packet[2] << 8) | packet[3]) / 100.0
 
-        dropped_packets = packet[4]
+        # uint8_t to int8_t conversion
+        if packet[4] >= 128:
+            sail_angle = packet[4] - 256
+        else:
+            sail_angle = packet[4]
+        # uint8_t to int8_t conversion
+        if packet[5] >= 128:
+            rudder_angle = packet[5] - 256
+        else:
+            rudder_angle = packet[5]
 
-        return wind_angle, sail_angle, rudder_angle, dropped_packets
+        dropped_packets = packet[6]
+
+        return wind_angle, wind_speed_mph, sail_angle, rudder_angle, dropped_packets
 
 
     def send_command(self, sail, rudder):

@@ -48,13 +48,15 @@ void AnemometerMonitor::execute()
     interrupts();
     
 
+    // WIND SPEED
+    // Sends in units of MPH*100 to retain 2 decimal places of precision.
+    // On the ROS side, divide by 100 to get MPH.
     if (!ok || last_ms == 0 || (millis() - last_ms) > 2000) {
-        anemometer::wind_speed = 0.0f;
+        anemometer::wind_speed = 0;
     } else if (period_ms > 0) {
         float T = period_ms / 1000.0f;
-        anemometer::wind_speed = 2.25f / T;
+        anemometer::wind_speed = (uint16_t)((2.25f / T) * 100);
     } else {
-        anemometer::wind_speed = 0.0f;
+        anemometer::wind_speed = 0;
     }
-    Serial.println(anemometer::wind_speed); //print for testing
 }

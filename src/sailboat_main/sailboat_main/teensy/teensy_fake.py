@@ -24,6 +24,7 @@ class TeensyFake:
         :param packet: Teensy packet
         """
         data["wind_angle"] = self._generate_random_wind()
+        data["wind_speed_mph"] = round(random.uniform(0.0, 20.0), 2)
         data["sail_angle"] = self.last_sail
         data["rudder_angle"] = self.last_rudder
         data["dropped_packets"] = self.dropped_packets

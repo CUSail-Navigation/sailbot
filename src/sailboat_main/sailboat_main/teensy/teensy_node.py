@@ -1,7 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from sailboat_interface.msg import SailTail
-from std_msgs.msg import Int32
+from std_msgs.msg import Int32, Float32
 
 from . import teensy
 from . import teensy_fake
@@ -47,6 +47,7 @@ class Teensy(Node):
 
         # telemetry data publishers
         self.wind_angle_pub = self.create_publisher(Int32, 'wind', 10)
+        self.wind_speed_pub = self.create_publisher(Float32, 'wind_speed_mph', 10)
         self.actual_sail_angle_pub = self.create_publisher(Int32, 'actual_sail_angle', 10)
         self.actual_rudder_angle_pub = self.create_publisher(Int32, 'actual_rudder_angle', 10)
         self.dropped_packets_pub = self.create_publisher(Int32, 'dropped_packets', 10)
@@ -79,6 +80,10 @@ class Teensy(Node):
             wind_angle_msg.data = data["wind_angle"]
             self.wind_angle_pub.publish(wind_angle_msg)
 
+            wind_speed_msg = Float32()
+            wind_speed_msg.data = data["wind_speed_mph"]
+            self.wind_speed_pub.publish(wind_speed_msg)
+
             sail_angle_msg = Int32()
             sail_angle_msg.data = data["sail_angle"]
             self.actual_sail_angle_pub.publish(sail_angle_msg)
@@ -102,6 +107,7 @@ class Teensy(Node):
             self.dropped_packets_pub.publish(dropped_packets_msg)
 
             self.get_logger().info(f"{'Wind angle:':<20} {wind_angle_msg.data}")
+            self.get_logger().info(f"{'Wind speed (mph):':<20} {wind_speed_msg.data}")
             self.get_logger().info(f"{'Actual sail angle:':<20} {sail_angle_msg.data}")
             self.get_logger().info(f"{'Actual tail angle:':<20} {rudder_angle_msg.data}")
             self.get_logger().info(f"{'Dropped packets:':<20} {dropped_packets_msg.data}")

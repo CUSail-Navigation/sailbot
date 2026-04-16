@@ -7,7 +7,7 @@
 class AnemometerMonitor
 {
 private:
-    float wind_speed;
+    uint16_t wind_speed;
     volatile unsigned long elapsed_time;
     volatile unsigned long last_pulse_ms_isr;
     volatile bool have_period;
