@@ -3,10 +3,10 @@
 #include "sfr.hpp"
 #include "constants.hpp"
 
-class SerialMonitor
+class ROSSerialMonitor
 {
 public:
-    SerialMonitor();
+    ROSSerialMonitor();
     void execute();
 
 private:

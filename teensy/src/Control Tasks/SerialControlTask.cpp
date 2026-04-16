@@ -19,13 +19,13 @@ void SerialControlTask::execute()
             constants::serial::TX_START_FLAG,
             sfr::anemometer::wind_angle >> 8,
             sfr::anemometer::wind_angle & 0xFF,
-            sfr::servo::sail_angle,
-            sfr::servo::rudder_angle,
+            sfr::servo::radio_sail_angle,
+            sfr::servo::radio_rudder_angle,
             sfr::serial::dropped_packets,
             constants::serial::TX_END_FLAG};
 
         last_telemetry_send_time = millis();
-        Serial.write(data, sizeof(data));
+        //Serial.write(data, sizeof(data));
         send_telemetry = false;
     }
     current_time = millis();
