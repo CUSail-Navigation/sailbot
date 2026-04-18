@@ -12,15 +12,14 @@ void SerialControlTask::execute() {
     }
     if (send_telemetry) {
         // TX packet format:
-        // [start_flag, wind_hi, wind_lo, mainsail_angle, rudder_angle, jib_port_angle, jib_stb_angle, dropped_packets, end_flag]
+        // [start_flag, wind_hi, wind_lo, mainsail_angle, rudder_angle, jib_angle, dropped_packets, end_flag]
         uint8_t data[] = {
             constants::serial::TX_START_FLAG,
             sfr::anemometer::wind_angle >> 8,
             sfr::anemometer::wind_angle & 0xFF,
             sfr::servo::mainsail_angle,
             sfr::servo::rudder_angle,
-            sfr::servo::jib_port_angle,
-            sfr::servo::jib_stb_angle,
+            sfr::servo::jib_angle,
             sfr::serial::dropped_packets,
             constants::serial::TX_END_FLAG};
 

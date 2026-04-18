@@ -24,8 +24,7 @@ void ServoControlTask::execute() {
     if (sfr::serial::update_servos) {
         uint8_t mainsail_angle = sfr::serial::buffer[0];
         uint8_t rudder_angle = sfr::serial::buffer[1];
-        uint8_t jib_port_angle = sfr::serial::buffer[2];
-        uint8_t jib_stb_angle = sfr::serial::buffer[3];
+        uint8_t jib_angle = sfr::serial::buffer[2];
 
         // Update sfr values based on incoming serial data if checks pass.
         if (mainsail_angle >= constants::servo::MAINSAIL_MIN_ANGLE &&
@@ -39,13 +38,9 @@ void ServoControlTask::execute() {
             sfr::servo::rudder_pwm = rudder_to_pwm(rudder_angle);
             actuate_servo(rudder_servo, sfr::servo::rudder_pwm);
         }
-        // (Temporary) Store jib command bytes from serial so we can plumb data end-to-end.
-        sfr::servo::jib_port_angle = jib_port_angle;
-        sfr::servo::jib_stb_angle = jib_stb_angle;
-        // TODO(jib-logic): Validate jib angles against constants::servo::JIB_MIN_ANGLE / JIB_MAX_ANGLE.
-        // TODO(jib-logic): Compute and set sfr::servo::jib_port_pwm, then actuate jib_port_servo.
-        // TODO(jib-logic): Compute and set sfr::servo::jib_stb_pwm, then actuate jib_stb_servo.
-        // TODO(jib-logic): Enforce linked behavior so only one jib side is active at a time.
+        if (jib_angle >= constants::servo::JIB_MIN_ANGLE && jib_angle <= constants::servo::JIB_MAX_ANGLE) {
+            //TODO
+        }
 
         sfr::serial::update_servos = false; // Reset flag for the next update.
     }
@@ -76,21 +71,13 @@ uint32_t ServoControlTask::mainsail_to_pwm(uint8_t angle) {
     return (uint32_t) ( 229.3f * (mainsheet_len / 12.927f) + constants::servo::MAINSAIL_MIN_PULSE );                    //TODO consider adding some offsets + consider adding constants to file
 }
 
-/** Maps a goal sail angle for the jib, on the port side, to a \code jib_port_servo\endcode PWM.
- *
- * @param angle the goal angle to set the jib to on the port side of the boat.
- * @return the PWM to actuate \code jib_port_servo\endcode to.
- */
+/** Maps the single logical jib angle to \code jib_port_servo\endcode PWM (port-side calibration). */
 uint32_t ServoControlTask::jib_port_to_pwm(uint8_t angle) {
     return map(angle, constants::servo::JIB_MIN_ANGLE, constants::servo::JIB_MAX_ANGLE,
                constants::servo::JIB_PORT_MIN_PULSE, constants::servo::JIB_PORT_MAX_PULSE);
 }
 
-/** Maps a goal sail angle for the jib, on the starboard side, to a \code jib_stb_servo\endcode PWM.
- *
- * @param angle the goal angle to set the jib to on the starboard side of the boat.
- * @return the PWM to actuate \code jib_stb_servo\endcode to.
- */
+/** Maps the same logical jib angle to \code jib_stb_servo\endcode PWM (starboard-side calibration). */
 uint32_t ServoControlTask::jib_stb_to_pwm(uint8_t angle) {
     return map(angle, constants::servo::JIB_MIN_ANGLE, constants::servo::JIB_MAX_ANGLE,
                constants::servo::JIB_STB_MIN_PULSE, constants::servo::JIB_STB_MAX_PULSE);

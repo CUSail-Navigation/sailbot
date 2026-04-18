@@ -10,8 +10,7 @@ namespace sfr {
     namespace servo {
         extern uint8_t rudder_angle;
         extern uint8_t mainsail_angle;
-        extern uint8_t jib_port_angle;
-        extern uint8_t jib_stb_angle;
+        extern uint8_t jib_angle;
 
         extern uint32_t rudder_pwm;
         extern uint32_t mainsail_pwm;
@@ -24,6 +23,6 @@ namespace sfr {
 
         extern uint8_t dropped_packets;
 
-        extern uint8_t buffer[4];
+        extern uint8_t buffer[3];
     }
 }
