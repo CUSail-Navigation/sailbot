@@ -25,3 +25,6 @@ __pycache__/
 *.tmp
 *.DS_Store
 *~
+
+# CV model\
+*.pt

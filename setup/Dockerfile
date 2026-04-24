@@ -5,7 +5,7 @@
 ###########################################
 # Base image
 ###########################################
-FROM ubuntu:22.04 AS base
+FROM nvcr.io/nvidia/l4t-base:r36.2.0 AS base
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -26,17 +26,17 @@ RUN ln -fs /usr/share/zoneinfo/UTC /etc/localtime \
   && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update && apt-get -y upgrade \
-    && rm -rf /var/lib/apt/lists/*
+  && rm -rf /var/lib/apt/lists/*
 
 # Install common programs
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    gnupg2 \
-    lsb-release \
-    sudo \
-    software-properties-common \
-    wget \
-    && rm -rf /var/lib/apt/lists/*
+  curl \
+  gnupg2 \
+  lsb-release \
+  sudo \
+  software-properties-common \
+  wget \
+  && rm -rf /var/lib/apt/lists/*
 
 # Install ROS2
 RUN sudo add-apt-repository universe \
@@ -85,12 +85,12 @@ ARG USER_GID=$USER_UID
 
 # Check if "ubuntu" user exists, delete it if it does, then create the desired user
 RUN if getent passwd ubuntu > /dev/null 2>&1; then \
-        userdel -r ubuntu && \
-        echo "Deleted existing ubuntu user"; \
-    fi && \
-    groupadd --gid $USER_GID $USERNAME && \
-    useradd -s /bin/bash --uid $USER_UID --gid $USER_GID -m $USERNAME && \
-    echo "Created new user $USERNAME"
+    userdel -r ubuntu && \
+    echo "Deleted existing ubuntu user"; \
+  fi && \
+  groupadd --gid $USER_GID $USERNAME && \
+  useradd -s /bin/bash --uid $USER_UID --gid $USER_GID -m $USERNAME && \
+  echo "Created new user $USERNAME"
 
 # Add sudo support for the non-root user
 RUN apt-get update && apt-get install -y sudo \
@@ -143,34 +143,58 @@ RUN sudo apt update \
 && echo "deb [signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null \ 
 && sudo apt-get -y install ros-humble-rosbridge-server
 
-# Set the entry point to run the setup script on container start
-ENTRYPOINT ["/home/ros2_user/setup_ros.sh"]
-
 # Build and install librealsense from source (ARM64)
 RUN apt-get update && apt-get install -y \
-    git \
-    cmake \
-    build-essential \
-    libusb-1.0-0-dev \
-    libglfw3-dev \
-    libgtk-3-dev \
-    libgl1-mesa-dev \
-    libssl-dev \
-    python3-dev \
-    python3-numpy \
-    pkg-config \
-    && rm -rf /var/lib/apt/lists/*
+  git \
+  cmake \
+  build-essential \
+  libusb-1.0-0-dev \
+  libglfw3-dev \
+  libgtk-3-dev \
+  libgl1-mesa-dev \
+  libssl-dev \
+  python3-dev \
+  python3-numpy \
+  pkg-config \
+  && rm -rf /var/lib/apt/lists/*
 
 RUN git clone https://github.com/IntelRealSense/librealsense.git /tmp/librealsense \
-    && cd /tmp/librealsense \
-    && mkdir build && cd build \
-    && cmake .. \
-        -DBUILD_PYTHON_BINDINGS=ON \
-        -DPYTHON_EXECUTABLE=/usr/bin/python3 \
-        -DBUILD_EXAMPLES=OFF \
-        -DBUILD_GRAPHICAL_EXAMPLES=OFF \
-        -DFORCE_LIBUVC=ON \
-    && make -j$(nproc) \
-    && make install \
-    && ldconfig \
-    && rm -rf /tmp/librealsense
+  && cd /tmp/librealsense \
+  && mkdir build && cd build \
+  && cmake .. \
+    -DBUILD_PYTHON_BINDINGS=ON \
+    -DPYTHON_EXECUTABLE=/usr/bin/python3 \
+    -DBUILD_EXAMPLES=OFF \
+    -DBUILD_GRAPHICAL_EXAMPLES=OFF \
+    -DFORCE_LIBUVC=ON \
+  && make -j$(nproc) \
+  && make install \
+  && ldconfig \
+  && rm -rf /tmp/librealsense
+  
+# Install dependencies for GPU utilization
+ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+
+RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/ros-archive-keyring.gpg
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libopenblas-base \
+    libopenblas-dev \
+    libblas-dev \
+    liblapack-dev \
+    libc6-dev \
+    build-essential \
+    ca-certificates \
+  && wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/arm64/cuda-keyring_1.1-1_all.deb \
+  && dpkg -i cuda-keyring_1.1-1_all.deb \
+  && rm cuda-keyring_1.1-1_all.deb \
+  && apt-get update \
+  && apt-get -y install cudss \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install --no-cache-dir torch torchvision \
+  --index-url https://pypi.jetson-ai-lab.io/jp6/cu126
+
+RUN pip3 install ultralytics "numpy<2"
+
+ENTRYPOINT ["/home/ros2_user/setup_ros.sh"]
