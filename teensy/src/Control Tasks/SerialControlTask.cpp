@@ -5,10 +5,10 @@ SerialControlTask::SerialControlTask() : last_telemetry_send_time(0), current_ti
 void SerialControlTask::execute() {
     if (last_telemetry_send_time - current_time >= constants::serial::TX_PERIOD_MS) send_telemetry = true;
     if (send_telemetry) {
-        uint8_t data[] = {
+        const uint8_t data[] = {
             constants::serial::TX_START_FLAG,
-            sfr::anemometer::wind_angle >> 8,
-            sfr::anemometer::wind_angle & 0xFF,
+            static_cast<uint8_t>(sfr::anemometer::wind_angle >> 8),
+            static_cast<uint8_t>(sfr::anemometer::wind_angle & 0xFF),
             sfr::servo::mainsail_angle,
             sfr::servo::rudder_angle,
             sfr::servo::jib_port_angle,
