@@ -27,7 +27,7 @@ void SerialMonitor::execute() {
                 packet_started = false;
                 sfr::serial::update_servos = true;
             }
-            else drop_packet();
+            else drop_packet(); // Packet is incorrect (buffer is not full, but we have reached RX_END_FLAG).
         }
     }
 }

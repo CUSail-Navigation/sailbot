@@ -3,11 +3,6 @@
 #include "constants.hpp"
 #include "sfr.hpp"
 
-/** NOTES FROM 2025-2026 SEASON: <p>
- * - Rudder: 600 represents "minimum" angle, 2400 represents "maximum" angle. This servo can turn 0.5 times.
- *           Since the rudder goes from -65 degrees to 65 degrees, the corresponding PWM range is 850 - 2150.
- * - Mainsail: 600 is "all-in", 2400 is "all-out" (on both sides). This servo can turn 7.85 times.
- */
 class ServoControlTask {
 public:
     ServoControlTask();
