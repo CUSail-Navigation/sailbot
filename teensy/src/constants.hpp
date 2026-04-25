@@ -38,6 +38,7 @@ namespace constants {
 
         constexpr uint8_t RX_START_FLAG = 0xFF;
         constexpr uint8_t RX_END_FLAG = 0xEE;
+        constexpr uint32_t RX_PACKET_TIMEOUT_MS = 50; //TODO confirm this number makes sense for a 9600 baud rate
 
         constexpr uint32_t BAUD_RATE = 9600;
     }
