@@ -20,10 +20,10 @@ namespace sfr {
     }
     namespace serial {
         extern bool update_servos;
-        extern bool send_telemetry;
 
         extern uint8_t dropped_packets;
 
-        extern uint8_t buffer[4];
+        constexpr uint8_t buffer_length = 4;
+        extern uint8_t buffer[buffer_length];
     }
 }

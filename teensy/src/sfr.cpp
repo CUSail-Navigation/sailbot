@@ -22,6 +22,6 @@ namespace sfr {
 
         uint8_t dropped_packets = 0;
 
-        uint8_t buffer[4] = {0};
+        uint8_t buffer[buffer_length] = {};
     }
 }
