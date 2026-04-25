@@ -18,11 +18,11 @@ void SerialMonitor::execute() {
             packet_start_time = millis();
         }
         else if (packet_started && new_byte != constants::serial::RX_END_FLAG) {
-            if (buffer_index < sfr::serial::buffer_length) sfr::serial::buffer[buffer_index++] = new_byte;
+            if (buffer_index < constants::serial::BUFFER_LEN) sfr::serial::buffer[buffer_index++] = new_byte;
             else drop_packet(); // Packet is incorrect (buffer is full and RX_END_FLAG is not where it should be).
         }
         else if (packet_started && new_byte == constants::serial::RX_END_FLAG) {
-            if (buffer_index == sfr::serial::buffer_length) {
+            if (buffer_index == constants::serial::BUFFER_LEN) {
                 buffer_index = 0;
                 packet_started = false;
                 sfr::serial::update_servos = true;

@@ -1,5 +1,5 @@
 #pragma once
-#include <Arduino.h>
+#include "constants.hpp"
 
 /** SFR stands for State Field Registry. It contains all sensor values, and
  *  universal flags that should be available to the entire boat. */
@@ -20,10 +20,7 @@ namespace sfr {
     }
     namespace serial {
         extern bool update_servos;
-
         extern uint8_t dropped_packets;
-
-        constexpr uint8_t buffer_length = 4;
-        extern uint8_t buffer[buffer_length];
+        extern uint8_t buffer[constants::serial::BUFFER_LEN];
     }
 }

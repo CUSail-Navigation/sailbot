@@ -10,6 +10,7 @@ namespace constants {
      * - Rudder: This servo can turn 0.5 times, but mech did something with the gears so that the rudder will only go
      *              from -45 degrees (600 PWM) to 45 degrees (2400 PWM).
      * - Mainsail: This servo can turn 7.85 times, but [TODO]. PWM of [TODO] is "all-in", [TODO] is "all-out" (on both sides).
+     * - Jib: [TODO].
      */
     namespace servo {
         constexpr uint32_t SERVO_MIN_PULSE = 600;
@@ -30,6 +31,7 @@ namespace constants {
         constexpr uint32_t MAINSAIL_MAX_PULSE = 0;  //TODO
         constexpr uint8_t MAINSAIL_MIN_ANGLE = 0;
         constexpr uint8_t MAINSAIL_MAX_ANGLE = 90;
+        constexpr uint8_t BOOM_LENGTH_CM_SQUARED = 0 * 0;       //TODO
 
         constexpr uint32_t JIB_PORT_MIN_PULSE = 0;  //TODO
         constexpr uint32_t JIB_PORT_MAX_PULSE = 0;  //TODO
@@ -54,11 +56,12 @@ namespace constants {
 
         constexpr uint8_t RX_START_FLAG = 0xFF;
         constexpr uint8_t RX_END_FLAG = 0xEE;
-        constexpr uint32_t RX_PACKET_TIMEOUT_MS = 50;
+        constexpr uint8_t RX_PACKET_TIMEOUT_MS = 50;
+        constexpr uint8_t BUFFER_LEN = 4;
 
         constexpr uint32_t BAUD_RATE = 9600;
     }
     namespace led {
-        constexpr uint8_t LED_PIN = 13;
+        constexpr uint8_t LED_PIN = 13; // TODO
     }
 }

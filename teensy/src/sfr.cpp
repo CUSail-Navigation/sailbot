@@ -18,9 +18,7 @@ namespace sfr {
     }
     namespace serial {
         bool update_servos = false;
-
         uint8_t dropped_packets = 0;
-
-        uint8_t buffer[buffer_length] = {};
+        uint8_t buffer[constants::serial::BUFFER_LEN] = {};
     }
 }

@@ -1,6 +1,5 @@
 #pragma once
 #include <Servo.h>
-#include "constants.hpp"
 #include "sfr.hpp"
 
 class ServoControlTask {
