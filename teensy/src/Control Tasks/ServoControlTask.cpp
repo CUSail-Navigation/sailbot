@@ -22,10 +22,10 @@ ServoControlTask::ServoControlTask() {
 void ServoControlTask::execute() {
     // Check if we have new serial data to update the servos.
     if (sfr::serial::update_servos) {
-        uint8_t mainsail_angle = sfr::serial::buffer[0];
-        uint8_t rudder_angle = sfr::serial::buffer[1];
-        uint8_t jib_port_angle = sfr::serial::buffer[2];
-        uint8_t jib_stb_angle = sfr::serial::buffer[3];
+        const uint8_t mainsail_angle = sfr::serial::buffer[0];
+        const uint8_t rudder_angle = sfr::serial::buffer[1];
+        const uint8_t jib_port_angle = sfr::serial::buffer[2];
+        const uint8_t jib_stb_angle = sfr::serial::buffer[3];
 
         // Update sfr values based on incoming serial data if checks pass.
         if (mainsail_angle >= constants::servo::MAINSAIL_MIN_ANGLE &&
