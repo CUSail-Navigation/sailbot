@@ -9,7 +9,7 @@ ServoControlTask::ServoControlTask() {
     jib_port_servo.attach(constants::servo::JIB_PORT_PIN, constants::servo::JIB_PORT_MIN_PULSE, constants::servo::JIB_PORT_MAX_PULSE);
     jib_stb_servo.attach(constants::servo::JIB_STB_PIN, constants::servo::JIB_STB_MIN_PULSE, constants::servo::JIB_STB_MAX_PULSE);
 
-    // (2025-2026) Pre-set the rudder to center, mainsail to "all-in", and jib to "all-in" on the port side.
+    // Pre-set the rudder to center, mainsail to "all-in", and jib to "all-in" on the port side.
     actuate_servo(rudder_servo, constants::servo::RUDDER_MID_PULSE);
     actuate_servo(mainsail_servo, constants::servo::MAINSAIL_MIN_PULSE);
     actuate_servo(jib_port_servo, constants::servo::JIB_PORT_MIN_PULSE);
@@ -39,13 +39,13 @@ void ServoControlTask::execute() {
             sfr::servo::mainsail_pwm = mainsail_to_pwm(mainsail_angle);
             actuate_servo(mainsail_servo, sfr::servo::mainsail_pwm);
         }
-        // (Temporary) Store jib command bytes from serial so we can plumb data end-to-end.
-        sfr::servo::jib_port_angle = jib_port_angle;
-        sfr::servo::jib_stb_angle = jib_stb_angle;
-        // TODO(jib-logic): Validate jib angles against constants::servo::JIB_MIN_ANGLE / JIB_MAX_ANGLE.
-        // TODO(jib-logic): Compute and set sfr::servo::jib_port_pwm, then actuate jib_port_servo.
-        // TODO(jib-logic): Compute and set sfr::servo::jib_stb_pwm, then actuate jib_stb_servo.
-        // TODO(jib-logic): Enforce linked behavior so only one jib side is active at a time.
+        if (true) { // TODO(jib-logic): Validate jib angles against constants::servo::JIB_MIN_ANGLE / JIB_MAX_ANGLE.
+            sfr::servo::jib_port_angle = jib_port_angle;
+            sfr::servo::jib_stb_angle = jib_stb_angle;
+            // TODO(jib-logic): Compute and set sfr::servo::jib_port_pwm, then actuate jib_port_servo.
+            // TODO(jib-logic): Compute and set sfr::servo::jib_stb_pwm, then actuate jib_stb_servo.
+            // TODO(jib-logic): for both of the above, enforce linked behavior so only one jib side is active at a time.
+        }
 
         sfr::serial::update_servos = false; // Reset flag for the next update.
     }

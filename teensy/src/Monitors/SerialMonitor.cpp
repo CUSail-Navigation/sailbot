@@ -4,11 +4,11 @@ SerialMonitor::SerialMonitor() : buffer_index(0), packet_started(false), packet_
 
 /** Process incoming packets and update SFR fields if applicable. */
 void SerialMonitor::execute() {
-    // Catch and drop stale partial packets that started in earlier execute() calls but stalled.
+    // Catch and drop stale packets that started being processed in earlier execute() calls but stalled.
     if (packet_started && (millis() - packet_start_time > constants::serial::RX_PACKET_TIMEOUT_MS)) drop_packet();
 
     while (Serial.available()) {
-        // In case of timeout during processing, drop the stale partial packet.
+        // Drop the packet in case of timing out while processing it.
         if (packet_started && (millis() - packet_start_time > constants::serial::RX_PACKET_TIMEOUT_MS)) drop_packet();
 
         const uint8_t new_byte = Serial.read();
