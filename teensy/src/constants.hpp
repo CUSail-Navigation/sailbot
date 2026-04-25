@@ -31,7 +31,7 @@ namespace constants {
         constexpr uint32_t MAINSAIL_MAX_PULSE = 0;  //TODO
         constexpr uint8_t MAINSAIL_MIN_ANGLE = 0;
         constexpr uint8_t MAINSAIL_MAX_ANGLE = 90;
-        constexpr uint8_t BOOM_LENGTH_CM_SQUARED = 0 * 0;       //TODO
+        constexpr uint8_t BOOM_LENGTH_CM_SQUARED = 0 * 0; //TODO
 
         constexpr uint32_t JIB_PORT_MIN_PULSE = 0;  //TODO
         constexpr uint32_t JIB_PORT_MAX_PULSE = 0;  //TODO
@@ -39,6 +39,7 @@ namespace constants {
         constexpr uint32_t JIB_STB_MAX_PULSE = 0;   //TODO
         constexpr uint8_t JIB_MIN_ANGLE = 15;
         constexpr uint8_t JIB_MAX_ANGLE = 75;
+        constexpr uint8_t JIB_FOOT_LENGTH_CM_SQUARED = 0 * 0; //TODO
     }
     /** SERIAL NOTES FROM 2025-2026 SEASON: <p>
      * - BUFFER FORMAT (which is RX PACKET FORMAT between the start and end flags):
