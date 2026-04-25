@@ -3,31 +3,31 @@
 
 namespace constants {
     namespace anemometer {
-        constexpr uint8_t ANEMOMETER_PIN = 18;
+        constexpr uint8_t ANEMOMETER_PIN = 18; //TODO
     }
     /** SERVO NOTES FROM 2025-2026 SEASON: <p>
      * - All servos can go from 600 PWM (a "minimum angle") to 2400 PWM (a "maximum angle").
-     * - Rudder: This servo can turn 0.5 times. Since the rudder goes from -65 degrees to 65 degrees on the hull, the
-     *              corresponding PWM range is 850 - 2150.
-     * - Mainsail: This servo can turn 7.85 times. PWM of 600 is "all-in", 2400 is "all-out" (on both sides).
+     * - Rudder: This servo can turn 0.5 times, but mech did something with the gears so that the rudder will only go
+     *              from -45 degrees (600 PWM) to 45 degrees (2400 PWM).
+     * - Mainsail: This servo can turn 7.85 times, but [TODO]. PWM of [TODO] is "all-in", [TODO] is "all-out" (on both sides).
      */
     namespace servo {
-        constexpr uint32_t SERVO_MIN_PULSE = 600;   // 1ms pulse width. //TODO double check this with Emith.
-        constexpr uint32_t SERVO_MAX_PULSE = 2400;  // 2ms pulse width.
+        constexpr uint32_t SERVO_MIN_PULSE = 600;
+        constexpr uint32_t SERVO_MAX_PULSE = 2400;
 
-        constexpr uint8_t RUDDER_PIN = 4;
-        constexpr uint8_t MAINSAIL_PIN = 3;
+        constexpr uint8_t RUDDER_PIN = 4;   //TODO
+        constexpr uint8_t MAINSAIL_PIN = 3; //TODO
         constexpr uint8_t JIB_PORT_PIN = 0; //TODO
         constexpr uint8_t JIB_STB_PIN = 0;  //TODO
 
-        constexpr uint32_t RUDDER_MIN_PULSE = 850;
-        constexpr uint32_t RUDDER_MAX_PULSE = 2150;
+        constexpr uint32_t RUDDER_MIN_PULSE = SERVO_MIN_PULSE;
+        constexpr uint32_t RUDDER_MAX_PULSE = SERVO_MAX_PULSE;
         constexpr uint32_t RUDDER_MID_PULSE = (RUDDER_MIN_PULSE + RUDDER_MAX_PULSE) / 2; // Amidships.
         constexpr uint8_t RUDDER_MIN_ANGLE = 0;
-        constexpr uint8_t RUDDER_MAX_ANGLE = 130;       // (2025-2026) 0-130 range = -65 to +65 degrees.
+        constexpr uint8_t RUDDER_MAX_ANGLE = 90; // (2025-2026) 0-90 range = -45 to +45 degrees.
 
-        constexpr uint32_t MAINSAIL_MIN_PULSE = SERVO_MIN_PULSE;
-        constexpr uint32_t MAINSAIL_MAX_PULSE = SERVO_MAX_PULSE;
+        constexpr uint32_t MAINSAIL_MIN_PULSE = 0;  //TODO
+        constexpr uint32_t MAINSAIL_MAX_PULSE = 0;  //TODO
         constexpr uint8_t MAINSAIL_MIN_ANGLE = 0;
         constexpr uint8_t MAINSAIL_MAX_ANGLE = 90;
 
@@ -35,8 +35,8 @@ namespace constants {
         constexpr uint32_t JIB_PORT_MAX_PULSE = 0;  //TODO
         constexpr uint32_t JIB_STB_MIN_PULSE = 0;   //TODO
         constexpr uint32_t JIB_STB_MAX_PULSE = 0;   //TODO
-        constexpr uint8_t JIB_MIN_ANGLE = 0;        //TODO
-        constexpr uint8_t JIB_MAX_ANGLE = 0;        //TODO
+        constexpr uint8_t JIB_MIN_ANGLE = 15;
+        constexpr uint8_t JIB_MAX_ANGLE = 75;
     }
     /** SERIAL NOTES FROM 2025-2026 SEASON: <p>
      * - BUFFER FORMAT (which is RX PACKET FORMAT between the start and end flags):
@@ -54,7 +54,7 @@ namespace constants {
 
         constexpr uint8_t RX_START_FLAG = 0xFF;
         constexpr uint8_t RX_END_FLAG = 0xEE;
-        constexpr uint32_t RX_PACKET_TIMEOUT_MS = 50; //TODO confirm this number makes sense for a 9600 baud rate
+        constexpr uint32_t RX_PACKET_TIMEOUT_MS = 50;
 
         constexpr uint32_t BAUD_RATE = 9600;
     }
