@@ -1,5 +1,4 @@
 #include "sfr.hpp"
-#include "constants.hpp"
 
 class SerialControlTask {
 public:

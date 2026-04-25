@@ -14,7 +14,8 @@ void SerialControlTask::execute() {
             sfr::servo::jib_port_angle,
             sfr::servo::jib_stb_angle,
             sfr::serial::dropped_packets,
-            constants::serial::TX_END_FLAG};
+            constants::serial::TX_END_FLAG
+        };
 
         last_telemetry_send_time = millis();
         Serial.write(data, sizeof(data));
