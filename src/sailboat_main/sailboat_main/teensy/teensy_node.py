@@ -44,13 +44,15 @@ class Teensy(Node):
         # keep track of our desired sail and rudder angles
         self.desired_sail = 0
         self.desired_rudder = 0
-        # TODO(jib-topics): Subscribe to a jib command topic and pass into teensy.send_command(..., jib).
+        # TODO(jib-topics): Add command subscriptions for jib port/stb and pass those
+        # values into teensy.send_command(..., jib_port, jib_stb) 
 
         # telemetry data publishers
         self.wind_angle_pub = self.create_publisher(Int32, 'wind', 10)
         self.actual_sail_angle_pub = self.create_publisher(Int32, 'actual_sail_angle', 10)
         self.actual_rudder_angle_pub = self.create_publisher(Int32, 'actual_rudder_angle', 10)
-        self.actual_jib_angle_pub = self.create_publisher(Int32, 'actual_jib_angle', 10)
+        self.actual_jib_port_angle_pub = self.create_publisher(Int32, 'actual_jib_port_angle', 10)
+        self.actual_jib_stb_angle_pub = self.create_publisher(Int32, 'actual_jib_stb_angle', 10)
         self.dropped_packets_pub = self.create_publisher(Int32, 'dropped_packets', 10)
 
         # callback to read teensy data
@@ -89,9 +91,13 @@ class Teensy(Node):
             rudder_angle_msg.data = data["rudder_angle"]
             self.actual_rudder_angle_pub.publish(rudder_angle_msg)
 
-            jib_angle_msg = Int32()
-            jib_angle_msg.data = data["jib_angle"]
-            self.actual_jib_angle_pub.publish(jib_angle_msg)
+            jib_port_angle_msg = Int32()
+            jib_port_angle_msg.data = data["jib_port_angle"]
+            self.actual_jib_port_angle_pub.publish(jib_port_angle_msg)
+
+            jib_stb_angle_msg = Int32()
+            jib_stb_angle_msg.data = data["jib_stb_angle"]
+            self.actual_jib_stb_angle_pub.publish(jib_stb_angle_msg)
 
             # Write rudder angle to file in append mode
             try:
@@ -110,7 +116,8 @@ class Teensy(Node):
             self.get_logger().info(f"{'Wind angle:':<20} {wind_angle_msg.data}")
             self.get_logger().info(f"{'Actual sail angle:':<20} {sail_angle_msg.data}")
             self.get_logger().info(f"{'Actual tail angle:':<20} {rudder_angle_msg.data}")
-            self.get_logger().info(f"{'Actual jib angle:':<20} {jib_angle_msg.data}")
+            self.get_logger().info(f"{'Actual jib port:':<20} {jib_port_angle_msg.data}")
+            self.get_logger().info(f"{'Actual jib stb:':<20} {jib_stb_angle_msg.data}")
             self.get_logger().info(f"{'Dropped packets:':<20} {dropped_packets_msg.data}")
         else:
             self.get_logger().info("No telemetry received")
