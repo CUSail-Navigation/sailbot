@@ -40,15 +40,19 @@ namespace constants {
         constexpr uint8_t JIB_MIN_ANGLE = 15;
         constexpr uint8_t JIB_MAX_ANGLE = 75;
         constexpr uint8_t JIB_FOOT_LENGTH_CM_SQUARED = 0 * 0; //TODO
+
+        /** Active jib sheet side (RX/TX and \code sfr::servo::jib_side_flag\endcode). */
+        constexpr uint8_t JIB_SIDE_PORT = 0;
+        constexpr uint8_t JIB_SIDE_STARBOARD = 1;
     }
     /** SERIAL NOTES FROM 2025-2026 SEASON: <p>
      * - BUFFER FORMAT (which is RX PACKET FORMAT between the start and end flags):
      *   - [0] = \code mainsail_angle\endcode
      *   - [1] = \code rudder_angle\endcode
-     *   - [2] = \code jib_port_angle\endcode
-     *   - [3] = \code jib_stb_angle\endcode
+     *   - [2] = \code jib_angle\endcode
+     *   - [3] = \code jib_side_flag\endcode (\code JIB_SIDE_PORT\endcode / \code JIB_SIDE_STARBOARD\endcode)
      * - TX PACKET FORMAT: [start_flag, wind_hi, wind_lo, mainsail_angle, rudder_angle,
-     *                      jib_port_angle, jib_stb_angle, dropped_packets, end_flag]
+     *                      jib_angle, jib_side_flag, dropped_packets, end_flag]
      */
     namespace serial {
         constexpr uint8_t TX_START_FLAG = 0XFF;

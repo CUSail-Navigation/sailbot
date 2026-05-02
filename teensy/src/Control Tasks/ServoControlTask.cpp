@@ -24,8 +24,8 @@ void ServoControlTask::execute() {
     if (sfr::serial::update_servos) {
         const uint8_t mainsail_angle = sfr::serial::buffer[0];
         const uint8_t rudder_angle = sfr::serial::buffer[1];
-        const uint8_t jib_port_angle = sfr::serial::buffer[2];
-        const uint8_t jib_stb_angle = sfr::serial::buffer[3];
+        const uint8_t jib_angle = sfr::serial::buffer[2];
+        const uint8_t jib_side_flag = sfr::serial::buffer[3];
 
         // Update sfr values based on incoming serial data if checks pass.
         if (rudder_angle >= constants::servo::RUDDER_MIN_ANGLE && rudder_angle <= constants::servo::RUDDER_MAX_ANGLE) {
@@ -39,12 +39,10 @@ void ServoControlTask::execute() {
             sfr::servo::mainsail_pwm = mainsail_to_pwm(mainsail_angle);
             actuate_servo(mainsail_servo, sfr::servo::mainsail_pwm);
         }
-        if (true) { // TODO(jib-logic): Validate jib angles against constants::servo::JIB_MIN_ANGLE / JIB_MAX_ANGLE.
-            sfr::servo::jib_port_angle = jib_port_angle;
-            sfr::servo::jib_stb_angle = jib_stb_angle;
-            // TODO(jib-logic): Compute and set sfr::servo::jib_port_pwm, then actuate jib_port_servo.
-            // TODO(jib-logic): Compute and set sfr::servo::jib_stb_pwm, then actuate jib_stb_servo.
-            // TODO(jib-logic): for both of the above, enforce linked behavior so only one jib side is active at a time.
+        if (true) { // TODO(jib-logic): Validate jib_angle against constants::servo::JIB_MIN_ANGLE / JIB_MAX_ANGLE.
+            sfr::servo::jib_angle = jib_angle;
+            sfr::servo::jib_side_flag = jib_side_flag;
+            // TODO(jib-logic): Use jib_side_flag to choose port vs starboard sheet; compute jib_port_pwm / jib_stb_pwm; actuate.
         }
 
         sfr::serial::update_servos = false; // Reset flag for the next update.

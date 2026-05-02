@@ -11,8 +11,8 @@ void SerialControlTask::execute() {
             static_cast<uint8_t>(sfr::anemometer::wind_angle & 0xFF),
             sfr::servo::mainsail_angle,
             sfr::servo::rudder_angle,
-            sfr::servo::jib_port_angle,
-            sfr::servo::jib_stb_angle,
+            sfr::servo::jib_angle,
+            sfr::servo::jib_side_flag,
             sfr::serial::dropped_packets,
             constants::serial::TX_END_FLAG
         };

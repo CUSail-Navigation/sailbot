@@ -10,7 +10,7 @@ class TeensyHardware:
     START_BYTE = 0xff
     END_BYTE = 0xee
     # Telemetry payload bytes between start/end flags:
-    # [wind_hi, wind_lo, sail_angle, rudder_angle, jib_port_angle, jib_stb_angle, dropped_packets]
+    # [wind_hi, wind_lo, sail_angle, rudder_angle, jib_angle, jib_side_flag, dropped_packets]
     PACKET_LENGTH = 7
 
     def __init__(self, port):
@@ -41,8 +41,8 @@ class TeensyHardware:
                 data["wind_angle"], \
                 data["sail_angle"], \
                 data["rudder_angle"], \
-                data["jib_port_angle"], \
-                data["jib_stb_angle"], \
+                data["jib_angle"], \
+                data["jib_side_flag"], \
                 data["dropped_packets"] = self._parse_packet(self.buffer)
 
                 # clear buffer
@@ -75,16 +75,14 @@ class TeensyHardware:
         else:
             rudder_angle = packet[3]
 
-        # TODO(jib-protocol): Decide jib telemetry encoding (raw uint8 vs signed/offset),
-        # then decode here to match the command/UI convention.
-        jib_port_angle = packet[4]
-        jib_stb_angle = packet[5]
+        jib_angle = packet[4]
+        jib_side_flag = packet[5]
         dropped_packets = packet[6]
 
-        return wind_angle, sail_angle, rudder_angle, jib_port_angle, jib_stb_angle, dropped_packets
+        return wind_angle, sail_angle, rudder_angle, jib_angle, jib_side_flag, dropped_packets
 
 
-    def send_command(self, sail, rudder, jib_port=0, jib_stb=0):
+    def send_command(self, sail, rudder, jib_angle=0, jib_side_flag=0):
         """
         Send a properly formatted command packet to the servo.
 
@@ -99,13 +97,12 @@ class TeensyHardware:
             # convert control values to signed 8-bit integers (bytes)
             sail_byte = sail & 0xFF if sail >= 0 else (sail + 256) & 0xFF
             rudder_byte = rudder & 0xFF if rudder >= 0 else (rudder + 256) & 0xFF
-            # TODO(jib-protocol): Apply finalized jib bounds/offset conversion before byte-pack.
-            jib_port_byte = int(jib_port) & 0xFF
-            jib_stb_byte = int(jib_stb) & 0xFF
+            jib_angle_byte = int(jib_angle) & 0xFF
+            jib_side_byte = int(jib_side_flag) & 0xFF
 
             # Command payload bytes between start/end flags:
-            # [sail_angle, rudder_angle, jib_port_angle, jib_stb_angle]
-            command_packet = bytearray([self.START_BYTE, sail_byte, rudder_byte, jib_port_byte, jib_stb_byte, self.END_BYTE])
+            # [sail_angle, rudder_angle, jib_angle, jib_side_flag]
+            command_packet = bytearray([self.START_BYTE, sail_byte, rudder_byte, jib_angle_byte, jib_side_byte, self.END_BYTE])
 
             # send the packet over serial
             self.serial.write(command_packet)
