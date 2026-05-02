@@ -5,12 +5,12 @@ namespace constants {
     namespace anemometer {
         constexpr uint8_t ANEMOMETER_PIN = 18; //TODO
     }
-    /** SERVO NOTES FROM 2025-2026 SEASON: <p>
+    /** PHYSICAL SERVO NOTES FROM 2025-2026 SEASON:
      * - All servos can go from 600 PWM (a "minimum angle") to 2400 PWM (a "maximum angle").
-     * - Rudder: This servo can turn 0.5 times, but mech did something with the gears so that the rudder will only go
-     *              from -45 degrees (600 PWM) to 45 degrees (2400 PWM).
-     * - Mainsail: This servo can turn 7.85 times, but [TODO]. PWM of [TODO] is "all-in", [TODO] is "all-out" (on both sides).
-     * - Jib: [TODO].
+     * - Rudder: This servo can turn 0.5 times (but mech did something with so that the rudder will only go
+     *              from -45 degrees (600 PWM) to 45 degrees (2400 PWM)).
+     * - Mainsail: This servo can turn 7.85 times.
+     * - Jib: We have two servos; one for each side of the boat. Both servos can turn 7.85 times.
      */
     namespace servo {
         constexpr uint32_t SERVO_MIN_PULSE = 600;
@@ -31,7 +31,9 @@ namespace constants {
         constexpr uint32_t MAINSAIL_MAX_PULSE = 0;  //TODO
         constexpr uint8_t MAINSAIL_MIN_ANGLE = 0;
         constexpr uint8_t MAINSAIL_MAX_ANGLE = 90;
-        constexpr uint8_t BOOM_LENGTH_CM_SQUARED = 0 * 0; //TODO
+        constexpr float MAINSAIL_PWM_PER_TURN = (SERVO_MAX_PULSE - SERVO_MIN_PULSE) / 7.85;
+        constexpr float MAINSAIL_WHEEL_CIRCUM_CM = 12.927;
+        constexpr uint32_t TWO_BOOM_LEN_SQD_CM = 2 * 0 * 0; //TODO
 
         constexpr uint32_t JIB_PORT_MIN_PULSE = 0;  //TODO
         constexpr uint32_t JIB_PORT_MAX_PULSE = 0;  //TODO
@@ -39,11 +41,13 @@ namespace constants {
         constexpr uint32_t JIB_STB_MAX_PULSE = 0;   //TODO
         constexpr uint8_t JIB_MIN_ANGLE = 15;
         constexpr uint8_t JIB_MAX_ANGLE = 75;
-        constexpr uint8_t JIB_FOOT_LENGTH_CM_SQUARED = 0 * 0; //TODO
+        constexpr float JIB_PWM_PER_TURN = (SERVO_MAX_PULSE - SERVO_MIN_PULSE) / 7.85;
+        constexpr float JIB_WHEEL_CIRCUM_CM = 0;    // TODO
+        constexpr uint8_t TWO_JIB_FOOT_LEN_SQD_CM = 2 * 0 * 0; //TODO
 
         /** Active jib sheet side (RX/TX and \code sfr::servo::jib_side_flag\endcode). */
         constexpr uint8_t JIB_SIDE_PORT = 0;
-        constexpr uint8_t JIB_SIDE_STARBOARD = 1;
+        constexpr uint8_t JIB_SIDE_STB = 1;
     }
     /** SERIAL NOTES FROM 2025-2026 SEASON: <p>
      * - BUFFER FORMAT (which is RX PACKET FORMAT between the start and end flags):
