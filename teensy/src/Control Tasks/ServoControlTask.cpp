@@ -79,10 +79,10 @@ uint32_t ServoControlTask::rudder_to_pwm(const uint8_t angle) {
  * @return the PWM to actuate \code mainsail_servo\endcode to.
  */
 uint32_t ServoControlTask::mainsail_to_pwm(const uint8_t angle) {
-    return law_of_cos_map( angle,
-                           constants::servo::TWO_BOOM_LEN_SQD_CM,
-                           constants::servo::MAINSAIL_PULSE_PER_TURN,
-                           constants::servo::MAINSAIL_WHEEL_CIRCUM_CM
+    return law_of_cos_map(angle,
+                          constants::servo::TWO_BOOM_LEN_SQD_CM,
+                          constants::servo::MAINSAIL_PULSE_PER_TURN,
+                          constants::servo::MAINSAIL_WHEEL_CIRCUM_CM
     ) + constants::servo::MAINSAIL_MIN_PULSE;
 }
 
@@ -97,11 +97,10 @@ uint32_t ServoControlTask::jib_to_pwm(const uint8_t angle, const uint8_t jib_sid
                                 constants::servo::JIB_PORT_WHEEL_CIRCUM_CM : constants::servo::JIB_STB_WHEEL_CIRCUM_CM;
     const uint32_t min_pulse = (jib_side_flag == constants::servo::JIB_SIDE_PORT) ?
                                 constants::servo::JIB_PORT_MIN_PULSE : constants::servo::JIB_STB_MIN_PULSE;
-
-    return law_of_cos_map( angle,
-                           constants::servo::TWO_JIB_FOOT_LEN_SQD_CM,
-                           constants::servo::JIB_PULSE_PER_TURN,
-                           wheel_circum
+    return law_of_cos_map(angle,
+                          constants::servo::TWO_JIB_FOOT_LEN_SQD_CM,
+                          constants::servo::JIB_PULSE_PER_TURN,
+                          wheel_circum
     ) + min_pulse;
 }
 
@@ -118,10 +117,10 @@ void ServoControlTask::actuate_servo(Servo &servo, const uint32_t pwm) {
  * - In an isosceles triangle where a = b, and "angle" is the angle between these two legs, this simplifies to
  *   c = sqrt{2b^2(1 - cos(angle))}
  * - Consider the mainsail, namely looking down at the boom from high above the boat:
- *    - "angle" refers to the angle that the boom makes with the centerline of the boat; namely the goal angle we want
+ *    - "angle" refers to the angle that the boom makes with the centerline of the boat; namely, the goal angle we want
  *      the mainsail to be set to.
- *    - Pivoting the boom around mast traces out an isosceles triangle: the length of the legs ("b") is the length of
- *      the section of the boom from the mast to where the mainsheet attaches.
+ *    - Pivoting the boom around the mast traces out an isosceles triangle: the length of the legs ("b") is the length
+ *      of the section of the boom from the mast to where the mainsheet attaches.
  * - We model similarly for the jib (note that this is less accurate as there is no "boom" for the jib, and it is
  *   therefore harder to quantify a triangle or angles in general).
  *    - "angle" refers to the goal angle we want the jib to be set to.
