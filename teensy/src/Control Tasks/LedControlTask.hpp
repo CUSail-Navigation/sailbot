@@ -1,3 +1,4 @@
+#pragma once
 #include "sfr.hpp"
 #include <Arduino.h>
 
