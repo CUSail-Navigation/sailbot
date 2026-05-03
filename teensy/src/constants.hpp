@@ -32,7 +32,7 @@ namespace constants {
         constexpr uint8_t MAINSAIL_MIN_ANGLE = 0;
         constexpr uint8_t MAINSAIL_MAX_ANGLE = 90;
         constexpr float MAINSAIL_WHEEL_CIRCUM_CM = 12.927;  //TODO
-        constexpr uint32_t TWO_BOOM_LEN_SQD_CM = 2 * 0 * 0; //TODO
+        constexpr uint32_t TWO_BOOM_LEN_SQD_CM = 2 * 94 * 94;
         constexpr float MAINSAIL_PULSE_PER_TURN = (SERVO_MAX_PULSE - SERVO_MIN_PULSE) / 7.85;
 
         constexpr uint32_t JIB_PORT_MIN_PULSE = 0;  //TODO
@@ -43,7 +43,7 @@ namespace constants {
         constexpr uint8_t JIB_MAX_ANGLE = 80;       //TODO
         constexpr float JIB_PORT_WHEEL_CIRCUM_CM = 0;   //TODO
         constexpr float JIB_STB_WHEEL_CIRCUM_CM = 0;    //TODO
-        constexpr uint32_t TWO_JIB_FOOT_LEN_SQD_CM = 2 * 0 * 0; //TODO
+        constexpr uint32_t TWO_JIB_FOOT_LEN_SQD_CM = 2 * 60 * 60;
         constexpr float JIB_PULSE_PER_TURN = (SERVO_MAX_PULSE - SERVO_MIN_PULSE) / 7.85;
 
         /** Active jib sheet side (RX/TX and \code sfr::servo::jib_side_flag\endcode). */
