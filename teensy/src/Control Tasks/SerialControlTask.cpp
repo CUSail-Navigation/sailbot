@@ -3,7 +3,7 @@
 SerialControlTask::SerialControlTask() : last_telemetry_send_time(0), current_time(0), send_telemetry(false) {}
 
 void SerialControlTask::execute() {
-    if (last_telemetry_send_time - current_time >= constants::serial::TX_PERIOD_MS) send_telemetry = true;
+    if (current_time - last_telemetry_send_time >= constants::serial::TX_PERIOD_MS) send_telemetry = true;
     if (send_telemetry) {
         const uint8_t data[] = {
             constants::serial::TX_START_FLAG,
