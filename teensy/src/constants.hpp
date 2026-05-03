@@ -39,8 +39,8 @@ namespace constants {
         constexpr uint32_t JIB_PORT_MAX_PULSE = 0;  //TODO
         constexpr uint32_t JIB_STB_MIN_PULSE = 0;   //TODO
         constexpr uint32_t JIB_STB_MAX_PULSE = 0;   //TODO
-        constexpr uint8_t JIB_MIN_ANGLE = 15;       //TODO
-        constexpr uint8_t JIB_MAX_ANGLE = 75;       //TODO
+        constexpr uint8_t JIB_MIN_ANGLE = 10;       //TODO
+        constexpr uint8_t JIB_MAX_ANGLE = 80;       //TODO
         constexpr float JIB_PORT_WHEEL_CIRCUM_CM = 0;   //TODO
         constexpr float JIB_STB_WHEEL_CIRCUM_CM = 0;    //TODO
         constexpr uint32_t TWO_JIB_FOOT_LEN_SQD_CM = 2 * 0 * 0; //TODO
