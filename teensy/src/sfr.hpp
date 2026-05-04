@@ -1,7 +1,7 @@
 #pragma once
 #include "constants.hpp"
 
-/** SFR stands for State Field Registry. It contains all sensor values, and
+/** SFR stands for State Field Registry. It contains all sensor values and
  *  universal flags that should be available to the entire boat. */
 namespace sfr {
     namespace anemometer {

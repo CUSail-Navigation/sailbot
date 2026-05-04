@@ -32,7 +32,7 @@ namespace constants {
         constexpr uint8_t MAINSAIL_MIN_ANGLE = 0;
         constexpr uint8_t MAINSAIL_MAX_ANGLE = 90;
         constexpr float MAINSAIL_WHEEL_CIRCUM_CM = 12.927;  //TODO
-        constexpr uint32_t TWO_BOOM_LEN_SQD_CM = 2 * 94 * 94; // (2025-2026) Boom length is 94cm.
+        constexpr uint32_t TWO_BOOM_LEN_SQD_CM = 2 * 94 * 94; // (2025-2026) Boom length (mast to mainsheet) is 94cm.
         constexpr float MAINSAIL_PULSE_PER_TURN = (SERVO_MAX_PULSE - SERVO_MIN_PULSE) / 7.85;
 
         constexpr uint32_t JIB_PORT_MIN_PULSE = 0;  //TODO
@@ -55,9 +55,9 @@ namespace constants {
      *   - [0] = \code mainsail_angle\endcode
      *   - [1] = \code rudder_angle\endcode
      *   - [2] = \code jib_angle\endcode
-     *   - [3] = \code jib_side_flag\endcode (\code JIB_SIDE_PORT\endcode / \code JIB_SIDE_STARBOARD\endcode)
+     *   - [3] = \code jib_side_flag\endcode ( \code JIB_SIDE_PORT\endcode or \code JIB_SIDE_STARBOARD\endcode )
      * - TX PACKET FORMAT: [start_flag, wind_hi, wind_lo, mainsail_angle, rudder_angle,
-     *                      jib_angle, jib_side_flag, dropped_packets, end_flag]
+     *                      jib_angle, jib_side_flag, dropped_packets, end_flag].
      */
     namespace serial {
         constexpr uint8_t TX_START_FLAG = 0XFF;
