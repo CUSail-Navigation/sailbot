@@ -127,6 +127,9 @@ void ServoControlTask::actuate_servo(Servo &servo, const uint32_t pwm) {
  *    - We approximate "b" as the length of the foot of the jib.
  * - In both cases, "c" is approximately the length of the sheet, which is what we want to solve for.
  * - "c" maps to some PWM value based on the specific servo and the circumference of its wheel.
+ *
+ * Note that this method assumes that the max PWM value of the servo in question allows for the sail to be set to
+ * \code angle\endcode. If this is not the case, it will return a value greater than the servo's PWM range.
  */
 uint32_t ServoControlTask::law_of_cos_map(const uint8_t angle, const uint32_t two_b_sqd, const float PWM_per_turn, const float wheel_circum) {
     const float c = sqrtf( two_b_sqd * (1 - cosf(angle * 0.017453f)) ); // 0.017453 = pi/180.
