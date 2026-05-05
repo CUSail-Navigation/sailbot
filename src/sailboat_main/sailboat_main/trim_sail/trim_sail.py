@@ -9,6 +9,14 @@ class TrimSail(Node):
     the optimal angles for the sails based on the wind direction.
     """
 
+    # CONSTANTS (2024-2025).
+    NO_GO_CENTER = 180
+    NO_GO_WIDTH = 55
+    MAINSAIL_MIN = 0
+    MAINSAIL_MAX = 90
+    JIB_MIN = 10
+    JIB_MAX = 80
+
     def __init__(self):
         super().__init__('trim_sail')
         # Subscription for wind direction and danger zone.
@@ -26,10 +34,7 @@ class TrimSail(Node):
         Use the wind data from ``msg`` to calculate the sail angles and side;
         publish these values.
         """
-        values = self.calculate_sail_angles(msg.data)
-        mainsail_angle = values[0]
-        jib_angle = values[1]
-        jib_side_flag = values[2]
+        mainsail_angle, jib_angle, jib_side_flag = self.calculate_sail_angles(msg.data)
 
         # Create the proper messages and publish the values.
         mainsail_angle_msg = Int32()
@@ -39,7 +44,7 @@ class TrimSail(Node):
         jib_side_flag_msg = UInt8()
         jib_side_flag_msg.data = jib_side_flag
 
-        self.publisher_sail.publish(mainsail_angle_msg)
+        self.publisher_mainsail_angle.publish(mainsail_angle_msg)
         self.publisher_jib_angle.publish(jib_angle_msg)
         self.publisher_jib_side_flag.publish(jib_side_flag_msg)
         self.get_logger().info(f"Mainsail angle: {mainsail_angle}, Jib angle: {jib_angle}, Jib Side: {jib_side_flag}")
@@ -49,27 +54,30 @@ class TrimSail(Node):
         Calculates the new sail angles given the wind direction.
         Note that goal sail angles are symmetric across the no-go zone.
         We only need to know what side to set the sail on for the jib, since we use 2 servos (2025-2026).
-        :param: windDir the wind direction, an int in [0,360). (CURRENT CONVENTION: 180 = HEAD ON / NO-GO ZONE CENTER)
+        :param: windDir the wind direction, an int in [0,360). (CURRENT CONVENTION: 180 = HEAD ON / NO-GO ZONE CENTER).
         :return: an array of ints: [mainsail_angle, jib_angle, jib_side_flag].
                     mainsail_angle: in [0, 90]. jib_angle: in [10, 80]. jib_side_flag: in {0, 1}.
         """
-        # (2024-2025) the no-go zone is 55 degrees.
-        HALF_NO_GO_ZONE = 55/2
+        half_no_go = self.NO_GO_WIDTH/2
 
         # Set the jib on the port side of the boat if we're on the left side of the no-go zone.
-        jib_side_flag = 0 if wind_dir > 180 else 1
+        jib_side_flag = 0 if wind_dir > self.NO_GO_CENTER else 1
 
         # No longer care about side: map angles on the left side of the no-go zone symmetrically to the right side.
         if 180 < wind_dir < 360: wind_dir = 360 - wind_dir
 
-        if wind_dir > (180 - HALF_NO_GO_ZONE): # In the no-go zone.
-            mainsail_angle = 0
-            jib_angle = 0
+        if wind_dir > (self.NO_GO_CENTER - half_no_go): # In the no-go zone.
+            mainsail_angle = self.MAINSAIL_MIN
+            jib_angle = self.JIB_MIN
         else: # Not in no-go zone; linearly map wind direction to sail angle.
-            mainsail_angle = int(np.interp(wind_dir, [0, 180 - HALF_NO_GO_ZONE], [90, 0]))
-            jib_angle = int(np.interp(wind_dir, [0, 180 - HALF_NO_GO_ZONE], [80, 10]))
+            mainsail_angle = int(np.interp(
+                wind_dir, [0, self.NO_GO_CENTER - half_no_go], [self.MAINSAIL_MAX, self.MAINSAIL_MIN]
+            ))
+            jib_angle = int(np.interp(
+                wind_dir, [0, self.NO_GO_CENTER - half_no_go], [self.JIB_MAX, self.JIB_MIN]
+            ))
 
-        return [mainsail_angle, jib_angle, jib_side_flag]
+        return mainsail_angle, jib_angle, jib_side_flag
 
     def danger_zone_callback(self, msg):
         """
