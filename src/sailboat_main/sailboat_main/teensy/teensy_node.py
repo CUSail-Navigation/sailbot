@@ -11,8 +11,8 @@ class Teensy(Node):
     with the Teensy in real or simulated mode, reads telemetry (wind, angles,
     dropped packets), and sends control commands from ROS subscriptions.
 
-    Command topics (namespace-relative): ``sail``, ``rudder_angle``,
-    ``jib_angle`` (Int32), ``jib_side_flag`` (UInt8: 0 = port, 1 = starboard).
+    Command topics (namespace-relative): ``sail`` (Int32), ``rudder_angle`` (Int32),
+    ``jib_angle`` (Int32), ``jib_side_flag`` (UInt8: 0 = port side, 1 = starboard side).
     """
     def __init__(self):
         super().__init__('teensy')
@@ -37,15 +37,15 @@ class Teensy(Node):
             self.teensy = teensy.TeensyHardware(self.teensy_port)
             self.get_logger().info(f'Real mode enabled. Serial communication on {self.teensy_port}.')
 
-        # Keep track of our desired mainsail, rudder, and jib positions.
-        self.desired_sail = 0
-        self.desired_rudder = 0
+        # Keep track of our desired mainsail, rudder, and jib angles.
+        self.desired_mainsail_angle = 0
+        self.desired_rudder_angle = 0
         self.desired_jib_angle = 0
         self.desired_jib_side_flag = 0
 
         # Telemetry data publishers.
         self.wind_angle_pub = self.create_publisher(Int32, 'wind', 10)
-        self.actual_sail_angle_pub = self.create_publisher(Int32, 'actual_sail_angle', 10)
+        self.actual_mainsail_angle_pub = self.create_publisher(Int32, 'actual_sail_angle', 10)
         self.actual_rudder_angle_pub = self.create_publisher(Int32, 'actual_rudder_angle', 10)
         self.actual_jib_angle_pub = self.create_publisher(Int32, 'actual_jib_angle', 10)
         self.actual_jib_side_flag_pub = self.create_publisher(UInt8, 'actual_jib_side_flag', 10)
@@ -72,7 +72,7 @@ class Teensy(Node):
 
             sail_angle_msg = Int32()
             sail_angle_msg.data = data['sail_angle']
-            self.actual_sail_angle_pub.publish(sail_angle_msg)
+            self.actual_mainsail_angle_pub.publish(sail_angle_msg)
 
             rudder_angle_msg = Int32()
             rudder_angle_msg.data = data['rudder_angle']
@@ -103,45 +103,40 @@ class Teensy(Node):
             self.get_logger().info(f"{'Actual mainsail angle:':<20} {sail_angle_msg.data}")
             self.get_logger().info(f"{'Actual rudder angle:':<20} {rudder_angle_msg.data}")
             self.get_logger().info(f"{'Actual jib angle:':<20} {jib_angle_msg.data}")
-            self.get_logger().info(f"{'Jib side flag:':<20} {jib_side_flag_msg.data}")
+            self.get_logger().info(f"{'Actual jib side flag:':<20} {jib_side_flag_msg.data}")
             self.get_logger().info(f"{'Dropped packets:':<20} {dropped_packets_msg.data}")
-        else:
-            self.get_logger().info('No telemetry received.')
+        else: self.get_logger().info('No telemetry received.')
 
     def _send_command_to_teensy(self):
         """ Send the latest mainsail, rudder, and jib goals in one serial packet. """
-        jib_angle = max(0, min(255, int(self.desired_jib_angle)))
-        jib_side = max(0, min(255, int(self.desired_jib_side_flag)))
         if self.teensy.send_command(
-            self.desired_sail,
-            self.desired_rudder,
-            jib_angle,
-            jib_side,
+            self.desired_mainsail_angle,
+            self.desired_rudder_angle,
+            self.desired_jib_angle,
+            self.desired_jib_side_flag,
         ) == 0:
-            self.get_logger().info('Message sent to Teensy.')
+            self.get_logger().info(f'Message sent to Teensy: mainsail:{self.desired_mainsail_angle}, rudder:{self.desired_rudder_angle} '
+                                   f'jib:{self.desired_jib_angle}, jib side:{self.desired_jib_side_flag}')
         else:
             self.get_logger().warn('Message failed to send to Teensy.')
 
     def sail_callback(self, msg):
         """ Handle ``sail`` updates and forward the full command packet. """
-        self.desired_sail = msg.data
+        self.desired_mainsail_angle = msg.data
         self._send_command_to_teensy()
 
     def rudder_callback(self, msg):
         """ Handle ``rudder_angle`` updates and forward the full command packet. """
-        self.desired_rudder = msg.data
-        self.get_logger().info(
-            f'Rudder callback — sail:{self.desired_sail}, rudder:{self.desired_rudder}'
-        )
+        self.desired_rudder_angle = msg.data
         self._send_command_to_teensy()
 
     def jib_angle_callback(self, msg):
-        """ Handle ``jib_angle`` (Int32); firmware applies jib only if the byte is in range. """
+        """ Handle ``jib_angle`` updates and forward the full command packet. """
         self.desired_jib_angle = msg.data
         self._send_command_to_teensy()
 
     def jib_side_flag_callback(self, msg):
-        """ Handle ``jib_side_flag`` (UInt8: set the jib on port (0) or starboard (1) side). """
+        """ Handle ``jib_side_flag`` updates and forward the full command packet. """
         self.desired_jib_side_flag = int(msg.data)
         self._send_command_to_teensy()
 
