@@ -53,8 +53,8 @@ class TrimSail(Node):
         """
         Calculates the new sail angles given the wind direction.
         Note that goal sail angles are symmetric across the no-go zone.
-        We only need to know what side to set the sail on for the jib, since we use 2 servos (2025-2026).
-        :param: windDir the wind direction, an int in [0,360). (CURRENT CONVENTION: 180 = HEAD ON / NO-GO ZONE CENTER).
+        We only need to know what side to set the sails on for the jib, since we use 2 servos (2025-2026).
+        :param: windDir: the wind direction, an int in [0,360). (CURRENT CONVENTION: 180 = HEAD ON / NO-GO ZONE CENTER).
         :return: an array of ints: [mainsail_angle, jib_angle, jib_side_flag].
                     mainsail_angle: in [0, 90]. jib_angle: in [10, 80]. jib_side_flag: in {0, 1}.
         """
