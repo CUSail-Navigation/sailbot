@@ -11,7 +11,7 @@ class TrimSail(Node):
 
     def __init__(self):
         super().__init__('trim_sail')
-        # Subscription for wind direction.
+        # Subscription for wind direction and danger zone.
         self.wind_subscription = self.create_subscription(Int32, 'wind', self.wind_callback, 10)
         self.danger_zone_subscription = self.create_subscription(Bool, 'danger_zone', self.danger_zone_callback, 10)
         self.in_danger_zone = False
@@ -19,11 +19,11 @@ class TrimSail(Node):
         # Publishers for mainsail angle, jib angle, and jib side flag.
         self.publisher_mainsail_angle = self.create_publisher(Int32, 'algo_sail', 10)
         self.publisher_jib_angle = self.create_publisher(Int32, 'algo_jib_angle', 10)
-        self.publisher_jib_side_flag = self.create_publisher(Int32, 'algo_jib_side_flag', 10)
+        self.publisher_jib_side_flag = self.create_publisher(UInt8, 'algo_jib_side_flag', 10)
 
     def wind_callback(self, msg):
         """
-        Use the wind data from msg to calculate the sail angles and side;
+        Use the wind data from ``msg`` to calculate the sail angles and side;
         publish these values.
         """
         values = self.calculate_sail_angles(msg.data)
@@ -49,17 +49,17 @@ class TrimSail(Node):
         Calculates the new sail angles given the wind direction.
         Note that goal sail angles are symmetric across the no-go zone.
         We only need to know what side to set the sail on for the jib, since we use 2 servos (2025-2026).
-        :param: windDir the wind direction, an int in [0,360).
+        :param: windDir the wind direction, an int in [0,360). (CURRENT CONVENTION: 180 = HEAD ON / NO-GO ZONE CENTER)
         :return: an array of ints: [mainsail_angle, jib_angle, jib_side_flag].
                     mainsail_angle: in [0, 90]. jib_angle: in [10, 80]. jib_side_flag: in {0, 1}.
         """
         # (2024-2025) the no-go zone is 55 degrees.
         HALF_NO_GO_ZONE = 55/2
 
-        # Se the on port side of the boat if we're on the left side of the no-go zone.
+        # Set the jib on the port side of the boat if we're on the left side of the no-go zone.
         jib_side_flag = 0 if wind_dir > 180 else 1
 
-        # No longer care about side: map angles on the left side of the no-go zone to the right side.
+        # No longer care about side: map angles on the left side of the no-go zone symmetrically to the right side.
         if 180 < wind_dir < 360: wind_dir = 360 - wind_dir
 
         if wind_dir > (180 - HALF_NO_GO_ZONE): # In the no-go zone.
