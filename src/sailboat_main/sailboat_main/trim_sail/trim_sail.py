@@ -1,48 +1,75 @@
+import numpy as np
 import rclpy
 from rclpy.node import Node
-
-from std_msgs.msg import Int32
-from std_msgs.msg import Bool
+from std_msgs.msg import Int32, UInt8, Bool
 
 class TrimSail(Node):
     """
-    The sailing algorithm responsible for changing the sail angle based on the 
-    wind direction.
+    The part of the sailing algorithm that is responsible for calculating
+    the optimal angles for the sails based on the wind direction.
     """
 
     def __init__(self):
         super().__init__('trim_sail')
-        
-        #Subscription for wind direction
-        self.wind_subscription = self.create_subscription(
-            Int32,
-            'wind',
-            self.wind_callback,
-            10)   
+        # Subscription for wind direction.
+        self.wind_subscription = self.create_subscription(Int32, 'wind', self.wind_callback, 10)
+        self.danger_zone_subscription = self.create_subscription(Bool, 'danger_zone', self.danger_zone_callback, 10)
+        self.in_danger_zone = False
 
-        self.danger_zone_subscription = self.create_subscription(
-            Bool,
-            'danger_zone',
-            self.danger_zone_callback,
-            10)
-        self.in_danger_zone = False 
-        # Publisher for sail angle
-        self.publisher_sail = self.create_publisher(Int32, 'algo_sail', 10)
-        
+        # Publishers for mainsail angle, jib angle, and jib side flag.
+        self.publisher_mainsail_angle = self.create_publisher(Int32, 'algo_sail', 10)
+        self.publisher_jib_angle = self.create_publisher(Int32, 'algo_jib_angle', 10)
+        self.publisher_jib_side_flag = self.create_publisher(Int32, 'algo_jib_side_flag', 10)
 
     def wind_callback(self, msg):
         """
-        Use the wind data from msg to calculate the sail angle and publish the absolute value 
-        of the sail angle
+        Use the wind data from msg to calculate the sail angles and side;
+        publish these values.
         """
-        sail_angle = abs(self.setSail(msg.data))
+        values = self.calculate_sail_angles(msg.data)
+        mainsail_angle = values[0]
+        jib_angle = values[1]
+        jib_side_flag = values[2]
 
-        # Create an Int32 message and publish the sail angle
-        msg = Int32()
-        msg.data = sail_angle
+        # Create the proper messages and publish the values.
+        mainsail_angle_msg = Int32()
+        mainsail_angle_msg.data = mainsail_angle
+        jib_angle_msg = Int32()
+        jib_angle_msg.data = jib_angle
+        jib_side_flag_msg = UInt8()
+        jib_side_flag_msg.data = jib_side_flag
 
-        self.publisher_sail.publish(msg)
-        self.get_logger().info('Sail Angle: "%s"' % sail_angle)
+        self.publisher_sail.publish(mainsail_angle_msg)
+        self.publisher_jib_angle.publish(jib_angle_msg)
+        self.publisher_jib_side_flag.publish(jib_side_flag_msg)
+        self.get_logger().info(f"Mainsail angle: {mainsail_angle}, Jib angle: {jib_angle}, Jib Side: {jib_side_flag}")
+
+    def calculate_sail_angles(self, wind_dir):
+        """
+        Calculates the new sail angles given the wind direction.
+        Note that goal sail angles are symmetric across the no-go zone.
+        We only need to know what side to set the sail on for the jib, since we use 2 servos (2025-2026).
+        :param: windDir the wind direction, an int in [0,360).
+        :return: an array of ints: [mainsail_angle, jib_angle, jib_side_flag].
+                    mainsail_angle: in [0, 90]. jib_angle: in [10, 80]. jib_side_flag: in {0, 1}.
+        """
+        # (2024-2025) the no-go zone is 55 degrees.
+        HALF_NO_GO_ZONE = 55/2
+
+        # Se the on port side of the boat if we're on the left side of the no-go zone.
+        jib_side_flag = 0 if wind_dir > 180 else 1
+
+        # No longer care about side: map angles on the left side of the no-go zone to the right side.
+        if 180 < wind_dir < 360: wind_dir = 360 - wind_dir
+
+        if wind_dir > (180 - HALF_NO_GO_ZONE): # In the no-go zone.
+            mainsail_angle = 0
+            jib_angle = 0
+        else: # Not in no-go zone; linearly map wind direction to sail angle.
+            mainsail_angle = int(np.interp(wind_dir, [0, 180 - HALF_NO_GO_ZONE], [90, 0]))
+            jib_angle = int(np.interp(wind_dir, [0, 180 - HALF_NO_GO_ZONE], [80, 10]))
+
+        return [mainsail_angle, jib_angle, jib_side_flag]
 
     def danger_zone_callback(self, msg):
         """
@@ -50,35 +77,11 @@ class TrimSail(Node):
         """
         self.in_danger_zone = msg.data
 
-    def setSail(self, windDir):
-        """
-        Calculate and set the new sail angle given wind direction.
-        Parameter precondition: windDir, an int in [0,360)
-        Return value: the sail angle, an int in [-90,90]
-        """
-        # wind is blowing in the same direction as the sailing direction (run), this range
-        # sets a 20 degree buffer zone so that the sail does not always flip.
-
-        if 0 <= windDir < 10 or 350 < windDir < 360:
-            return 90
-        elif 235 < windDir <= 350: # assumes no-go zone is 55 degrees
-            return round(((18/23)*windDir - 4230/23))
-        elif 10 <= windDir < 125:
-            return round((-(18/23)*windDir + 2250/23))
-        # no go zone 
-        else:
-            return 0
-
 
 def main(args=None):
     rclpy.init(args=args)
-
     trim_sail = TrimSail()
 
-
-    # Destroy the node explicitly
-    # (optional - otherwise it will be done automatically
-    # when the garbage collector destroys the node object)
     try:
         rclpy.spin(trim_sail)
     except KeyboardInterrupt:
