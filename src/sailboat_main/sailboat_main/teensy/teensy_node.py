@@ -14,6 +14,7 @@ class Teensy(Node):
     Command topics (namespace-relative): ``sail`` (Int32), ``rudder_angle`` (Int32),
     ``jib_angle`` (Int32), ``jib_side_flag`` (UInt8: 0 = port side, 1 = starboard side).
     """
+
     def __init__(self):
         super().__init__('teensy')
 
