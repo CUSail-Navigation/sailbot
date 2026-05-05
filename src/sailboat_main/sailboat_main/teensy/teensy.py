@@ -42,7 +42,7 @@ class TeensyHardware:
             elif incoming_byte == self.END_BYTE.to_bytes(1, 'big') and len(self.buffer) == self.PACKET_LENGTH:
                 self.packet_started = False
                 data["wind_angle"], \
-                data["sail_angle"], \
+                data["mainsail_angle"], \
                 data["rudder_angle"], \
                 data["jib_angle"], \
                 data["jib_side_flag"], \

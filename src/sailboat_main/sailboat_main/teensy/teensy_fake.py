@@ -10,7 +10,8 @@ class TeensyFake:
     # CONSTANTS.
     START_BYTE = 0xFF
     END_BYTE = 0xEE
-    def __init__(self, ):
+
+    def __init__(self):
         self.wind_angle = random.randint(160, 200) # Tacking range.
         self.wind_step = random.uniform(-5, 5) 
         self.last_mainsail_angle = 0
@@ -29,7 +30,7 @@ class TeensyFake:
         :return: 0 for success, 1 for failure.
         """
         data["wind_angle"] = self._generate_random_wind()
-        data["sail_angle"] = self.last_mainsail_angle
+        data["mainsail_angle"] = self.last_mainsail_angle
         data["rudder_angle"] = self.last_rudder_angle
         data["jib_angle"] = self.last_jib_angle
         data["jib_side_flag"] = self.last_jib_side_flag

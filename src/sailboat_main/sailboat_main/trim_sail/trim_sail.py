@@ -69,7 +69,7 @@ class TrimSail(Node):
         if wind_dir > (self.NO_GO_CENTER - half_no_go): # In the no-go zone.
             mainsail_angle = self.MAINSAIL_MIN
             jib_angle = self.JIB_MIN
-        else: # Not in no-go zone; linearly map wind direction to sail angle.
+        else: # Not in no-go zone; linearly map wind direction to sail angles.
             mainsail_angle = int(np.interp(
                 wind_dir, [0, self.NO_GO_CENTER - half_no_go], [self.MAINSAIL_MAX, self.MAINSAIL_MIN]
             ))

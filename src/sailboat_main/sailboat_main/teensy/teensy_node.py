@@ -53,8 +53,8 @@ class Teensy(Node):
 
         # Callback to read Teensy data.
         self.timer = self.create_timer(self.timer_period, self.check_telemetry)
-        self.create_subscription(Int32, 'sail', self.sail_callback, 10)
-        self.create_subscription(Int32, 'rudder_angle', self.rudder_callback, 10)
+        self.create_subscription(Int32, 'sail', self.mainsail_angle_callback, 10)
+        self.create_subscription(Int32, 'rudder_angle', self.rudder_angle_callback, 10)
         self.create_subscription(Int32, 'jib_angle', self.jib_angle_callback, 10)
         self.create_subscription(UInt8, 'jib_side_flag', self.jib_side_flag_callback, 10)
 
@@ -70,9 +70,9 @@ class Teensy(Node):
             wind_angle_msg.data = data['wind_angle']
             self.wind_angle_pub.publish(wind_angle_msg)
 
-            sail_angle_msg = Int32()
-            sail_angle_msg.data = data['sail_angle']
-            self.actual_mainsail_angle_pub.publish(sail_angle_msg)
+            mainsail_angle_msg = Int32()
+            mainsail_angle_msg.data = data['mainsail_angle']
+            self.actual_mainsail_angle_pub.publish(mainsail_angle_msg)
 
             rudder_angle_msg = Int32()
             rudder_angle_msg.data = data['rudder_angle']
@@ -100,7 +100,7 @@ class Teensy(Node):
                 self.get_logger().warn(f'Failed to write rudder angle to file: {e}')
 
             self.get_logger().info(f"{'Wind angle:':<20} {wind_angle_msg.data}")
-            self.get_logger().info(f"{'Actual mainsail angle:':<20} {sail_angle_msg.data}")
+            self.get_logger().info(f"{'Actual mainsail angle:':<20} {mainsail_angle_msg.data}")
             self.get_logger().info(f"{'Actual rudder angle:':<20} {rudder_angle_msg.data}")
             self.get_logger().info(f"{'Actual jib angle:':<20} {jib_angle_msg.data}")
             self.get_logger().info(f"{'Actual jib side flag:':<20} {jib_side_flag_msg.data}")
@@ -120,12 +120,12 @@ class Teensy(Node):
         else:
             self.get_logger().warn('Message failed to send to Teensy.')
 
-    def sail_callback(self, msg):
+    def mainsail_angle_callback(self, msg):
         """ Handle ``sail`` updates and forward the full command packet. """
         self.desired_mainsail_angle = msg.data
         self._send_command_to_teensy()
 
-    def rudder_callback(self, msg):
+    def rudder_angle_callback(self, msg):
         """ Handle ``rudder_angle`` updates and forward the full command packet. """
         self.desired_rudder_angle = msg.data
         self._send_command_to_teensy()
