@@ -61,12 +61,13 @@ class TeensyFake:
         try:
             # Check bounds. For the sails, this is just defensive.
             mainsail_angle = max(min(mainsail_angle, 127), -128)
-            rudder_angle = rudder_angle + (-constants.PHYSICAL.RUDDER_MIN_ANGLE)
+            rudder_ros = rudder_angle
+            rudder_for_wire = rudder_angle + (-constants.PHYSICAL.RUDDER_MIN_ANGLE)
             jib_angle = max(min(jib_angle, 127), -128)
 
             # Convert control values to 8-bit integers (bytes). The else check is just defensive.
             mainsail_byte = mainsail_angle & 0xFF if mainsail_angle >= 0 else (mainsail_angle + 256) & 0xFF
-            rudder_byte = rudder_angle & 0xFF if rudder_angle >= 0 else (rudder_angle + 256) & 0xFF
+            rudder_byte = rudder_for_wire & 0xFF if rudder_for_wire >= 0 else (rudder_for_wire + 256) & 0xFF
             jib_angle_byte = jib_angle & 0xFF if jib_angle >= 0 else (jib_angle + 256) & 0xFF
             jib_side_byte = jib_side_flag & 0xFF
 
@@ -76,7 +77,7 @@ class TeensyFake:
                                         jib_angle_byte, jib_side_byte, constants.SERIAL.RX_END_FLAG])
 
             self.last_mainsail_angle = int(mainsail_angle)
-            self.last_rudder_angle = int(rudder_angle)
+            self.last_rudder_angle = int(rudder_ros)
             self.last_jib_angle = int(jib_angle)
             self.last_jib_side_flag = int(jib_side_flag)
 

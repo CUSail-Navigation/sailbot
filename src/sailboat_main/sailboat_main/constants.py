@@ -22,7 +22,7 @@ class _Physical:
 
     JIB_MIN_ANGLE: int = 10
     JIB_MAX_ANGLE: int = 80
-    # Flag for the active jib sheet side.
+    # Flag for which side to set the jib on.
     JIB_SIDE_PORT: int = 0
     JIB_SIDE_STB: int = 1
 
