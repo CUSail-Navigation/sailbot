@@ -2,20 +2,14 @@ import numpy as np
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Int32, UInt8, Bool
+from .. import constants
+
 
 class TrimSail(Node):
     """
     The part of the sailing algorithm that is responsible for calculating
     the optimal angles for the sails based on the wind direction.
     """
-
-    # CONSTANTS (2024-2025).
-    NO_GO_CENTER = 180
-    NO_GO_WIDTH = 55
-    MAINSAIL_MIN = 0
-    MAINSAIL_MAX = 90
-    JIB_MIN = 10
-    JIB_MAX = 80
 
     def __init__(self):
         super().__init__('trim_sail')
@@ -47,7 +41,7 @@ class TrimSail(Node):
         self.publisher_mainsail_angle.publish(mainsail_angle_msg)
         self.publisher_jib_angle.publish(jib_angle_msg)
         self.publisher_jib_side_flag.publish(jib_side_flag_msg)
-        self.get_logger().info(f"Mainsail angle: {mainsail_angle}, Jib angle: {jib_angle}, Jib Side: {jib_side_flag}")
+        self.get_logger().info(f"Mainsail angle: {mainsail_angle}, Jib angle: {jib_angle}, Jib side: {jib_side_flag}")
 
     def calculate_sail_angles(self, wind_dir):
         """
@@ -55,27 +49,25 @@ class TrimSail(Node):
         Note that goal sail angles are symmetric across the no-go zone.
         We only need to know what side to set the sails on for the jib, since we use 2 servos (2025-2026).
         :param: windDir: the wind direction, an int in [0,360). (CURRENT CONVENTION: 180 = HEAD ON / NO-GO ZONE CENTER).
-        :return: an array of ints: [mainsail_angle, jib_angle, jib_side_flag].
+        :return: a tuple of ints: mainsail_angle, jib_angle, jib_side_flag.
                     mainsail_angle: in [0, 90]. jib_angle: in [10, 80]. jib_side_flag: in {0, 1}.
         """
-        half_no_go = self.NO_GO_WIDTH/2
+        half_no_go = constants.WIND.NO_GO_WIDTH / 2
 
         # Set the jib on the port side of the boat if we're on the left side of the no-go zone.
-        jib_side_flag = 0 if wind_dir > self.NO_GO_CENTER else 1
+        jib_side_flag = constants.PHYSICAL.JIB_SIDE_PORT if wind_dir > constants.WIND.NO_GO_CENTER else constants.PHYSICAL.JIB_SIDE_STB
 
         # No longer care about side: map angles on the left side of the no-go zone symmetrically to the right side.
         if 180 < wind_dir < 360: wind_dir = 360 - wind_dir
 
-        if wind_dir > (self.NO_GO_CENTER - half_no_go): # In the no-go zone.
-            mainsail_angle = self.MAINSAIL_MIN
-            jib_angle = self.JIB_MIN
-        else: # Not in no-go zone; linearly map wind direction to sail angles.
-            mainsail_angle = int(np.interp(
-                wind_dir, [0, self.NO_GO_CENTER - half_no_go], [self.MAINSAIL_MAX, self.MAINSAIL_MIN]
-            ))
-            jib_angle = int(np.interp(
-                wind_dir, [0, self.NO_GO_CENTER - half_no_go], [self.JIB_MAX, self.JIB_MIN]
-            ))
+        if wind_dir > (constants.WIND.NO_GO_CENTER - half_no_go):  # In the no-go zone.
+            mainsail_angle = constants.WIND.MAINSAIL_MIN_ANGLE
+            jib_angle = constants.WIND.JIB_MIN_ANGLE
+        else:  # Not in no-go zone: linearly map wind direction to sail angles.
+            mainsail_angle = int(np.interp(wind_dir, [0, constants.WIND.NO_GO_CENTER - half_no_go],
+                                           [constants.WIND.MAINSAIL_MAX_ANGLE, constants.WIND.MAINSAIL_MIN_ANGLE]))
+            jib_angle = int(np.interp(wind_dir, [0, constants.WIND.NO_GO_CENTER - half_no_go],
+                                      [constants.WIND.JIB_MAX_ANGLE, constants.WIND.JIB_MIN_ANGLE]))
 
         return mainsail_angle, jib_angle, jib_side_flag
 
@@ -94,7 +86,7 @@ def main(args=None):
         rclpy.spin(trim_sail)
     except KeyboardInterrupt:
         pass
-    
+
     trim_sail.destroy_node()
     rclpy.shutdown()
 

@@ -1,19 +1,17 @@
 import random
+from .. import constants
 
-class TeensyFake: 
+
+class TeensyFake:
     """
     Simulates communication with a Teensy 4.0 via a serial connection. Class methods
-    send fake serial messages to the Teensy, receive and process telemetry data,
-    and perform any necessary conversions of transmitted and received data.
+    send fake serial messages to the Teensy, simulate receiving and process telemetry
+    data, and perform any necessary conversions of transmitted and received data.
     """
 
-    # CONSTANTS.
-    START_BYTE = 0xFF
-    END_BYTE = 0xEE
-
     def __init__(self):
-        self.wind_angle = random.randint(160, 200) # Tacking range.
-        self.wind_step = random.uniform(-5, 5) 
+        self.wind_angle = random.randint(160, 200)  # Tacking range.
+        self.wind_step = random.uniform(-5, 5)
         self.last_mainsail_angle = 0
         self.last_rudder_angle = 0
         self.last_jib_angle = 0
@@ -23,10 +21,10 @@ class TeensyFake:
 
     def read_telemetry(self, data):
         """
-        Reads a Teensy telemetry packet and records the packet data.
+        Simulates reading a Teensy telemetry packet and records the packet data.
         The format of the telemetry payload between start/end flags is:
             [wind_hi, wind_lo, mainsail_angle, rudder_angle, jib_angle, jib_side_flag, dropped_packets]
-        :param data: where the Teensy packet is written to.
+        :param data: where the fake Teensy packet is written to.
         :return: 0 for success, 1 for failure.
         """
         data["wind_angle"] = self._generate_random_wind()
@@ -35,7 +33,7 @@ class TeensyFake:
         data["jib_angle"] = self.last_jib_angle
         data["jib_side_flag"] = self.last_jib_side_flag
         data["dropped_packets"] = self.dropped_packets
-        return random.randint(0,1)
+        return random.randint(0, 1)
 
     def _generate_random_wind(self):
         """
@@ -44,15 +42,17 @@ class TeensyFake:
         """
         # Update wind angle with the step value, wrapping around if necessary.
         self.wind_angle += self.wind_step
-        if self.wind_angle >= 360: self.wind_angle -= 360
-        elif self.wind_angle < 0: self.wind_angle += 360
+        if self.wind_angle >= 360:
+            self.wind_angle -= 360
+        elif self.wind_angle < 0:
+            self.wind_angle += 360
 
         self.wind_step = random.uniform(-5, 5)
         return int(self.wind_angle)
 
     def send_command(self, mainsail_angle, rudder_angle, jib_angle, jib_side_flag):
         """
-        Send a properly formatted command packet to the servo.
+        Simulates sending a properly formatted command packet to the servo.
         :param mainsail_angle: new mainsail angle to set (integer). Should be in range [0, 90].
         :param rudder_angle: new rudder angle to set (integer). Should be in range [-45, 45].
         :param jib_angle: new jib angle to set (integer). Should be in range [10, 80].
@@ -61,7 +61,7 @@ class TeensyFake:
         try:
             # Check bounds. For the sails, this is just defensive.
             mainsail_angle = max(min(mainsail_angle, 127), -128)
-            rudder_angle = rudder_angle + 45    # (2025-2026) Rudder angle ranges from -45 to 45 degrees.
+            rudder_angle = rudder_angle + (-constants.PHYSICAL.RUDDER_MIN_ANGLE)
             jib_angle = max(min(jib_angle, 127), -128)
 
             # Convert control values to 8-bit integers (bytes). The else check is just defensive.
@@ -72,7 +72,8 @@ class TeensyFake:
 
             # Command payload format between start/end flags:
             # [mainsail_angle, rudder_angle, jib_angle, jib_side_flag]
-            command_packet = bytearray([self.START_BYTE, mainsail_byte, rudder_byte, jib_angle_byte, jib_side_byte, self.END_BYTE])
+            command_packet = bytearray([constants.SERIAL.RX_START_FLAG, mainsail_byte, rudder_byte,
+                                        jib_angle_byte, jib_side_byte, constants.SERIAL.RX_END_FLAG])
 
             self.last_mainsail_angle = int(mainsail_angle)
             self.last_rudder_angle = int(rudder_angle)
@@ -80,7 +81,7 @@ class TeensyFake:
             self.last_jib_side_flag = int(jib_side_flag)
 
             # Send the packet over serial.
-            return 0   
-        except: return 1
-
-        print(f'Sent to FakeTeensy: {command_packet}')
+            #print(f'Sent to FakeTeensy: {command_packet}')
+            return 0
+        except:
+            return 1

@@ -1,8 +1,10 @@
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Int32, UInt8
+from .. import constants
 from . import teensy
 from . import teensy_fake
+
 
 class Teensy(Node):
     """
@@ -23,7 +25,7 @@ class Teensy(Node):
         self.declare_parameter('simulated', False)
 
         # Teensy TX ~0.5s; poll at rx_period (default 0.5s) so reads keep up with telemetry.
-        self.declare_parameter('rx_period', 0.500)
+        self.declare_parameter('rx_period', constants.SERIAL.RX_PERIOD_MS)
 
         # Get parameters.
         self.timer_period = self.get_parameter('rx_period').value
@@ -106,18 +108,23 @@ class Teensy(Node):
             self.get_logger().info(f"{'Actual jib angle:':<20} {jib_angle_msg.data}")
             self.get_logger().info(f"{'Actual jib side flag:':<20} {jib_side_flag_msg.data}")
             self.get_logger().info(f"{'Dropped packets:':<20} {dropped_packets_msg.data}")
-        else: self.get_logger().info('No telemetry received.')
+        else:
+            self.get_logger().info('No telemetry received.')
 
     def _send_command_to_teensy(self):
-        """ Send the latest mainsail, rudder, and jib goals in one serial packet. """
+        """
+        Send the latest mainsail, rudder, and jib goals in one serial packet.
+        """
         if self.teensy.send_command(
-            self.desired_mainsail_angle,
-            self.desired_rudder_angle,
-            self.desired_jib_angle,
-            self.desired_jib_side_flag,
+                self.desired_mainsail_angle,
+                self.desired_rudder_angle,
+                self.desired_jib_angle,
+                self.desired_jib_side_flag,
         ) == 0:
-            self.get_logger().info(f'Message sent to Teensy: mainsail:{self.desired_mainsail_angle}, rudder:{self.desired_rudder_angle} '
-                                   f'jib:{self.desired_jib_angle}, jib side:{self.desired_jib_side_flag}')
+            self.get_logger().info(
+                f'Message sent to Teensy: mainsail:{self.desired_mainsail_angle}, rudder:{self.desired_rudder_angle} '
+                f'jib:{self.desired_jib_angle}, jib side:{self.desired_jib_side_flag}'
+            )
         else:
             self.get_logger().warn('Message failed to send to Teensy.')
 

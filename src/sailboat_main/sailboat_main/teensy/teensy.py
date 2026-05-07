@@ -1,4 +1,6 @@
 import serial
+from .. import constants
+
 
 class TeensyHardware:
     """
@@ -7,18 +9,12 @@ class TeensyHardware:
     and perform any necessary conversions of transmitted and received data.
     """
 
-    # CONSTANTS.
-    START_BYTE = 0xFF
-    END_BYTE = 0xEE
-    BAUD_RATE = 9600
-    PACKET_LENGTH = 7
-
     def __init__(self, port):
         self.port = port
         self.buffer = []
         self.packet_started = False
         try:
-            self.serial = serial.Serial(self.port, baudrate=self.BAUD_RATE)
+            self.serial = serial.Serial(self.port, baudrate=constants.SERIAL.BAUD_RATE)
         except serial.SerialException as e:
             raise
         
@@ -35,11 +31,11 @@ class TeensyHardware:
             incoming_byte = self.serial.read()
 
             # If we see a packet start byte: set flags, clear buffer.
-            if incoming_byte == self.START_BYTE.to_bytes(1, 'big'):
+            if incoming_byte == constants.SERIAL.TX_START_FLAG.to_bytes(1, 'big'):
                 self.packet_started = True
                 self.buffer = []
             # If we see a packet end byte and the buffer is full, process the buffer and store into ``data``.
-            elif incoming_byte == self.END_BYTE.to_bytes(1, 'big') and len(self.buffer) == self.PACKET_LENGTH:
+            elif incoming_byte == constants.SERIAL.TX_END_FLAG.to_bytes(1, 'big') and len(self.buffer) == constants.SERIAL.TX_PACKET_LEN:
                 self.packet_started = False
                 data["wind_angle"], \
                 data["mainsail_angle"], \
@@ -73,7 +69,7 @@ class TeensyHardware:
 
     def send_command(self, mainsail_angle, rudder_angle, jib_angle, jib_side_flag):
         """
-        Send a properly formatted command packet to the servo.
+        Send a properly formatted command packet to the Teensy.
         :param mainsail_angle: new mainsail angle to set (integer). Should be in range [0, 90].
         :param rudder_angle: new rudder angle to set (integer). Should be in range [-45, 45].
         :param jib_angle: new jib angle to set (integer). Should be in range [10, 80].
@@ -82,7 +78,7 @@ class TeensyHardware:
         try:
             # Check bounds. For the sails, this is just defensive.
             mainsail_angle = max(min(mainsail_angle, 127), -128)
-            rudder_angle = rudder_angle + 45    # (2025-2026) Rudder angle ranges from -45 to 45 degrees.
+            rudder_angle = rudder_angle + (-constants.PHYSICAL.RUDDER_MIN_ANGLE)
             jib_angle = max(min(jib_angle, 127), -128)
 
             # Convert control values to 8-bit integers (bytes). The else check is just defensive.
@@ -93,7 +89,8 @@ class TeensyHardware:
 
             # Command payload format between start/end flags:
             # [mainsail_angle, rudder_angle, jib_angle, jib_side_flag]
-            command_packet = bytearray([self.START_BYTE, mainsail_byte, rudder_byte, jib_angle_byte, jib_side_byte, self.END_BYTE])
+            command_packet = bytearray([constants.SERIAL.RX_START_FLAG, mainsail_byte, rudder_byte,
+                                         jib_angle_byte, jib_side_byte, constants.SERIAL.RX_END_FLAG])
 
             # Send the packet over serial.
             self.serial.write(command_packet)

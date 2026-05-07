@@ -2,52 +2,54 @@
 Multiplex control commands from several sources onto the topics the boat stack expects.
 
 Each source (e.g. ``radio``, ``algo``) publishes on prefixed topics (``<source>_sail``,
-``<source>_rudder``, …). This node forwards only the active source (see ``control_mode``)
+``<source>_rudder``, ...). This node forwards only the active source (see ``control_mode``)
 to the shared outputs: ``sail``, ``rudder_angle``, ``jib_angle``, ``jib_side_flag``.
 
-**Parameter**
+**Parameters**
 
-- ``control_mode`` (string, default ``algo``): active source; must be one of ``radio``,
-  ``algo``, ``webserver``, ``controller_app``.
+- ``control_mode`` (defaults to ``algo``): the active source; must be one of
+  ``radio``, ``algo``, ``webserver``, ``controller_app``.
 
 **Topics**
 
-- Subscribe: ``control_mode`` (``String``) to switch source; unknown values are ignored.
-- Subscribe per source: ``<source>_sail``, ``<source>_rudder`` (``Int32``),
+- Subscribe to ``control_mode`` (``String``) in order to know which source to switch to;
+  unknown values are ignored.
+- Subscribe per source: ``<source>_sail`` (``Int32``), ``<source>_rudder`` (``Int32``),
   ``<source>_jib_angle`` (``Int32``), ``<source>_jib_side_flag`` (``UInt8``).
 - Publish: ``sail``, ``rudder_angle``, ``jib_angle``, ``jib_side_flag``.
 
 **Behavior**
 
-- Timer at 10 Hz republishes the latest values from the active source.
+- Timer at 10 Hz re-publishes the latest values from the active source.
 - Mainsail and rudder publish when that axis has been received from the active source.
 - Jib angle and jib side publish only when **both** are non-null, avoiding half-updates.
 """
-
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Int32, String, UInt8
 
 
 class MuxNode(Node):
-    """Select one control source and forward it to the shared command topics."""
+    """
+    Select one control source and forward it to the shared command topics.
+    """
 
     def __init__(self):
         super().__init__('mux_node')
 
-        # Default control mode.
+        # Default control mode: ``algo``.
         self.declare_parameter('control_mode', 'algo')
         self.control_mode = self.get_parameter('control_mode').value
 
         # Mux topic for changing control_mode.
         self.create_subscription(String, 'control_mode', self.control_mode_callback, 10)
 
-        # Latest command per source (``mainsail`` matches topic ``sail``).
+        # Latest command per source.
         self.control_sources = {
-            'radio': {'mainsail': None, 'rudder': None, 'jib_angle': None, 'jib_side_flag': None},
-            'algo': {'mainsail': None, 'rudder': None, 'jib_angle': None, 'jib_side_flag': None},
-            'webserver': {'mainsail': None, 'rudder': None, 'jib_angle': None, 'jib_side_flag': None},
-            'controller_app': {'mainsail': None, 'rudder': None, 'jib_angle': None, 'jib_side_flag': None},
+            'radio': {'mainsail_angle': None, 'rudder_angle': None, 'jib_angle': None, 'jib_side_flag': None},
+            'algo': {'mainsail_angle': None, 'rudder_angle': None, 'jib_angle': None, 'jib_side_flag': None},
+            'webserver': {'mainsail_angle': None, 'rudder_angle': None, 'jib_angle': None, 'jib_side_flag': None},
+            'controller_app': {'mainsail_angle': None, 'rudder_angle': None, 'jib_angle': None, 'jib_side_flag': None},
         }
 
         # Create subscribers for all control sources.
@@ -75,11 +77,11 @@ class MuxNode(Node):
         self.create_timer(0.1, self.publish_muxed_values)
 
     def mainsail_angle_callback(self, msg, source):
-        self.control_sources[source]['mainsail'] = msg.data
+        self.control_sources[source]['mainsail_angle'] = msg.data
         self.get_logger().info(f'{source} mainsail angle: {msg.data}')
 
     def rudder_angle_callback(self, msg, source):
-        self.control_sources[source]['rudder'] = msg.data
+        self.control_sources[source]['rudder_angle'] = msg.data
         self.get_logger().info(f'{source} rudder angle: {msg.data}')
 
     def jib_angle_callback(self, msg, source):
@@ -103,8 +105,8 @@ class MuxNode(Node):
     def publish_muxed_values(self):
         # Get current values from the active control source.
         src = self.control_sources[self.control_mode]
-        mainsail_value = src['mainsail']
-        rudder_value = src['rudder']
+        mainsail_value = src['mainsail_angle']
+        rudder_value = src['rudder_angle']
         jib_angle_value = src['jib_angle']
         jib_side_value = src['jib_side_flag']
 
