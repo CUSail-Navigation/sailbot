@@ -24,8 +24,7 @@ class Teensy(Node):
         self.declare_parameter('teensy_port', '/dev/ttyACM0')
         self.declare_parameter('simulated', False)
 
-        # Poll telemetry on ``rx_period`` (seconds — ``create_timer`` does not use ms). Default is
-        # ``SERIAL.RX_PERIOD_MS / 1000`` so the host matches the Teensy TX period in ``constants``.
+        # Poll telemetry on ``rx_period`` (in seconds). Default is ``SERIAL.RX_PERIOD_MS`` (same as Teensy TX).
         self.declare_parameter('rx_period', constants.SERIAL.RX_PERIOD_MS / 1000.0)
 
         # Get parameters.

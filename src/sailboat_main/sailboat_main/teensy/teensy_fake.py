@@ -61,7 +61,6 @@ class TeensyFake:
         try:
             # Check bounds. For the sails, this is just defensive.
             mainsail_angle = max(min(mainsail_angle, 127), -128)
-            rudder_ros = rudder_angle
             rudder_for_wire = rudder_angle + (-constants.PHYSICAL.RUDDER_MIN_ANGLE)
             jib_angle = max(min(jib_angle, 127), -128)
 
@@ -77,7 +76,7 @@ class TeensyFake:
                                         jib_angle_byte, jib_side_byte, constants.SERIAL.RX_END_FLAG])
 
             self.last_mainsail_angle = int(mainsail_angle)
-            self.last_rudder_angle = int(rudder_ros)
+            self.last_rudder_angle = int(rudder_angle)
             self.last_jib_angle = int(jib_angle)
             self.last_jib_side_flag = int(jib_side_flag)
 
