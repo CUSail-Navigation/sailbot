@@ -31,6 +31,7 @@ namespace constants
         constexpr uint8_t RX_END_FLAG = 0xEE;
 
         constexpr uint32_t BAUD_RATE = 9600;
+        constexpr uint32_t RADIO_TIMEOUT_MS = 2000;
     }
     namespace led
     {

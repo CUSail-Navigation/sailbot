@@ -9,7 +9,7 @@ SerialControlTask::SerialControlTask()
 
 void SerialControlTask::execute()
 {
-    if (last_telemetry_send_time - current_time >= constants::serial::TX_PERIOD_MS)
+    if (current_time - last_telemetry_send_time >= constants::serial::TX_PERIOD_MS)
     {
         send_telemetry = true;
     }
@@ -17,15 +17,15 @@ void SerialControlTask::execute()
     {
         uint8_t data[] = {
             constants::serial::TX_START_FLAG,
-            sfr::anemometer::wind_angle >> 8,
-            sfr::anemometer::wind_angle & 0xFF,
+            (uint8_t)(sfr::anemometer::wind_angle >> 8),
+            (uint8_t)(sfr::anemometer::wind_angle & 0xFF),
             sfr::servo::radio_sail_angle,
             sfr::servo::radio_rudder_angle,
             sfr::serial::dropped_packets,
             constants::serial::TX_END_FLAG};
 
         last_telemetry_send_time = millis();
-        //Serial.write(data, sizeof(data));
+        Serial2.write(data, sizeof(data));
         send_telemetry = false;
     }
     current_time = millis();

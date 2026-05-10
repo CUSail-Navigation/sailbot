@@ -29,7 +29,7 @@ void ROSSerialMonitor::execute()
             buffer_index = 0;
 
             // Decode ROS packet: [sail, rudder]
-            sfr::serial::update_servos = true;
+            sfr::serial::update_servos_ros = true;
             sfr::servo::ros_sail_angle   = sfr::serial::ros_buffer[0];
             sfr::servo::ros_rudder_angle = sfr::serial::ros_buffer[1];
         }

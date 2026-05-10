@@ -11,34 +11,27 @@ ServoControlTask::ServoControlTask()
 
 void ServoControlTask::execute()
 {
-    // check if we have new serial data to update servos
-    if (sfr::serial::update_servos)
+    if (sfr::serial::radio_flag != 0)
     {
-        uint8_t sail_angle;
-        uint8_t rudder_angle;
-
-        // Selection Logic based on radio_flag
-        if (sfr::serial::radio_flag == 0)
+        // RC mode: drop radio updates if link has gone silent
+        if (millis() - sfr::serial::last_radio_packet_ms > constants::serial::RADIO_TIMEOUT_MS)
         {
-            // Use ros buffer: [sail, rudder]
-            sail_angle = sfr::serial::ros_buffer[0];
-            rudder_angle = sfr::serial::ros_buffer[1];
-        }
-        else
-        {
-            // Default to radio buffer: [radio flag, sail, rudder]
-            sail_angle = sfr::serial::radio_buffer[1];
-            rudder_angle = sfr::serial::radio_buffer[2];
+            sfr::serial::update_servos_radio = false;
+            return;
         }
 
-        // update sfr values and actuate based on validated incoming data
+        if (!sfr::serial::update_servos_radio)
+            return;
+
+        uint8_t sail_angle   = sfr::serial::radio_buffer[1];
+        uint8_t rudder_angle = sfr::serial::radio_buffer[2];
+
         if (sail_angle >= constants::servo::SAIL_MIN_ANGLE && sail_angle <= constants::servo::SAIL_MAX_ANGLE)
         {
             sfr::servo::radio_sail_angle = sail_angle;
             sfr::servo::sail_pwm = sail_to_pwm(sail_angle);
             actuate_servo(sail_servo, sfr::servo::sail_pwm);
         }
-
         if (rudder_angle >= constants::servo::RUDDER_MIN_ANGLE && rudder_angle <= constants::servo::RUDDER_MAX_ANGLE)
         {
             sfr::servo::radio_rudder_angle = rudder_angle;
@@ -46,7 +39,31 @@ void ServoControlTask::execute()
             actuate_servo(rudder_servo, sfr::servo::rudder_pwm);
         }
 
-        sfr::serial::update_servos = false; // reset flag for next update
+        sfr::serial::update_servos_radio = false;
+    }
+    else
+    {
+        // Jetson mode
+        if (!sfr::serial::update_servos_ros)
+            return;
+
+        uint8_t sail_angle   = sfr::serial::ros_buffer[0];
+        uint8_t rudder_angle = sfr::serial::ros_buffer[1];
+
+        if (sail_angle >= constants::servo::SAIL_MIN_ANGLE && sail_angle <= constants::servo::SAIL_MAX_ANGLE)
+        {
+            sfr::servo::ros_sail_angle = sail_angle;
+            sfr::servo::sail_pwm = sail_to_pwm(sail_angle);
+            actuate_servo(sail_servo, sfr::servo::sail_pwm);
+        }
+        if (rudder_angle >= constants::servo::RUDDER_MIN_ANGLE && rudder_angle <= constants::servo::RUDDER_MAX_ANGLE)
+        {
+            sfr::servo::ros_rudder_angle = rudder_angle;
+            sfr::servo::rudder_pwm = tail_to_pwm(rudder_angle);
+            actuate_servo(rudder_servo, sfr::servo::rudder_pwm);
+        }
+
+        sfr::serial::update_servos_ros = false;
     }
 }
 
