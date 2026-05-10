@@ -5,7 +5,7 @@ namespace sfr
     namespace anemometer
     {
         uint16_t wind_angle = 0;
-        float wind_speed = 0;
+        uint16_t wind_speed = 0;
     }
     namespace servo
     {
