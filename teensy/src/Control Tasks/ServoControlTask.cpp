@@ -13,13 +13,6 @@ void ServoControlTask::execute()
 {
     if (sfr::serial::radio_flag != 0)
     {
-        // RC mode: drop radio updates if link has gone silent
-        if (millis() - sfr::serial::last_radio_packet_ms > constants::serial::RADIO_TIMEOUT_MS)
-        {
-            sfr::serial::update_servos_radio = false;
-            return;
-        }
-
         if (!sfr::serial::update_servos_radio)
             return;
 

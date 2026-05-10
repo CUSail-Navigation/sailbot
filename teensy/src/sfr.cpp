@@ -20,7 +20,6 @@ namespace sfr
         bool update_servos_radio = false;
         bool update_servos_ros = false;
 
-        uint32_t last_radio_packet_ms = 0;
         uint8_t dropped_packets = 0;
 
         uint8_t ros_buffer[2] = {0};

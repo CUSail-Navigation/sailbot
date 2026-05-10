@@ -26,7 +26,6 @@ namespace sfr
         extern bool update_servos_ros;
         extern bool send_telemetry;
 
-        extern uint32_t last_radio_packet_ms;
         extern uint8_t dropped_packets;
 
         extern uint8_t ros_buffer[2];
