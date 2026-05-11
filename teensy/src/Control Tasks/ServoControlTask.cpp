@@ -9,11 +9,11 @@ ServoControlTask::ServoControlTask() {
     jib_port_servo.attach(constants::servo::JIB_PORT_PIN, constants::servo::JIB_PORT_MIN_PULSE, constants::servo::JIB_PORT_MAX_PULSE);
     jib_stb_servo.attach(constants::servo::JIB_STB_PIN, constants::servo::JIB_STB_MIN_PULSE, constants::servo::JIB_STB_MAX_PULSE);
 
-    // Pre-set the rudder to center, mainsail to "all-in", and jib to "all-in" on the port side.
+    // Pre-set the rudder to center and all sail servos to "all-out" (for manual setup).
     actuate_servo(rudder_servo, constants::servo::RUDDER_MID_PULSE);
-    actuate_servo(mainsail_servo, constants::servo::MAINSAIL_MIN_PULSE);
+    actuate_servo(mainsail_servo, constants::servo::MAINSAIL_MAX_PULSE);
+    actuate_servo(jib_port_servo, constants::servo::JIB_PORT_MAX_PULSE);
     actuate_servo(jib_stb_servo, constants::servo::JIB_STB_MAX_PULSE);
-    actuate_servo(jib_port_servo, constants::servo::JIB_PORT_MIN_PULSE);
 }
 
 /**
@@ -132,6 +132,6 @@ void ServoControlTask::actuate_servo(Servo &servo, const uint32_t pwm) {
  * \code angle\endcode. If this is not the case, it will return a value greater than the servo's PWM range.
  */
 uint32_t ServoControlTask::law_of_cos_map(const uint8_t angle, const uint32_t two_b_sqd, const float PWM_per_turn, const float wheel_circum) {
-    const float c = sqrtf( two_b_sqd * (1 - cosf(angle * 0.017453f)) ); // 0.017453 = pi/180.
+    const float c = sqrtf( two_b_sqd * (1 - cosf(angle * 0.017453f)) ); // 0.017453 = pi/180. //TODO fix initial offset issue
     return static_cast<uint32_t>(PWM_per_turn * (c / wheel_circum));    // PWM value: (PWM_per_turn * turns_needed).
 }
