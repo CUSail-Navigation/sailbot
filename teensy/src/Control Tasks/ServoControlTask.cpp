@@ -82,7 +82,8 @@ uint32_t ServoControlTask::mainsail_to_pwm(const uint8_t angle) {
     return law_of_cos_map(angle,
                           constants::servo::TWO_BOOM_LEN_SQD_CM,
                           constants::servo::MAINSAIL_PULSE_PER_TURN,
-                          constants::servo::MAINSAIL_WHEEL_CIRCUM_CM
+                          constants::servo::MAINSAIL_WHEEL_CIRCUM_CM,
+                          true
     ) + constants::servo::MAINSAIL_MIN_PULSE;
 }
 
@@ -100,7 +101,8 @@ uint32_t ServoControlTask::jib_to_pwm(const uint8_t angle, const uint8_t jib_sid
     return law_of_cos_map(angle,
                           constants::servo::TWO_JIB_FOOT_LEN_SQD_CM,
                           constants::servo::JIB_PULSE_PER_TURN,
-                          wheel_circum
+                          wheel_circum,
+                          false
     ) + min_pulse;
 }
 
@@ -113,25 +115,34 @@ void ServoControlTask::actuate_servo(Servo &servo, const uint32_t pwm) {
  *  Used for both the mainsail servo and the jib servos.
  *
  *  Extended explanation as follows:
- * - The law of cosines states c = sqrt{a^2 + b^2 - 2ab*cos(angle)}.
+ * - The law of cosines states \code c^2 = a^2 + b^2 - 2ab*cos(angle)\endcode
  * - In an isosceles triangle where a = b, and "angle" is the angle between these two legs, this simplifies to
- *   c = sqrt{2b^2(1 - cos(angle))}
+ *   \code c^2 = 2b^2(1 - cos(angle))\endcode
  * - Consider the mainsail, namely looking down at the boom from high above the boat:
  *    - "angle" refers to the angle that the boom makes with the centerline of the boat; namely, the goal angle we want
  *      the mainsail to be set to.
  *    - Pivoting the boom around the mast traces out an isosceles triangle: the length of the legs ("b") is the length
  *      of the section of the boom from the mast to where the mainsheet attaches.
+ *    - "c" is the component of the mainsheet length in the plane that the boom rotates in.
+ *    - We must take the initial length of the mainsheet, \code MAINSAIL_INITIAL_CM\endcode, into account; we therefore
+ *      apply the Pythagorean theorem on the right triangle formed by "c", the initial distance from the deck to the
+ *      boom, and the actual mainsheet, to obtain the actual goal length of the mainsheet.
  * - We model similarly for the jib (note that this is less accurate as there is no "boom" for the jib, and it is
  *   therefore harder to quantify a triangle or angles in general).
  *    - "angle" refers to the goal angle we want the jib to be set to.
  *    - We approximate "b" as the length of the foot of the jib.
- * - In both cases, "c" is approximately the length of the sheet, which is what we want to solve for.
- * - "c" maps to some PWM value based on the specific servo and the circumference of its wheel.
+ *    - Here, "c" on its own is approximately the length of the sheet, which is what we want to solve for.
+ * - In either case, our final \code sheet_len\endcode value maps to a PWM value based on the specific servo and
+ *   the circumference of its wheel.
  *
  * Note that this method assumes that the max PWM value of the servo in question allows for the sail to be set to
  * \code angle\endcode. If this is not the case, it will return a value greater than the servo's PWM range.
  */
-uint32_t ServoControlTask::law_of_cos_map(const uint8_t angle, const uint32_t two_b_sqd, const float PWM_per_turn, const float wheel_circum) {
-    const float c = sqrtf( two_b_sqd * (1 - cosf(angle * 0.017453f)) ); // 0.017453 = pi/180. //TODO fix initial offset issue
-    return static_cast<uint32_t>(PWM_per_turn * (c / wheel_circum));    // PWM value: (PWM_per_turn * turns_needed).
+uint32_t ServoControlTask::law_of_cos_map(const uint8_t angle, const uint32_t two_b_sqd, const float PWM_per_turn,
+                                          const float wheel_circum, const bool mainsail) {
+    const float c_squared = static_cast<float>(two_b_sqd) * (1 - cosf(static_cast<float>(angle) * 0.017453f)); // 0.017453 = pi/180.
+    const float sheet_len = mainsail ? sqrtf(c_squared + constants::servo::MAINSAIL_INITIAL_SQD_CM) - constants::servo::MAINSAIL_INITIAL_CM
+                                     : sqrtf(c_squared);
+
+    return static_cast<uint32_t>(PWM_per_turn * (sheet_len / wheel_circum));  // PWM: (PWM_per_turn * turns_needed).
 }

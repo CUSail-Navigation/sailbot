@@ -18,5 +18,5 @@ private:
     static uint32_t jib_to_pwm(uint8_t angle, uint8_t jib_side_flag);
     static void actuate_servo(Servo &servo, uint32_t pwm);
 
-    static uint32_t law_of_cos_map(uint8_t angle, uint32_t two_b_sqd, float PWM_per_turn, float wheel_circum);
+    static uint32_t law_of_cos_map(uint8_t angle, uint32_t two_b_sqd, float PWM_per_turn, float wheel_circum, bool mainsail);
 };
