@@ -21,7 +21,7 @@ namespace constants {
         constexpr uint8_t JIB_PORT_PIN = 5; 
         constexpr uint8_t JIB_STB_PIN  = 9;
 
-        constexpr uint8_t RUDDER_MIN_ANGLE = 0; // (2025-2026) 0-90 range = -45 to +45 degrees.                         //TODO -- runtime changeable (for all TODOs).
+        constexpr uint8_t RUDDER_MIN_ANGLE = 0; // (2025-2026) 0-90 range = -45 to +45 degrees.                         //TODO -- make runtime changeable (for all TODOs).
         constexpr uint8_t RUDDER_MAX_ANGLE = 90;                                                                        //TODO
         constexpr uint32_t RUDDER_MIN_PULSE = SERVO_MIN_PULSE;                                                          //TODO
         constexpr uint32_t RUDDER_MAX_PULSE = SERVO_MAX_PULSE;                                                          //TODO
@@ -31,10 +31,10 @@ namespace constants {
         constexpr uint8_t MAINSAIL_MAX_ANGLE = 90;                                                                      //TODO
         constexpr uint32_t MAINSAIL_MIN_PULSE = SERVO_MIN_PULSE;                                                        //TODO
         constexpr uint32_t MAINSAIL_MAX_PULSE = SERVO_MAX_PULSE;                                                        //TODO
-        constexpr uint32_t TWO_BOOM_LEN_SQD_CM = 2 * 94 * 94; // (2025-2026) Boom length (mast to mainsheet) is 94cm.
-        constexpr uint32_t MAINSAIL_INITIAL_CM = 0; // (2025-2026) Height from deck to end of boom is __cm.             //TODO -- just get value for this one.
+        constexpr uint32_t TWO_BOOM_LEN_SQD_CM = 2 * 94 * 94; // (2025-2026) Boom length (mast to mainsheet) is 94cm.   //TODO
+        constexpr uint32_t MAINSAIL_INITIAL_CM = 17; // (2025-2026) Mainsheet length from deck to end of boom is 17cm.  //TODO
         constexpr uint32_t MAINSAIL_INITIAL_SQD_CM = MAINSAIL_INITIAL_CM * MAINSAIL_INITIAL_CM;
-        constexpr float MAINSAIL_WHEEL_CIRCUM_CM = 12.927;                                                              //TODO -- just get value for this one.
+        constexpr float MAINSAIL_WHEEL_CIRCUM_CM = 16.242; // (2025-2026) Diameter: 5.17cm.                             //TODO
         constexpr float MAINSAIL_PULSE_PER_TURN = (SERVO_MAX_PULSE - SERVO_MIN_PULSE) / 7.85;
 
         constexpr uint8_t JIB_MIN_ANGLE = 10;                                                                           //TODO
@@ -43,9 +43,9 @@ namespace constants {
         constexpr uint32_t JIB_PORT_MAX_PULSE = SERVO_MAX_PULSE;                                                        //TODO
         constexpr uint32_t JIB_STB_MIN_PULSE = SERVO_MIN_PULSE;                                                         //TODO
         constexpr uint32_t JIB_STB_MAX_PULSE = SERVO_MAX_PULSE;                                                         //TODO
-        constexpr uint32_t TWO_JIB_FOOT_LEN_SQD_CM = 2 * 60 * 60; // (2025-2026) Jib foot length is 60cm.
-        constexpr float JIB_PORT_WHEEL_CIRCUM_CM = 8.545;                                                               //TODO -- just get value for this one.
-        constexpr float JIB_STB_WHEEL_CIRCUM_CM = 16.179;                                                               //TODO -- just get value for this one
+        constexpr uint32_t TWO_JIB_FOOT_LEN_SQD_CM = 2 * 60 * 60; // (2025-2026) Jib foot length is 60cm.               //TODO
+        constexpr float JIB_PORT_WHEEL_CIRCUM_CM = 16.242; // (2025-2026) Diameter: 5.17cm.                             //TODO
+        constexpr float JIB_STB_WHEEL_CIRCUM_CM = 16.242; // (2025-2026) Diameter: 5.17cm.                              //TODO
         constexpr float JIB_PULSE_PER_TURN = (SERVO_MAX_PULSE - SERVO_MIN_PULSE) / 7.85;
 
         /** Active jib sheet side (RX/TX and \code sfr::servo::jib_side_flag\endcode). */
