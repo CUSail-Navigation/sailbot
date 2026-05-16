@@ -31,8 +31,8 @@ namespace constants {
         constexpr uint8_t MAINSAIL_MAX_ANGLE = 90;                                                                      //TODO
         constexpr uint32_t MAINSAIL_MIN_PULSE = SERVO_MIN_PULSE;                                                        //TODO
         constexpr uint32_t MAINSAIL_MAX_PULSE = SERVO_MAX_PULSE;                                                        //TODO
-        constexpr uint32_t TWO_BOOM_LEN_SQD_CM = 2 * 94 * 94; // (2025-2026) Boom length (mast to mainsheet) is 94cm.   //TODO
-        constexpr uint32_t MAINSAIL_INITIAL_CM = 17; // (2025-2026) Mainsheet length from deck to end of boom is 17cm.  //TODO
+        constexpr uint32_t TWO_BOOM_LEN_SQD_CM = 2 * 92 * 92; // (2025-2026) Boom length (mast to mainsheet) is 92cm.   //TODO
+        constexpr uint32_t MAINSAIL_INITIAL_CM = 18; // (2025-2026) Mainsheet length from deck to end of boom is 18cm.  //TODO
         constexpr uint32_t MAINSAIL_INITIAL_SQD_CM = MAINSAIL_INITIAL_CM * MAINSAIL_INITIAL_CM;
         constexpr float MAINSAIL_WHEEL_CIRCUM_CM = 16.242; // (2025-2026) Diameter: 5.17cm.                             //TODO
         constexpr float MAINSAIL_PULSE_PER_TURN = (SERVO_MAX_PULSE - SERVO_MIN_PULSE) / 7.85;
