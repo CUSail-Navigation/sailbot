@@ -1,9 +1,9 @@
 #pragma once
 #include "sfr.hpp"
 
-class SerialMonitor {
+class ROSSerialMonitor {
 public:
-    SerialMonitor();
+    ROSSerialMonitor();
     void execute();
 
 private:

@@ -6,13 +6,14 @@ LedControlTask::LedControlTask() {
 }
 
 void LedControlTask::execute() {
-    if(!sfr::serial::update_servos && Serial.available()) {
+    bool update_servos = sfr::serial::update_servos_radio || sfr::serial::update_servos_ros;
+    if(!update_servos && Serial.available()) {
         digitalWrite(LED_PIN, LOW);
         delay(2000);
         digitalWrite(LED_PIN, HIGH);
         delay(2000);
     }
-    else if(sfr::serial::update_servos) {
+    else if(update_servos) {
         digitalWrite(LED_PIN, HIGH);
         delay(1000);
     }

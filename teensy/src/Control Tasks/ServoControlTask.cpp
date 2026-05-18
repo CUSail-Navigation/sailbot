@@ -14,6 +14,12 @@ ServoControlTask::ServoControlTask() {
     actuate_servo(mainsail_servo, constants::servo::MAINSAIL_MAX_PULSE);
     actuate_servo(jib_port_servo, constants::servo::JIB_PORT_MAX_PULSE);
     actuate_servo(jib_stb_servo, constants::servo::JIB_STB_MAX_PULSE);
+ServoControlTask::ServoControlTask()
+{
+    sail_servo.attach(constants::servo::SAIL_PIN, constants::servo::SAIL_MIN_PULSE, constants::servo::SAIL_MAX_PULSE);
+    rudder_servo.attach(constants::servo::RUDDER_PIN, 500, 2500);
+    sail_servo.writeMicroseconds(constants::servo::SAIL_MAX_PULSE);
+    rudder_servo.writeMicroseconds(1500);  // start centered
 }
 
 /**
@@ -32,6 +38,51 @@ void ServoControlTask::execute() {
             sfr::servo::rudder_angle = rudder_angle;
             sfr::servo::rudder_pwm = rudder_to_pwm(rudder_angle);
             actuate_servo(rudder_servo, sfr::servo::rudder_pwm);
+void ServoControlTask::execute()
+{
+    if (sfr::serial::radio_flag != 0)
+    {
+        if (!sfr::serial::update_servos_radio)
+            return;
+
+        uint8_t sail_angle   = sfr::serial::radio_buffer[1];
+        uint8_t rudder_angle = sfr::serial::radio_buffer[2];
+
+        if (sail_angle >= constants::servo::SAIL_MIN_ANGLE && sail_angle <= constants::servo::SAIL_MAX_ANGLE)
+        {
+            sfr::servo::radio_sail_angle = sail_angle;
+            sfr::servo::sail_pwm = sail_to_pwm(sail_angle);
+            sail_servo.writeMicroseconds(sfr::servo::sail_pwm);
+        }
+        if (rudder_angle >= constants::servo::RUDDER_MIN_ANGLE && rudder_angle <= constants::servo::RUDDER_MAX_ANGLE)
+        {
+            sfr::servo::radio_rudder_angle = rudder_angle;
+            sfr::servo::rudder_pwm = tail_to_pwm(rudder_angle);
+            rudder_servo.writeMicroseconds(sfr::servo::rudder_pwm);
+        }
+
+        sfr::serial::update_servos_radio = false;
+    }
+    else
+    {
+        // Jetson mode
+        if (!sfr::serial::update_servos_ros)
+            return;
+
+        uint8_t sail_angle   = sfr::serial::ros_buffer[0];
+        uint8_t rudder_angle = sfr::serial::ros_buffer[1];
+
+        if (sail_angle >= constants::servo::SAIL_MIN_ANGLE && sail_angle <= constants::servo::SAIL_MAX_ANGLE)
+        {
+            sfr::servo::ros_sail_angle = sail_angle;
+            sfr::servo::sail_pwm = sail_to_pwm(sail_angle);
+            sail_servo.writeMicroseconds(sfr::servo::sail_pwm);
+        }
+        if (rudder_angle >= constants::servo::RUDDER_MIN_ANGLE && rudder_angle <= constants::servo::RUDDER_MAX_ANGLE)
+        {
+            sfr::servo::ros_rudder_angle = rudder_angle;
+            sfr::servo::rudder_pwm = tail_to_pwm(rudder_angle);
+            rudder_servo.writeMicroseconds(sfr::servo::rudder_pwm);
         }
         if (mainsail_angle >= constants::servo::MAINSAIL_MIN_ANGLE &&
             mainsail_angle <= constants::servo::MAINSAIL_MAX_ANGLE) {
@@ -60,6 +111,8 @@ void ServoControlTask::execute() {
         }
 
         sfr::serial::update_servos = false; // Reset flag for the next update.
+
+        sfr::serial::update_servos_ros = false;
     }
 }
 
@@ -69,6 +122,11 @@ void ServoControlTask::execute() {
  * @return the PWM to actuate \code rudder_servo\endcode to.
  */
 uint32_t ServoControlTask::rudder_to_pwm(const uint8_t angle) {
+    return map(angle, constants::servo::RUDDER_MIN_ANGLE, constants::servo::RUDDER_MAX_ANGLE,
+               constants::servo::RUDDER_MIN_PULSE, constants::servo::RUDDER_MAX_PULSE);
+uint32_t ServoControlTask::tail_to_pwm(uint8_t angle)
+{
+    // angle is offset-encoded: 0 = -45°, 45 = 0° (center), 90 = +45°
     return map(angle, constants::servo::RUDDER_MIN_ANGLE, constants::servo::RUDDER_MAX_ANGLE,
                constants::servo::RUDDER_MIN_PULSE, constants::servo::RUDDER_MAX_PULSE);
 }
@@ -104,6 +162,10 @@ uint32_t ServoControlTask::jib_to_pwm(const uint8_t angle, const uint8_t jib_sid
                           wheel_circum,
                           false
     ) + min_pulse;
+uint32_t ServoControlTask::sail_to_pwm(uint8_t angle)
+{
+    return map(angle, constants::servo::SAIL_MIN_ANGLE, constants::servo::SAIL_MAX_ANGLE,
+               constants::servo::SAIL_MAX_PULSE, constants::servo::SAIL_MIN_PULSE);
 }
 
 /** Send \code pwm\endcode to \code servo\endcode, thereby changing \code servo\endcode 's angle. */
