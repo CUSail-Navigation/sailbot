@@ -3,10 +3,9 @@
 ServoControlTask::ServoControlTask()
 {
     sail_servo.attach(constants::servo::SAIL_PIN, constants::servo::SAIL_MIN_PULSE, constants::servo::SAIL_MAX_PULSE);
-    rudder_servo.attach(constants::servo::RUDDER_PIN);
-    // Set initial servo positions to 0-degrees
-    actuate_servo(sail_servo, 0);
-    actuate_servo(rudder_servo, 1050);
+    rudder_servo.attach(constants::servo::RUDDER_PIN, 500, 2500);
+    sail_servo.writeMicroseconds(constants::servo::SAIL_MAX_PULSE);
+    rudder_servo.writeMicroseconds(1500);  // start centered
 }
 
 void ServoControlTask::execute()
@@ -23,13 +22,13 @@ void ServoControlTask::execute()
         {
             sfr::servo::radio_sail_angle = sail_angle;
             sfr::servo::sail_pwm = sail_to_pwm(sail_angle);
-            actuate_servo(sail_servo, sfr::servo::sail_pwm);
+            sail_servo.writeMicroseconds(sfr::servo::sail_pwm);
         }
         if (rudder_angle >= constants::servo::RUDDER_MIN_ANGLE && rudder_angle <= constants::servo::RUDDER_MAX_ANGLE)
         {
             sfr::servo::radio_rudder_angle = rudder_angle;
             sfr::servo::rudder_pwm = tail_to_pwm(rudder_angle);
-            actuate_servo(rudder_servo, sfr::servo::rudder_pwm);
+            rudder_servo.writeMicroseconds(sfr::servo::rudder_pwm);
         }
 
         sfr::serial::update_servos_radio = false;
@@ -47,13 +46,13 @@ void ServoControlTask::execute()
         {
             sfr::servo::ros_sail_angle = sail_angle;
             sfr::servo::sail_pwm = sail_to_pwm(sail_angle);
-            actuate_servo(sail_servo, sfr::servo::sail_pwm);
+            sail_servo.writeMicroseconds(sfr::servo::sail_pwm);
         }
         if (rudder_angle >= constants::servo::RUDDER_MIN_ANGLE && rudder_angle <= constants::servo::RUDDER_MAX_ANGLE)
         {
             sfr::servo::ros_rudder_angle = rudder_angle;
             sfr::servo::rudder_pwm = tail_to_pwm(rudder_angle);
-            actuate_servo(rudder_servo, sfr::servo::rudder_pwm);
+            rudder_servo.writeMicroseconds(sfr::servo::rudder_pwm);
         }
 
         sfr::serial::update_servos_ros = false;
@@ -62,13 +61,15 @@ void ServoControlTask::execute()
 
 uint32_t ServoControlTask::tail_to_pwm(uint8_t angle)
 {
-    return map(angle, 0, 50, 45, 55);
+    // angle is offset-encoded: 0 = -45°, 45 = 0° (center), 90 = +45°
+    return map(angle, constants::servo::RUDDER_MIN_ANGLE, constants::servo::RUDDER_MAX_ANGLE,
+               constants::servo::RUDDER_MIN_PULSE, constants::servo::RUDDER_MAX_PULSE);
 }
 
 uint32_t ServoControlTask::sail_to_pwm(uint8_t angle)
 {
-    // return map(angle, 0, 90, 1050, 1200);
-    return map(angle, 0, 90, 38, 0);
+    return map(angle, constants::servo::SAIL_MIN_ANGLE, constants::servo::SAIL_MAX_ANGLE,
+               constants::servo::SAIL_MAX_PULSE, constants::servo::SAIL_MIN_PULSE);
 }
 
 void ServoControlTask::actuate_servo(Servo &servo, uint32_t pwm)

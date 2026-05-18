@@ -15,11 +15,14 @@ namespace constants
         constexpr uint8_t SAIL_MIN_ANGLE = 0;
         constexpr uint8_t SAIL_MAX_ANGLE = 90;
 
+        // Encoded: 0 = -45°, 45 = 0° (center), 90 = +45°
         constexpr uint8_t RUDDER_MIN_ANGLE = 0;
         constexpr uint8_t RUDDER_MAX_ANGLE = 90;
 
-        constexpr uint32_t SAIL_MIN_PULSE = 600;  // 1ms pulse width
-        constexpr uint32_t SAIL_MAX_PULSE = 2400; // 2ms pulse width
+        constexpr uint32_t SAIL_MIN_PULSE   = 600;   // 1ms pulse width
+        constexpr uint32_t SAIL_MAX_PULSE   = 2400;  // 2ms pulse width
+        constexpr uint32_t RUDDER_MIN_PULSE = 500;   // -45 degrees
+        constexpr uint32_t RUDDER_MAX_PULSE = 2500;  //  +45 degrees
     }
     namespace serial
     {
