@@ -6,7 +6,7 @@ namespace constants
     namespace anemometer
     {
         constexpr uint8_t ANEMOMETER_PIN_DIR = 18;
-        constexpr uint8_t ANEMOMETER_PIN_SPEED = 2;
+        constexpr uint8_t ANEMOMETER_PIN_SPEED = 19;
 
     }
     namespace servo
