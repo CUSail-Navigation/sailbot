@@ -16,6 +16,12 @@ namespace constants {
         constexpr uint32_t SERVO_MIN_PULSE = 600;
         constexpr uint32_t SERVO_MAX_PULSE = 2400;
 
+        constexpr uint32_t JIB_MIN_PULSE = 600;
+        constexpr uint32_t JIB_MAX_PULSE = 1600;
+
+        constexpr uint32_t SAIL_MIN_PULSE = 600;
+        constexpr uint32_t SAIL_MAX_PULSE = 2000;
+
         constexpr uint8_t RUDDER_PIN   = 4;
         constexpr uint8_t MAINSAIL_PIN = 3;
         constexpr uint8_t JIB_PORT_PIN = 5; 
@@ -29,8 +35,8 @@ namespace constants {
 
         constexpr uint8_t MAINSAIL_MIN_ANGLE = 0;                                                                       //TODO
         constexpr uint8_t MAINSAIL_MAX_ANGLE = 90;                                                                      //TODO
-        constexpr uint32_t MAINSAIL_MIN_PULSE = SERVO_MIN_PULSE;                                                        //TODO
-        constexpr uint32_t MAINSAIL_MAX_PULSE = SERVO_MAX_PULSE;                                                        //TODO
+        constexpr uint32_t MAINSAIL_MIN_PULSE = SAIL_MIN_PULSE;                                                        //TODO
+        constexpr uint32_t MAINSAIL_MAX_PULSE = SAIL_MAX_PULSE;                                                        //TODO
         constexpr uint32_t TWO_BOOM_LEN_SQD_CM = 2 * 92 * 92; // (2025-2026) Boom length (mast to mainsheet) is 92cm.   //TODO
         constexpr uint32_t MAINSAIL_INITIAL_CM = 18; // (2025-2026) Mainsheet length from deck to end of boom is 18cm.  //TODO
         constexpr uint32_t MAINSAIL_INITIAL_SQD_CM = MAINSAIL_INITIAL_CM * MAINSAIL_INITIAL_CM;
@@ -39,10 +45,10 @@ namespace constants {
 
         constexpr uint8_t JIB_MIN_ANGLE = 10;                                                                           //TODO
         constexpr uint8_t JIB_MAX_ANGLE = 80;                                                                           //TODO
-        constexpr uint32_t JIB_PORT_MIN_PULSE = SERVO_MIN_PULSE;                                                        //TODO
-        constexpr uint32_t JIB_PORT_MAX_PULSE = SERVO_MAX_PULSE;                                                        //TODO
-        constexpr uint32_t JIB_STB_MIN_PULSE = SERVO_MIN_PULSE;                                                         //TODO
-        constexpr uint32_t JIB_STB_MAX_PULSE = SERVO_MAX_PULSE;                                                         //TODO
+        constexpr uint32_t JIB_PORT_MIN_PULSE = JIB_MIN_PULSE;                                                        //TODO
+        constexpr uint32_t JIB_PORT_MAX_PULSE = JIB_MAX_PULSE;                                                        //TODO
+        constexpr uint32_t JIB_STB_MIN_PULSE = JIB_MIN_PULSE;                                                         //TODO
+        constexpr uint32_t JIB_STB_MAX_PULSE = JIB_MAX_PULSE;                                                         //TODO
         constexpr uint32_t TWO_JIB_FOOT_LEN_SQD_CM = 2 * 60 * 60; // (2025-2026) Jib foot length is 60cm.               //TODO
         constexpr float JIB_PORT_WHEEL_CIRCUM_CM = 16.242; // (2025-2026) Diameter: 5.17cm.                             //TODO
         constexpr float JIB_STB_WHEEL_CIRCUM_CM = 16.242; // (2025-2026) Diameter: 5.17cm.                              //TODO

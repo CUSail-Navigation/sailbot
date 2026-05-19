@@ -11,82 +11,76 @@ ServoControlTask::ServoControlTask() {
 
     // Pre-set the rudder to center and all sail servos to "all-out" (for manual setup).
     actuate_servo(rudder_servo, constants::servo::RUDDER_MID_PULSE);
-    actuate_servo(mainsail_servo, constants::servo::MAINSAIL_MAX_PULSE);
-    actuate_servo(jib_port_servo, constants::servo::JIB_PORT_MAX_PULSE);
-    actuate_servo(jib_stb_servo, constants::servo::JIB_STB_MAX_PULSE);
-ServoControlTask::ServoControlTask()
-{
-    sail_servo.attach(constants::servo::SAIL_PIN, constants::servo::SAIL_MIN_PULSE, constants::servo::SAIL_MAX_PULSE);
-    rudder_servo.attach(constants::servo::RUDDER_PIN, 500, 2500);
-    sail_servo.writeMicroseconds(constants::servo::SAIL_MAX_PULSE);
-    rudder_servo.writeMicroseconds(1500);  // start centered
+    actuate_servo(mainsail_servo, constants::servo::MAINSAIL_MIN_PULSE);
+    actuate_servo(jib_port_servo, constants::servo::JIB_PORT_MIN_PULSE);
+    actuate_servo(jib_stb_servo, constants::servo::JIB_STB_MIN_PULSE);
 }
 
 /**
  *  Updates the servos if valid serial data is ready and waiting.
+ *  Radio mode (radio_flag != 0) takes priority over Jetson/ROS mode.
+ *
+ *  Radio buffer layout:   [radio_flag, mainsail_angle, rudder_angle, jib_angle, jib_side_flag]
+ *  ROS buffer layout:     [mainsail_angle, rudder_angle, jib_angle, jib_side_flag]
  */
 void ServoControlTask::execute() {
-    // Check if we have new serial data to update the servos.
-    if (sfr::serial::update_servos) {
-        const uint8_t mainsail_angle = sfr::serial::buffer[0];
-        const uint8_t rudder_angle = sfr::serial::buffer[1];
-        const uint8_t jib_angle = sfr::serial::buffer[2];
-        const uint8_t jib_side_flag = sfr::serial::buffer[3];
+    if (sfr::serial::radio_flag != 0) {
+        if (!sfr::serial::update_servos_radio) return;
 
-        // Update sfr values and actuate servos based on incoming serial data, if checks pass.
+        const uint8_t mainsail_angle = sfr::serial::radio_buffer[1];
+        const uint8_t rudder_angle   = sfr::serial::radio_buffer[2];
+        const uint8_t jib_angle      = sfr::serial::radio_buffer[3];
+        const uint8_t jib_side_flag  = sfr::serial::radio_buffer[4];
+
+        if (mainsail_angle >= constants::servo::MAINSAIL_MIN_ANGLE && mainsail_angle <= constants::servo::MAINSAIL_MAX_ANGLE) {
+            sfr::servo::mainsail_angle = mainsail_angle;
+            sfr::servo::radio_sail_angle = mainsail_angle;
+            sfr::servo::mainsail_pwm = mainsail_to_pwm(mainsail_angle);
+            actuate_servo(mainsail_servo, sfr::servo::mainsail_pwm);
+        }
         if (rudder_angle >= constants::servo::RUDDER_MIN_ANGLE && rudder_angle <= constants::servo::RUDDER_MAX_ANGLE) {
             sfr::servo::rudder_angle = rudder_angle;
+            sfr::servo::radio_rudder_angle = rudder_angle;
             sfr::servo::rudder_pwm = rudder_to_pwm(rudder_angle);
             actuate_servo(rudder_servo, sfr::servo::rudder_pwm);
-void ServoControlTask::execute()
-{
-    if (sfr::serial::radio_flag != 0)
-    {
-        if (!sfr::serial::update_servos_radio)
-            return;
-
-        uint8_t sail_angle   = sfr::serial::radio_buffer[1];
-        uint8_t rudder_angle = sfr::serial::radio_buffer[2];
-
-        if (sail_angle >= constants::servo::SAIL_MIN_ANGLE && sail_angle <= constants::servo::SAIL_MAX_ANGLE)
-        {
-            sfr::servo::radio_sail_angle = sail_angle;
-            sfr::servo::sail_pwm = sail_to_pwm(sail_angle);
-            sail_servo.writeMicroseconds(sfr::servo::sail_pwm);
         }
-        if (rudder_angle >= constants::servo::RUDDER_MIN_ANGLE && rudder_angle <= constants::servo::RUDDER_MAX_ANGLE)
-        {
-            sfr::servo::radio_rudder_angle = rudder_angle;
-            sfr::servo::rudder_pwm = tail_to_pwm(rudder_angle);
-            rudder_servo.writeMicroseconds(sfr::servo::rudder_pwm);
+        if (jib_angle >= constants::servo::JIB_MIN_ANGLE && jib_angle <= constants::servo::JIB_MAX_ANGLE &&
+            (jib_side_flag == constants::servo::JIB_SIDE_PORT || jib_side_flag == constants::servo::JIB_SIDE_STB)) {
+            sfr::servo::jib_angle = jib_angle;
+            sfr::servo::jib_side_flag = jib_side_flag;
+
+            if (jib_side_flag == constants::servo::JIB_SIDE_PORT) {
+                sfr::servo::jib_stb_pwm = constants::servo::JIB_STB_MAX_PULSE;
+                actuate_servo(jib_stb_servo, constants::servo::JIB_STB_MAX_PULSE);
+                sfr::servo::jib_port_pwm = jib_to_pwm(jib_angle, jib_side_flag);
+                actuate_servo(jib_port_servo, sfr::servo::jib_port_pwm);
+            } else {
+                sfr::servo::jib_port_pwm = constants::servo::JIB_PORT_MAX_PULSE;
+                actuate_servo(jib_port_servo, constants::servo::JIB_PORT_MAX_PULSE);
+                sfr::servo::jib_stb_pwm = jib_to_pwm(jib_angle, jib_side_flag);
+                actuate_servo(jib_stb_servo, sfr::servo::jib_stb_pwm);
+            }
         }
 
         sfr::serial::update_servos_radio = false;
-    }
-    else
-    {
-        // Jetson mode
-        if (!sfr::serial::update_servos_ros)
-            return;
+    } else {
+        // Jetson (ROS) mode
+        if (!sfr::serial::update_servos_ros) return;
 
-        uint8_t sail_angle   = sfr::serial::ros_buffer[0];
-        uint8_t rudder_angle = sfr::serial::ros_buffer[1];
+        const uint8_t mainsail_angle = sfr::serial::ros_buffer[0];
+        const uint8_t rudder_angle   = sfr::serial::ros_buffer[1];
+        const uint8_t jib_angle      = sfr::serial::ros_buffer[2];
+        const uint8_t jib_side_flag  = sfr::serial::ros_buffer[3];
 
-        if (sail_angle >= constants::servo::SAIL_MIN_ANGLE && sail_angle <= constants::servo::SAIL_MAX_ANGLE)
-        {
-            sfr::servo::ros_sail_angle = sail_angle;
-            sfr::servo::sail_pwm = sail_to_pwm(sail_angle);
-            sail_servo.writeMicroseconds(sfr::servo::sail_pwm);
-        }
-        if (rudder_angle >= constants::servo::RUDDER_MIN_ANGLE && rudder_angle <= constants::servo::RUDDER_MAX_ANGLE)
-        {
+        if (rudder_angle >= constants::servo::RUDDER_MIN_ANGLE && rudder_angle <= constants::servo::RUDDER_MAX_ANGLE) {
+            sfr::servo::rudder_angle = rudder_angle;
             sfr::servo::ros_rudder_angle = rudder_angle;
-            sfr::servo::rudder_pwm = tail_to_pwm(rudder_angle);
-            rudder_servo.writeMicroseconds(sfr::servo::rudder_pwm);
+            sfr::servo::rudder_pwm = rudder_to_pwm(rudder_angle);
+            actuate_servo(rudder_servo, sfr::servo::rudder_pwm);
         }
-        if (mainsail_angle >= constants::servo::MAINSAIL_MIN_ANGLE &&
-            mainsail_angle <= constants::servo::MAINSAIL_MAX_ANGLE) {
+        if (mainsail_angle >= constants::servo::MAINSAIL_MIN_ANGLE && mainsail_angle <= constants::servo::MAINSAIL_MAX_ANGLE) {
             sfr::servo::mainsail_angle = mainsail_angle;
+            sfr::servo::ros_sail_angle = mainsail_angle;
             sfr::servo::mainsail_pwm = mainsail_to_pwm(mainsail_angle);
             actuate_servo(mainsail_servo, sfr::servo::mainsail_pwm);
         }
@@ -95,22 +89,19 @@ void ServoControlTask::execute()
             sfr::servo::jib_angle = jib_angle;
             sfr::servo::jib_side_flag = jib_side_flag;
 
-            // Decide PWMs for both sides and actuate. Always actuate the "loose" side first.
+            // Actuate the "loose" (releasing) side first, then the tensioning side.
             if (jib_side_flag == constants::servo::JIB_SIDE_PORT) {
                 sfr::servo::jib_stb_pwm = constants::servo::JIB_STB_MAX_PULSE;
                 actuate_servo(jib_stb_servo, constants::servo::JIB_STB_MAX_PULSE);
                 sfr::servo::jib_port_pwm = jib_to_pwm(jib_angle, jib_side_flag);
                 actuate_servo(jib_port_servo, sfr::servo::jib_port_pwm);
-            }
-            else {
+            } else {
                 sfr::servo::jib_port_pwm = constants::servo::JIB_PORT_MAX_PULSE;
                 actuate_servo(jib_port_servo, constants::servo::JIB_PORT_MAX_PULSE);
                 sfr::servo::jib_stb_pwm = jib_to_pwm(jib_angle, jib_side_flag);
                 actuate_servo(jib_stb_servo, sfr::servo::jib_stb_pwm);
             }
         }
-
-        sfr::serial::update_servos = false; // Reset flag for the next update.
 
         sfr::serial::update_servos_ros = false;
     }
@@ -122,11 +113,6 @@ void ServoControlTask::execute()
  * @return the PWM to actuate \code rudder_servo\endcode to.
  */
 uint32_t ServoControlTask::rudder_to_pwm(const uint8_t angle) {
-    return map(angle, constants::servo::RUDDER_MIN_ANGLE, constants::servo::RUDDER_MAX_ANGLE,
-               constants::servo::RUDDER_MIN_PULSE, constants::servo::RUDDER_MAX_PULSE);
-uint32_t ServoControlTask::tail_to_pwm(uint8_t angle)
-{
-    // angle is offset-encoded: 0 = -45°, 45 = 0° (center), 90 = +45°
     return map(angle, constants::servo::RUDDER_MIN_ANGLE, constants::servo::RUDDER_MAX_ANGLE,
                constants::servo::RUDDER_MIN_PULSE, constants::servo::RUDDER_MAX_PULSE);
 }
@@ -162,10 +148,6 @@ uint32_t ServoControlTask::jib_to_pwm(const uint8_t angle, const uint8_t jib_sid
                           wheel_circum,
                           false
     ) + min_pulse;
-uint32_t ServoControlTask::sail_to_pwm(uint8_t angle)
-{
-    return map(angle, constants::servo::SAIL_MIN_ANGLE, constants::servo::SAIL_MAX_ANGLE,
-               constants::servo::SAIL_MAX_PULSE, constants::servo::SAIL_MIN_PULSE);
 }
 
 /** Send \code pwm\endcode to \code servo\endcode, thereby changing \code servo\endcode 's angle. */
