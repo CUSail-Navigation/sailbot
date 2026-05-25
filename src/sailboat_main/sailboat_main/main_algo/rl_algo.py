@@ -105,11 +105,20 @@ class RLAlgo(Node):
         self.create_timer(self.timer_period, self._step)
         self.get_logger().info("RL algo started")
 
+    @staticmethod
+    def _cuda_available() -> bool:
+        try:
+            import torch
+            return torch.cuda.is_available()
+        except ImportError:
+            return False
+
     def _load_model(self, path: str) -> None:
         try:
             from stable_baselines3 import PPO
 
-            self.model = PPO.load(path, device="cpu")
+            self.model = PPO.load(path, device="cuda" if self._cuda_available() else "cpu")
+            self.get_logger().info(f"Running on {'CUDA' if self._cuda_available() else 'CPU'}")
             self.get_logger().info(f"Loaded PPO model from {path}")
         except Exception as e:
             self.get_logger().error(f"Failed to load model: {e}")
