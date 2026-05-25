@@ -27,7 +27,7 @@ class TrimSail(Node):
             10)
         self.in_danger_zone = False 
         # Publisher for sail angle
-        self.publisher_sail = self.create_publisher(Int32, 'algo_sail', 10)
+        self.publisher_sail = self.create_publisher(Int32, 'albo_sail', 10)
         
 
     def wind_callback(self, msg):

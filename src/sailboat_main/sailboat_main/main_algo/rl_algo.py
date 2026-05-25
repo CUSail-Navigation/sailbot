@@ -11,7 +11,7 @@ Observation vector (13 floats, all clipped to [-1, 1]):
   [7]  r / yaw_rate_scale               -- yaw rate (rad/s)
   [8]  wind_boat_x                      -- apparent wind in boat frame (x = forward)
   [9]  wind_boat_y                      -- apparent wind in boat frame (y = port)
-  [10] wind_speed / wind_speed_scale    -- wind speed (set via parameter)
+  [10] _WIND_SPEED_OBS                  -- constant (no wind speed sensor)
   [11] last_action[0]                   -- previous rudder command
   [12] last_action[1]                   -- previous sail command
 
@@ -21,7 +21,7 @@ Action vector (2 floats in [-1, 1]):
 
 Coordinate conventions:
   - Boat frame: x = bow, y = port
-  - IMU heading: compass degrees (0 = North, 90 = East)
+  - IMU heading: math convention (0 = East, 90 = North) — VectorNav applies (450 - raw) % 360
   - Wind angle:  sailbot convention (0 = tailwind, 180 = headwind)
   - World frame: UTM (x = east, y = north)
 
@@ -39,9 +39,12 @@ import rclpy
 from geometry_msgs.msg import Vector3
 from rclpy.node import Node
 from sensor_msgs.msg import NavSatFix
-from std_msgs.msg import Int32, String
+from std_msgs.msg import Int32
 
 import utm
+
+# Wind speed is unavailable; use a fixed normalised value matching training scale (5 m/s / 15 m/s).
+_WIND_SPEED_OBS: float = 5.0 / 15.0
 
 
 class RLAlgo(Node):
@@ -53,7 +56,6 @@ class RLAlgo(Node):
     waypoint_lon: Optional[float] = None
     heading_deg: Optional[float] = None
     wind_angle: Optional[float] = None
-    current_mode: str = "manual"
 
     _prev_utm_x: Optional[float] = None
     _prev_utm_y: Optional[float] = None
@@ -63,7 +65,7 @@ class RLAlgo(Node):
 
     _prev_heading: Optional[float] = None
     _prev_heading_t: Optional[float] = None
-    _yaw_rate: float = 0.0  # rad/s, positive = turning left/counterclockwise
+    _yaw_rate: float = 0.0  # rad/s
 
     def __init__(self) -> None:
         super().__init__("rl_algo")
@@ -77,9 +79,7 @@ class RLAlgo(Node):
         self.declare_parameter("max_sail_deg", 85.0)
         self.declare_parameter("speed_scale", 6.0)
         self.declare_parameter("yaw_rate_scale", 2.0)
-        self.declare_parameter("wind_speed_scale", 15.0)
         self.declare_parameter("waypoint_max_radius_m", 25.0)
-        self.declare_parameter("wind_speed_ms", 5.0)
         self.declare_parameter("deterministic", True)
 
         self.timer_period = self.get_parameter("timer_period").value
@@ -87,9 +87,7 @@ class RLAlgo(Node):
         self.max_sail_deg = self.get_parameter("max_sail_deg").value
         self.speed_scale = self.get_parameter("speed_scale").value
         self.yaw_rate_scale = self.get_parameter("yaw_rate_scale").value
-        self.wind_speed_scale = self.get_parameter("wind_speed_scale").value
         self.waypoint_max_radius_m = self.get_parameter("waypoint_max_radius_m").value
-        self.wind_speed_ms = self.get_parameter("wind_speed_ms").value
         self.deterministic = self.get_parameter("deterministic").value
 
         self._last_action = np.zeros(2, dtype=np.float32)
@@ -100,10 +98,9 @@ class RLAlgo(Node):
         self.create_subscription(Vector3, "/imu", self._imu_callback, 10)
         self.create_subscription(Int32, "wind", self._wind_callback, 10)
         self.create_subscription(NavSatFix, "current_waypoint", self._waypoint_callback, 10)
-        self.create_subscription(String, "current_mode", self._mode_callback, 10)
 
-        self.rudder_pub = self.create_publisher(Int32, "algo_rudder", 10)
-        self.sail_pub = self.create_publisher(Int32, "algo_sail", 10)
+        self.rudder_pub = self.create_publisher(Int32, "rl_algo_rudder", 10)
+        self.sail_pub = self.create_publisher(Int32, "rl_algo_sail", 10)
 
         self.create_timer(self.timer_period, self._step)
         self.get_logger().info("RL algo started")
@@ -140,35 +137,26 @@ class RLAlgo(Node):
         self.sail_pub.publish(msg)
 
     def _build_observation(self) -> np.ndarray:
-        # World-frame (UTM) offset to waypoint
         boat_e, boat_n, _, _ = utm.from_latlon(self.current_lat, self.current_lon)
         wp_e, wp_n, _, _ = utm.from_latlon(self.waypoint_lat, self.waypoint_lon)
         dx_east = wp_e - boat_e
         dy_north = wp_n - boat_n
         distance = max(math.hypot(dx_east, dy_north), 1e-9)
 
-        # Rotation from UTM (x=east, y=north) to boat frame (x=bow, y=port).
-        # IMU gives compass heading H (0=N, 90=E).
-        # Math angle θ = 90° - H → c = sin(H), s = cos(H).
+        # IMU gives math-convention heading (0=East, 90=North); use directly.
         H_rad = math.radians(self.heading_deg)
-        c = math.sin(H_rad)
-        s = math.cos(H_rad)
+        c = math.cos(H_rad)
+        s = math.sin(H_rad)
 
-        # Waypoint in boat frame
         rel_wp_x = c * dx_east + s * dy_north
         rel_wp_y = -s * dx_east + c * dy_north
-
-        # Unit direction vector toward waypoint in boat frame
         dir_x = rel_wp_x / distance
         dir_y = rel_wp_y / distance
 
-        # Velocity in boat frame (estimated from GPS)
         u = c * self._vel_east + s * self._vel_north
         v = -s * self._vel_east + c * self._vel_north
 
-        # Apparent wind in boat frame.
-        # Sailbot convention: 0 = tailwind, 180 = headwind.
-        # This maps directly to boat-frame unit vector [cos(θ), sin(θ)].
+        # Sailbot wind convention: 0=tailwind, 180=headwind → boat-frame vector [cos, sin].
         if self.wind_angle is not None:
             w_rad = math.radians(self.wind_angle)
             wind_x = math.cos(w_rad)
@@ -188,7 +176,7 @@ class RLAlgo(Node):
                 np.clip(self._yaw_rate / self.yaw_rate_scale, -1.0, 1.0),
                 np.clip(wind_x, -1.0, 1.0),
                 np.clip(wind_y, -1.0, 1.0),
-                np.clip(self.wind_speed_ms / self.wind_speed_scale, 0.0, 1.0),
+                _WIND_SPEED_OBS,
                 float(self._last_action[0]),
                 float(self._last_action[1]),
             ],
@@ -202,7 +190,7 @@ class RLAlgo(Node):
         if self._prev_utm_x is not None and self._prev_gps_t is not None:
             dt = now - self._prev_gps_t
             if dt > 0.05:
-                alpha = 0.3  # exponential smoothing
+                alpha = 0.3
                 self._vel_east = alpha * (e - self._prev_utm_x) / dt + (1 - alpha) * self._vel_east
                 self._vel_north = alpha * (n - self._prev_utm_y) / dt + (1 - alpha) * self._vel_north
 
@@ -219,10 +207,8 @@ class RLAlgo(Node):
         if self._prev_heading is not None and self._prev_heading_t is not None:
             dt = now - self._prev_heading_t
             if dt > 0.05:
-                # Wrap-aware heading difference in degrees
                 dh_deg = ((heading - self._prev_heading + 180.0) % 360.0) - 180.0
                 alpha = 0.3
-                # Convert to rad/s; positive = turning left per RHR convention
                 self._yaw_rate = alpha * math.radians(dh_deg / dt) + (1 - alpha) * self._yaw_rate
 
         self._prev_heading = heading
@@ -237,9 +223,6 @@ class RLAlgo(Node):
         self.waypoint_lon = msg.longitude
         self._last_action = np.zeros(2, dtype=np.float32)
         self.get_logger().info(f"New waypoint: ({msg.latitude:.6f}, {msg.longitude:.6f})")
-
-    def _mode_callback(self, msg: String) -> None:
-        self.current_mode = msg.data
 
 
 def main(args=None) -> None:

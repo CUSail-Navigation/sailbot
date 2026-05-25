@@ -195,7 +195,7 @@ class Algo(Node):
             10)
         
         # Publisher for rudder angle
-        self.rudder_angle_pub = self.create_publisher(Int32, 'algo_rudder', 10)
+        self.rudder_angle_pub = self.create_publisher(Int32, 'albo_rudder', 10)
 
         # Publisher for danger zone notification
         self.danger_zone_pub = self.create_publisher(Bool, 'danger_zone', 10)
