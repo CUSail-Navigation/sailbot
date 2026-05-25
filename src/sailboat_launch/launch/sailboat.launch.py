@@ -58,6 +58,14 @@ def generate_launch_description():
       parameters=[config]
    )
 
+   rl_algo_cmd = Node(
+      package='sailboat_main',
+      executable='rl_algo',
+      name='rl_algo',
+      namespace='sailbot',
+      parameters=[config]
+   )
+
    waypoint_service_cmd = Node(
       package='sailbot_events',
       executable='waypoint_service',
@@ -109,6 +117,7 @@ def generate_launch_description():
    # Autonomous sailing
    ld.add_action(main_algo_cmd)
    ld.add_action(trim_sail_cmd)
+   ld.add_action(rl_algo_cmd)
    ld.add_action(waypoint_service_cmd)
 
    # Event Drivers
