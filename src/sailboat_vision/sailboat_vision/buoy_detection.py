@@ -1,9 +1,13 @@
 import cv2
 import numpy as np
+import torch
 from ultralytics import YOLO
 
 class YOLOBuoyDetector:
     def __init__(self, detection_treshold=0.6, show_frames=False):
+        torch.cuda.init()
+        torch.cuda.synchronize()
+
         self.model = YOLO("src/sailboat_vision/sailboat_vision/buoy2.pt")
         self.detection_treshold = detection_treshold
         self.show_frames = show_frames
