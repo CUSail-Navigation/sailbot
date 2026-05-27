@@ -4,12 +4,12 @@ import torch
 from ultralytics import YOLO
 
 class YOLOBuoyDetector:
-    def __init__(self, detection_treshold=0.6, show_frames=False):
+    def __init__(self, detection_threshold=0.6, show_frames=False):
         torch.cuda.init()
         torch.cuda.synchronize()
 
         self.model = YOLO("src/sailboat_vision/sailboat_vision/buoy2.pt")
-        self.detection_treshold = detection_treshold
+        self.detection_threshold = detection_threshold
         self.show_frames = show_frames
     
     def update_parameters(self, detection_threshold=None):
