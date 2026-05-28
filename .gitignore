@@ -17,6 +17,7 @@ sys/ros.out
 
 # Python cache
 __pycache__/
+.venv/
 
 # Other common files to ignore
 *.swp
