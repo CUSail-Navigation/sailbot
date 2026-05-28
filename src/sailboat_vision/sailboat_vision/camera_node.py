@@ -17,7 +17,7 @@ class BuoyDetectorNode(Node):
 
         self.declare_parameter('hsv_lower', [0, 127, 63])
         self.declare_parameter('hsv_upper', [20, 255, 255] )
-        self.declare_parameter('detection_threshold', 100)
+        self.declare_parameter('detection_threshold', 0.85)
         self.declare_parameter('timer_period', 0.1)  # Timer period for frame processing
         self.declare_parameter('show_frames', False)
         

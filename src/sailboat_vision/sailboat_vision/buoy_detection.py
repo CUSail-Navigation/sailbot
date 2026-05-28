@@ -4,7 +4,7 @@ import torch
 from ultralytics import YOLO
 
 class YOLOBuoyDetector:
-    def __init__(self, detection_threshold=0.6, show_frames=False):
+    def __init__(self, detection_threshold=0.85, show_frames=False):
         torch.cuda.init()
         torch.cuda.synchronize()
 
