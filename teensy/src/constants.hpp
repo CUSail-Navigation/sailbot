@@ -11,6 +11,9 @@ namespace constants {
      *              go from -45 degrees (600 PWM) to 45 degrees (2400 PWM).
      * - Mainsail: This servo can turn 7.85 times.
      * - Jib: We have two servos; one for each side of the boat. Both servos can turn 7.85 times.
+     *
+     * NOTE: Anything labeled TODO is ones that will be made runtime-changable over the mobile app. This
+     *              functionality is not implemented yet
      */
     namespace servo {
 
@@ -31,10 +34,10 @@ namespace constants {
         constexpr uint32_t JIB_STB_MIN_PULSE = 600;                                                         //TODO
         constexpr uint32_t JIB_STB_MAX_PULSE = 1600;                                                        //TODO
 
-        constexpr uint32_t MAINSAIL_MIN_PULSE = 600;
-        constexpr uint32_t MAINSAIL_MAX_PULSE = 2000;
+        constexpr uint32_t MAINSAIL_MIN_PULSE = 650;
+        constexpr uint32_t MAINSAIL_MAX_PULSE = 2100;
 
-        constexpr uint8_t RUDDER_MIN_ANGLE = 0; // (2025-2026) 0-90 range = -45 to +45 degrees.                         //TODO -- make runtime changeable (for all TODOs).
+        constexpr uint8_t RUDDER_MIN_ANGLE = 0; // (2025-2026) 0-90 range = -45 to +45 degrees.                         //TODO
         constexpr uint8_t RUDDER_MAX_ANGLE = 90;                                                                        //TODO
         constexpr uint32_t RUDDER_MID_PULSE = (RUDDER_MIN_PULSE + RUDDER_MAX_PULSE) / 2; // Amidships.
 

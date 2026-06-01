@@ -9,7 +9,7 @@ RadioSerialMonitor::RadioSerialMonitor()
 
 void RadioSerialMonitor::execute()
 {
-    // Drop stale in-progress packets.
+    // Drop stale in-progress packets
     if (packet_started && (millis() - packet_start_time > constants::serial::RX_PACKET_TIMEOUT_MS)) {
         buffer_index = 0;
         packet_started = false;
@@ -18,7 +18,7 @@ void RadioSerialMonitor::execute()
 
     while (Serial2.available())
     {
-        // Also check timeout mid-stream.
+        // Also check timeout mid-stream
         if (packet_started && (millis() - packet_start_time > constants::serial::RX_PACKET_TIMEOUT_MS)) {
             buffer_index = 0;
             packet_started = false;
@@ -34,7 +34,7 @@ void RadioSerialMonitor::execute()
             buffer_index = 0;
             packet_start_time = millis();
         }
-        // End of packet — accept only when all 5 payload bytes have arrived.
+        // End of packet — accept only when all 5 payload bytes have arrived
         else if (incoming_byte == constants::serial::RX_END_FLAG &&
                  buffer_index == sizeof(sfr::serial::radio_buffer) &&
                  packet_started)
@@ -56,7 +56,7 @@ void RadioSerialMonitor::execute()
             }
             else
             {
-                // Buffer overflow → drop packet.
+                // Buffer overflow, drop packet
                 buffer_index = 0;
                 packet_started = false;
                 sfr::serial::dropped_packets++;
