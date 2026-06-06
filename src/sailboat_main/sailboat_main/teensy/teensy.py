@@ -59,7 +59,9 @@ class TeensyHardware:
 
         # uint8_t to int8_t conversion for negative values.
         mainsail_angle = packet[2] - 256 if packet[2] >= 128 else packet[2]
+        mainsail_angle = constants.PHYSICAL.MAINSAIL_MAX_ANGLE - mainsail_angle  # invert for mechanical swap
         rudder_angle = packet[3] - 256 if packet[3] >= 128 else packet[3]
+        rudder_angle -= (-constants.PHYSICAL.RUDDER_MIN_ANGLE)  # un-offset the +45 added in send_command
         jib_angle = packet[4] - 256 if packet[4] >= 128 else packet[4]
 
         jib_side_flag = packet[5]
