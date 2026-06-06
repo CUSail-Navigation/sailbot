@@ -70,6 +70,7 @@ class TrimSail(Node):
                                     [constants.PHYSICAL.JIB_MAX_ANGLE, constants.PHYSICAL.JIB_MIN_ANGLE]))
 
         mainsail_angle = constants.PHYSICAL.MAINSAIL_MAX_ANGLE - mainsail_angle
+        jib_angle = constants.PHYSICAL.JIB_MAX_ANGLE + constants.PHYSICAL.JIB_MIN_ANGLE - jib_angle
         return mainsail_angle, jib_angle, jib_side_flag
 
     def danger_zone_callback(self, msg):

@@ -390,6 +390,28 @@ export class ROSConnection {
             }
         });
 
+        // Subscribe to actual jib angle
+        const actualJibAngleTopic = new ROSLIB.Topic({
+            ros: this.ros,
+            name: '/sailbot/actual_jib_angle',
+            messageType: 'std_msgs/msg/Int32',
+            throttle_rate: this.BASE_THROTTLE_RATE,
+        });
+        actualJibAngleTopic.subscribe((message) => {
+            updateValue('actual-jib-angle-value', message.data);
+        });
+
+        // Subscribe to actual jib side flag
+        const actualJibSideTopic = new ROSLIB.Topic({
+            ros: this.ros,
+            name: '/sailbot/actual_jib_side_flag',
+            messageType: 'std_msgs/msg/UInt8',
+            throttle_rate: this.BASE_THROTTLE_RATE,
+        });
+        actualJibSideTopic.subscribe((message) => {
+            updateValue('actual-jib-side-value', message.data === 0 ? 'Port' : 'Starboard');
+        });
+
         // Subscribe to algorithm debug
         const algoDebugTopic = new ROSLIB.Topic({
             ros: this.ros,

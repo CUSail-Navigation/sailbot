@@ -63,6 +63,7 @@ class TeensyHardware:
         rudder_angle = packet[3] - 256 if packet[3] >= 128 else packet[3]
         rudder_angle -= (-constants.PHYSICAL.RUDDER_MIN_ANGLE)  # un-offset the +45 added in send_command
         jib_angle = packet[4] - 256 if packet[4] >= 128 else packet[4]
+        jib_angle = constants.PHYSICAL.JIB_MAX_ANGLE + constants.PHYSICAL.JIB_MIN_ANGLE - jib_angle  # invert for mechanical swap
 
         jib_side_flag = packet[5]
         dropped_packets = packet[6]
