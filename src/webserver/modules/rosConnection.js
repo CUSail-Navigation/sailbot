@@ -359,8 +359,7 @@ export class ROSConnection {
             throttle_rate: this.BASE_THROTTLE_RATE,
         });
         actualRudderAngleTopic.subscribe((message) => {
-            // Update angle, shift from [0,50] to [-25,25]
-            updateValue('actual-rudder-angle-value', message.data - 25);
+            updateValue('actual-rudder-angle-value', message.data);
             if (this.dialManager) {
                 this.dialManager.updateTailAngle(message.data, "actual-tail-angle-dial");
             }
