@@ -27,3 +27,7 @@ sailbot: #Namespace
          tacking_buffer: 1
          debug: True
 
+   rl_algo:
+      ros__parameters:
+         model_path: "/model/best_model.zip"
+
