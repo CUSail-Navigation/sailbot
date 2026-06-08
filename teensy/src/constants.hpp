@@ -49,8 +49,8 @@ namespace constants {
         constexpr float MAINSAIL_WHEEL_CIRCUM_CM = 16.242; // (2025-2026) Diameter: 5.17cm.                             //TODO
         constexpr float MAINSAIL_PULSE_PER_TURN = (SERVO_MAX_PULSE - SERVO_MIN_PULSE) / 7.85;
 
-        constexpr uint8_t JIB_MIN_ANGLE = 10;                                                                           //TODO
-        constexpr uint8_t JIB_MAX_ANGLE = 80;                                                                           //TODO
+        constexpr uint8_t JIB_MIN_ANGLE = 0;                                                                           //TODO
+        constexpr uint8_t JIB_MAX_ANGLE = 90;                                                                           //TODO
         constexpr uint32_t TWO_JIB_FOOT_LEN_SQD_CM = 2 * 60 * 60; // (2025-2026) Jib foot length is 60cm.               //TODO
         constexpr float JIB_PORT_WHEEL_CIRCUM_CM = 16.242; // (2025-2026) Diameter: 5.17cm.                             //TODO
         constexpr float JIB_STB_WHEEL_CIRCUM_CM = 16.242; // (2025-2026) Diameter: 5.17cm.                              //TODO
