@@ -134,7 +134,8 @@ COPY setup_ros.sh /home/ros2_user/setup_ros.sh
 RUN chmod +x /home/ros2_user/setup_ros.sh
 
 # Install Necessary Packages
-RUN pip3 install -r /home/ros2_user/ros2_ws/requirements.txt
+RUN pip3 install -r /home/ros2_user/ros2_ws/requirements.txt && \
+    pip3 install --upgrade --ignore-installed matplotlib
 
 # Install RosBridge and other WebDev Packages
 RUN sudo apt update \
