@@ -3,6 +3,9 @@
 #include <sstream>
 #include <optional>
 #include <cmath>
+#include <chrono>
+#include <algorithm>
+#include <memory>
 // ROS imports.
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
@@ -11,20 +14,25 @@
 #include <std_msgs/msg/string.hpp>
 #include <std_msgs/msg/bool.hpp>
 // Custom messages.
-#include "sailboat_interface/msg/algo_debug.hpp" //todo this is giving me errors
-//#include "sailboat_interface/srv/[waypoinythingy]" //todo this is giving me errors
+#include "sailboat_interface/msg/algo_debug.hpp"
+#include "sailboat_interface/srv/waypoint.hpp"
 
+enum SailState {
+    NORMAL,
+    TACK,
+};
+
+/** Represents a point in latitude and longitude coordinates. */
 class LatLongPoint;
-class NavSatFix;
 
 /** Represents a point in UTM coordinates. */
 class UTMPoint {
-    double northing;
+public:
     double easting;
+    double northing;
     int zoneNumber;
     std::string zoneLetter;
 
-    public:
     UTMPoint(double northing, double easting, int zoneNumber, std::string zoneLetter) {
         this->northing = northing;
         this->easting = easting;
@@ -32,22 +40,15 @@ class UTMPoint {
         this->zoneLetter = zoneLetter;
     }
 
-
-    // /** Covert UTM Coordinates to latitude and longitude. */
-    // LatLongPoint to_latlong() {
-    //     return LatLongPoint(0.0, 0.0);
-    // }
-
-    /*
-    /** Convert UTM Coordinates to NavSatFix message. /
-    NavSatFix to_navsatfix_msg() {
-        LatLongPoint lat_long = to_latlong();
-        ;avSatFix msg;
-        msg.setLatitude(lat_long.getlatitude());
-        msg.setLongitude(lat_long.getLongitude());
-        return msg;
+    double distance_to(const UTMPoint& other) const {
+        return std::hypot(other.easting - easting, other.northing - northing);
     }
-    */
+
+    double target_bearing_to(const UTMPoint& other) const {
+        double delta_easting = other.easting - easting;
+        double delta_northing = other.northing - northing;
+        return std::atan2(delta_northing, delta_easting) * 180.0 / M_PI;
+    }
 };
 
 /** Represents a point in latitude and longitude coordinates. */
@@ -55,39 +56,39 @@ class LatLongPoint {
     double latitude;
     double longitude;
 
-    public:
+public:
     LatLongPoint(double latitude, double longitude) {
         this->latitude = latitude;
         this->longitude = longitude;
     }
 
-    double get_latitude() {
+    double get_latitude() const {
         return latitude;
     }
-
-    double get_longitude() {
+    double get_longitude() const {
         return longitude;
     }
 
-    /* // TODO fix
-    /** Convert latitude and longitude to UTM coordinates. /
-    UTMPoint to_utm {
-        x, y, zone_number, zone_letter = utm.from_latlon(self.latitude, self.longitude);
-        return UTMPoint(x, y, zone_number, zone_letter);
-    };
-    */
+    UTMPoint to_utm() const {
+        double x = longitude * 111320.0; // Rough local approximation for structural compilation
+        double y = latitude * 110540.0;
+        return UTMPoint(x, y, 32, "T");
+    }
 
-    std::string to_string() {
+    sensor_msgs::msg::NavSatFix to_navsatfix_msg() const {
+        sensor_msgs::msg::NavSatFix msg;
+        msg.latitude = latitude;
+        msg.longitude = longitude;
+        return msg;
+    }
+
+    std::string to_string() const {
         std::ostringstream oss;
         oss << "Latitude = " << latitude << ", Longitude = " << longitude;
         return oss.str();
-    };
+    }
 };
 
-enum SailState { // TODO see if this can be removed, later. --> if it's redundant because it's obvious when we're tacking and we don't need to keep track of it
-    NORMAL,
-    TACK,
-};
 
 /** The sailing algorithm responsible for changing the rudder angle based on the
  *  current location, destination, and heading direction. */
@@ -98,35 +99,32 @@ class Algo : public rclcpp::Node {
      *  - BOAT reference frame: the direction the boat is facing represents 0 degrees.
      *  - EARTH reference frame: East is 0 degrees, North is 90 degrees, etc.
      */
-
-    // SENSOR AND INPUT DATA.                   // TODO write docs / class invariants / definitions for all variables
+    // SENSOR AND INPUT DATA.
     std::optional<double> wind_direction;
-    std::optional<double> wind_speed;           // TODO Work this in somewhere --> potentially for sail trim
-    std::optional<double> heading_direction;    // convention: 0 is east, 90 is north, etc. todo see if this is still true
-    std::optional<double> heading_difference;   // What is this for?? --> the difference to your target angle
+    std::optional<double> absolute_wind_dir;
+    std::optional<double> heading_direction;
+    std::optional<double> heading_difference;
     std::optional<double> dist_to_dest;
     std::optional<UTMPoint> current_location;
-    std::optional<UTMPoint> current_waypoint;   // The manual waypoint set on the map. New version: this will be our end goal.
+    std::optional<UTMPoint> current_waypoint;
 
-    // ALGORITHM STATE.     // TODO re-organize these sections because they don't seem super right.
-    SailState state = NORMAL;
-    // std::optional<UTMPoint> currentDestination;        // What the algorithm calculates as the next place to go to, to get to currentWaypoint. This was for the old version; don't need anymore.
-    // std::optional<UTMPoint> tacking_point = None       // Do we need this
+    // ALGORITHM STATE.
+    SailState sail_state = NORMAL;
+    std::optional<UTMPoint> current_destination;
     std::string current_mode = "manual";
+    double tack_time_tracker = 0.0;
+    bool turn_left = true;
+    double timer_period = 0.200;
+
+    // RUNTIME MUTABLE/UPDATABLE PARAMETERS.
+    int no_go_zone = 60;
+    int neutral_zone = 15;
+    int tacking_buffer = 10;
 
     // CONSTANT ALGORITHM/PHYSICAL PARAMETERS.
-    /* Nomenclature:
-     *  - NO_GO_ZONE (angle): irons; where the boat can't generate lift (left-right of the wind).
-     *  - DANGER_ZONE (angle): smaller zone opposite irons; don't sail here for accidental jibes.
-     *  - POP_RADIUS (meters): how close we need to get to a waypoint to "pop" it.
-     */
-    static constexpr int NO_GO_ZONE = 45;       // TODO nail down the value of this.
-    static constexpr int DANGER_ZONE = 10;      // TODO nail down the value of this.
-    static constexpr int TACKING_BUFFER = 30;   // Time (30 sec) to next tack
-    static constexpr int NEUTRAL_ZONE = 10;     // Angle off the nose of the boat to prevent new tack. Don't need anymore?
-    static constexpr int MAX_RUDDER_ANGLE = 25; // TODO nail down the value of this.
+    static constexpr int MAX_RUDDER_ANGLE = 25;
     static constexpr int NEUTRAL_RUDDER_ANGLE = 0;
-    static constexpr int POP_RADIUS = 5;        // Do we need this??
+    static constexpr int POP_RADIUS = 5;
 
     // ROS SUBSCRIBERS.
     rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr subscription_curr_loc;
@@ -134,23 +132,36 @@ class Algo : public rclcpp::Node {
     rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr subscription_wind_direction;
     rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr subscription_current_waypoint;
     rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr subscription_no_go_zone;
-    rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr subscription_neutral_zone;   // TODO delete? 1) class variable 2) ros variable 3) ros subscription 4) ros callback method
-    rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr subscription_tacking_buffer; // TODO delete? 1) class variable 2) ros variable 3) ros subscription 4) ros callback method
-    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr subscription_mode; // todo is this state? do we need?
+    rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr subscription_neutral_zone;
+    rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr subscription_tacking_buffer;
+    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr subscription_mode;
 
     // ROS PUBLISHERS.
     rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr rudder_angle_pub;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr danger_zone_pub;
-
     rclcpp::Publisher<sailboat_interface::msg::AlgoDebug>::SharedPtr state_pub;
+
+    // TIMERS & CLIENTS
+    rclcpp::TimerBase::SharedPtr step_timer;
     rclcpp::TimerBase::SharedPtr state_timer;
+    rclcpp::Client<sailboat_interface::srv::Waypoint>::SharedPtr waypoint_client;
 
-    public:
+public:
     Algo() : Node("main_algo") {
-        // Stuff with the timer
-        // All the stuff to subscribe and publish.
+        // Parameters
+        this->declare_parameter("timer_period", 0.200);
+        timer_period = this->get_parameter("timer_period").as_double();
 
-        // Subscription for current location.
+        this->declare_parameter("tacking_buffer", 10);
+        tacking_buffer = this->get_parameter("tacking_buffer").as_int();
+
+        this->declare_parameter("no_go_zone", 60);
+        no_go_zone = this->get_parameter("no_go_zone").as_int();
+
+        this->declare_parameter("debug", true);
+        bool debug = this->get_parameter("debug").as_bool();
+
+        // Subscriptions
         subscription_curr_loc = this->create_subscription<sensor_msgs::msg::NavSatFix>(
             "/gps", 10, std::bind(&Algo::currGpsCallback, this, std::placeholders::_1));
 
@@ -188,10 +199,14 @@ class Algo : public rclcpp::Node {
         // Publisher for the danger zone notification.
         danger_zone_pub = this->create_publisher<std_msgs::msg::Bool>("danger_zone", 10);
 
-        // Handle debug publishing.
-        // Declare and get parameter
-        this->declare_parameter("debug", true);
-        bool debug = this->get_parameter("debug").as_bool();
+        // Service Client
+        waypoint_client = this->create_client<sailboat_interface::srv::Waypoint>("mutate_waypoint_queue");
+
+        // Primary execution loop
+        step_timer = this->create_wall_timer(
+            std::chrono::duration<double>(timer_period),
+            std::bind(&Algo::step, this)
+        );
 
         RCLCPP_INFO(this->get_logger(), "Debug mode: %s", debug ? "true" : "false");
 
@@ -212,39 +227,63 @@ class Algo : public rclcpp::Node {
     // ALL THE ROS CALLBACKS AND PUBLISHERS
 
     void currGpsCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg) {
-        // Your logic here
+        current_location = LatLongPoint(msg->latitude, msg->longitude).to_utm();
+
+        if (current_destination) {
+            dist_to_dest = current_location->distance_to(*current_waypoint);
+            RCLCPP_INFO(this->get_logger(), "Distance to destination: %.2f", dist_to_dest.value());
+
+            if (dist_to_dest.value() < 3.0) {
+                if (current_mode != "station_keeping") {
+                    RCLCPP_INFO(this->get_logger(), "======================= Waypoint popped =======================");
+                    popWaypoint();
+                    current_destination = std::nullopt;
+                }
+            }
+        }
     }
 
     void headingDirectionCallback(const geometry_msgs::msg::Vector3::SharedPtr msg) {
-        // Your logic here
+        RCLCPP_INFO(this->get_logger(), "Heading Direction: %.2f", msg->z);
+        heading_direction = msg->z;
     }
 
     void windCallback(const std_msgs::msg::Int32::SharedPtr msg) {
-        // Your logic here
+        wind_direction = static_cast<double>(msg->data);
+        if (heading_direction) {
+            absolute_wind_dir = std::fmod(wind_direction.value() + heading_direction.value(), 360.0);
+            RCLCPP_INFO(this->get_logger(), "Wind Direction: %.2f, Absolute Wind Direction: %.2f",
+                wind_direction.value(), absolute_wind_dir.value());
+        }
     }
 
     void currentWaypointCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg) {
-        // Your logic here
+        current_waypoint = LatLongPoint(msg->latitude, msg->longitude).to_utm();
+        RCLCPP_INFO(this->get_logger(), "Updated current waypoint to: (%.4f, %.4f)", msg->latitude, msg->longitude);
+        RCLCPP_INFO(this->get_logger(), "New waypoint received");
+
+        current_destination = current_waypoint;
+        tack_time_tracker = 0.0;
+        sail_state = NORMAL;
     }
 
     void noGoZoneCallback(const std_msgs::msg::Int32::SharedPtr msg) {
-        // Your logic here
+        no_go_zone = msg->data;
+        RCLCPP_INFO(this->get_logger(), "No-Go Zone: %d", no_go_zone);
     }
 
     void neutralZoneCallback(const std_msgs::msg::Int32::SharedPtr msg) {
-        // Your logic here
+        neutral_zone = msg->data;
+        RCLCPP_INFO(this->get_logger(), "Neutral Zone: %d", neutral_zone);
     }
 
     void tackingBufferCallback(const std_msgs::msg::Int32::SharedPtr msg) {
-        // Your logic here
+        tacking_buffer = msg->data;
+        RCLCPP_INFO(this->get_logger(), "Tacking Buffer: %d", tacking_buffer);
     }
 
     void modeCallback(const std_msgs::msg::String::SharedPtr msg) {
-        // Your logic here
-    }
-
-    void publishStateDebug() {
-       // Your logic here
+        current_mode = msg->data;
     }
 
 
@@ -255,60 +294,200 @@ class Algo : public rclcpp::Node {
         // Not enough information yet.
         if (!current_location || !current_waypoint || !heading_direction) return;
 
+        if (!current_destination) {
+            current_destination = current_waypoint;
+            sail_state = NORMAL;
+        }
+
         updateState();
 
-        switch (state) { // todo simplify so it only does something if the state changes?
-            case TACK: setTackRudder(); // todo decide if we want a break here or if it should set normal after
-            case NORMAL: setNormalRudder();
-        }
+        // Equiv to np.mod(heading - bearing + 180, 360) - 180
+        double target_bearing = current_location->target_bearing_to(*current_destination);
+        double raw_diff = heading_direction.value() - target_bearing + 180.0;
+        heading_difference = std::fmod(raw_diff, 360.0);
+        if (heading_difference.value() < 0) heading_difference.value() += 360.0;
+        heading_difference.value() -= 180.0;
+
+        if (sail_state == NORMAL) setNormalRudder();
+        else if (sail_state == TACK) setTackRudder();
     }
 
-    /** Helper method to update the state of the algorithm. This function is called when the state changes. */
     void updateState() {
-        if (state == NORMAL) {
-            if (waypointInNogo()) {
-
+        if (sail_state == NORMAL) {
+            if (current_location->distance_to(*current_destination) < POP_RADIUS) {
+                RCLCPP_INFO(this->get_logger(), "Reached tacking point");
+                current_destination = current_waypoint;
             }
-            else {
-                // Sail directly to destination.
-            }
-        }
-        else if (state == TACK) {
 
-        }
-        else {
-            // self.get_logger().info("Unknown state")
+            if (waypointInNogo() && tack_time_tracker > tacking_buffer) {
+                current_destination = calculateTackingPoint();
+                if (wind_direction.value() < 180.0) turn_left = false;
+                else turn_left = true;
+                sail_state = TACK;
+                tack_time_tracker = 0.0;
+            } else if (tack_time_tracker > tacking_buffer) {
+                tack_time_tracker = 0.0;
+            }
+            tack_time_tracker += timer_period;
+
+        } else if (sail_state == TACK) {
+            if (tack_time_tracker > tacking_buffer) {
+                sail_state = NORMAL;
+                tack_time_tracker = 0.0;
+                current_destination = current_waypoint;
+            } else if (turn_left) {
+                if (heading_difference && heading_difference.value() > 0) {
+                    sail_state = NORMAL;
+                    tack_time_tracker = 0.0;
+                }
+            } else {
+                if (heading_difference && heading_difference.value() < 0) {
+                    sail_state = NORMAL;
+                    tack_time_tracker = 0.0;
+                }
+            }
+            tack_time_tracker += timer_period;
+        } else {
+            RCLCPP_INFO(this->get_logger(), "Unknown state");
         }
     }
 
-
-    bool waypointInNogo() {// TODO implement this
-        if (!(current_waypoint && wind_direction)) return false;
-
-
+    bool boatInNogo() {
+        RCLCPP_INFO(this->get_logger(), "Wind Direction: %.2f", wind_direction.value_or(0.0));
+        if (!wind_direction) return false;
+        return (180.0 - no_go_zone < wind_direction.value() && wind_direction.value() < 180.0 + no_go_zone);
     }
 
-    /** Initiates a tack by setting rudder angle to \code MAX_RUDDER_ANGLE\endcode on the correct side of the boat. */
+    bool waypointInNogo() {
+        if (!current_waypoint || !wind_direction || !absolute_wind_dir || !current_location) return false;
+
+        double target_bearing = current_location->target_bearing_to(*current_waypoint);
+        double opposite_wind_dir = std::fmod(absolute_wind_dir.value() + 180.0, 360.0);
+
+        double diff = std::fmod(target_bearing - opposite_wind_dir + 180.0, 360.0);
+        if (diff < 0) diff += 360.0;
+        diff -= 180.0;
+
+        return std::abs(diff) < no_go_zone;
+    }
+
+    UTMPoint calculateTackingPoint() {
+        double tack_angle = 0.0;
+        double approach_angle = 0.0;
+
+        if (wind_direction.value() < 180.0) {
+            tack_angle = std::fmod(absolute_wind_dir.value() - no_go_zone, 360.0);
+            approach_angle = std::fmod(no_go_zone + absolute_wind_dir.value(), 360.0);
+        } else {
+            tack_angle = std::fmod(no_go_zone + absolute_wind_dir.value(), 360.0);
+            approach_angle = std::fmod(absolute_wind_dir.value() - no_go_zone, 360.0);
+        }
+        if (tack_angle < 0) tack_angle += 360.0;
+        if (approach_angle < 0) approach_angle += 360.0;
+
+        double vec1_x = std::cos(tack_angle * M_PI / 180.0);
+        double vec1_y = std::sin(tack_angle * M_PI / 180.0);
+        double vec2_x = -std::cos(approach_angle * M_PI / 180.0);
+        double vec2_y = -std::sin(approach_angle * M_PI / 180.0);
+
+        // Linear equation solving system matrix A and column vector b
+        // [vec1_x  -vec2_x] [t1] = [P2_x - P1_x]
+        // [vec1_y  -vec2_y] [t2]   [P2_y - P1_y]
+        double p1_x = current_location->easting;
+        double p1_y = current_location->northing;
+        double p2_x = current_waypoint->easting;
+        double p2_y = current_waypoint->northing;
+
+        double bx = p2_x - p1_x;
+        double by = p2_y - p1_y;
+
+        double det = (vec1_x * -vec2_y) - (-vec2_x * vec1_y);
+        double t1 = 0.0;
+        if (std::abs(det) > 1e-6) {
+            t1 = (bx * -vec2_y - (-vec2_x * by)) / det;
+        }
+
+        double tp_easting = p1_x + t1 * vec1_x;
+        double tp_northing = p1_y + t1 * vec1_y;
+
+        return UTMPoint(tp_easting, tp_northing, current_location->zoneNumber, current_location->zoneLetter);
+    }
+
     void setTackRudder() {
-        int rudderAngle;
+        int rudder_angle = turn_left ? -MAX_RUDDER_ANGLE : MAX_RUDDER_ANGLE;
 
-        // smth about when you're coming out of the tack
-        if (heading_difference && std::abs(heading_difference.value()) <= NEUTRAL_ZONE) {
-            rudderAngle = (int) (heading_difference.value() / 180 * 25);
-        }
-        // Decide which side.
-        else {
-            rudderAngle = heading_difference >= 0 ? MAX_RUDDER_ANGLE : -MAX_RUDDER_ANGLE;
-        }
-
-        // Publish.
-
-        // todo implement this
+        RCLCPP_INFO(this->get_logger(), "Rudder Angle: %d", rudder_angle);
+        auto msg = std_msgs::msg::Int32();
+        msg.data = rudder_angle;
+        rudder_angle_pub->publish(msg);
     }
 
-    void setNormalRudder() {}
-};
+    void setNormalRudder() {
+        int rudder_angle = 0;
+        if (heading_difference) {
+            rudder_angle = static_cast<int>(std::round(heading_difference.value() / 180.0 * 20.0));
+        }
 
+        RCLCPP_INFO(this->get_logger(), "Rudder Angle: %d", rudder_angle);
+        auto msg = std_msgs::msg::Int32();
+        msg.data = rudder_angle;
+        rudder_angle_pub->publish(msg);
+    }
+
+    // ASYNC CLIENT INTERACTION
+    void popWaypoint() {
+        while (!waypoint_client->wait_for_service(std::chrono::seconds(1))) {
+            if (!rclcpp::ok()) {
+                RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the service. Exiting.");
+                return;
+            }
+            RCLCPP_INFO(this->get_logger(), "Waypoint service not available, waiting...");
+        }
+
+        auto request = std::make_shared<sailboat_interface::srv::Waypoint::Request>();
+        request->command = "pop";
+        request->argument = "";
+
+        auto result = waypoint_client->async_send_request(request,
+            [this](rclcpp::Client<sailboat_interface::srv::Waypoint>::SharedFuture future) {
+                try {
+                    auto response = future.get();
+                    if (response->success) {
+                        RCLCPP_INFO(this->get_logger(), "Waypoint popped successfully.");
+                    } else {
+                        RCLCPP_INFO(this->get_logger(), "Failed to pop waypoint from the service.");
+                    }
+                } catch (const std::exception &e) {
+                    RCLCPP_ERROR(this->get_logger(), "Service call failed: %s", e.what());
+                }
+            });
+    }
+
+    void publishStateDebug() {
+        RCLCPP_INFO(this->get_logger(), "Publishing internal state");
+        auto debug_msg = sailboat_interface::msg::AlgoDebug();
+
+        debug_msg.tacking = (sail_state == TACK);
+
+        debug_msg.heading_dir.data = heading_direction ? static_cast<int>(heading_direction.value()) : 0;
+
+        if (current_destination) {
+            // Reconstructing local latlong representation for debug pipeline output safely
+            LatLongPoint local_ll(current_destination->northing / 110540.0, current_destination->easting / 111320.0);
+            debug_msg.curr_dest = local_ll.to_navsatfix_msg();
+        } else {
+            RCLCPP_INFO(this->get_logger(), "Current destination is None");
+            debug_msg.curr_dest = sensor_msgs::msg::NavSatFix();
+        }
+
+        debug_msg.diff.data = heading_difference ? static_cast<int>(heading_difference.value()) : 0;
+        debug_msg.dist_to_dest.data = dist_to_dest ? static_cast<int>(dist_to_dest.value()) : -1;
+        debug_msg.no_go_zone.data = no_go_zone;
+        debug_msg.neutral_zone.data = neutral_zone;
+
+        state_pub->publish(debug_msg);
+    }
+};
 
 int main(int argc, char * argv[]) {
     rclcpp::init(argc, argv);
