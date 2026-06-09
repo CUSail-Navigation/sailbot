@@ -14,14 +14,14 @@ class _Physical:
     Physical parameters of the boat.
     These constants concern the 2025-2026 season boat. (Update this every year).
     """
-    RUDDER_MIN_ANGLE: int = -45
-    RUDDER_MAX_ANGLE: int = 45
+    RUDDER_MIN_ANGLE: int = -25
+    RUDDER_MAX_ANGLE: int = 25
 
     MAINSAIL_MIN_ANGLE: int = 0
     MAINSAIL_MAX_ANGLE: int = 90
 
-    JIB_MIN_ANGLE: int = 10
-    JIB_MAX_ANGLE: int = 80
+    JIB_MIN_ANGLE: int = 0
+    JIB_MAX_ANGLE: int = 90
     # Flag for which side to set the jib on.
     JIB_SIDE_PORT: int = 0
     JIB_SIDE_STB: int = 1
@@ -33,7 +33,7 @@ class _Wind:
     Conventions for interpreting wind sensor data.
     """
     NO_GO_CENTER: int = 180
-    NO_GO_WIDTH: int = 55  # (2024-2025)
+    NO_GO_WIDTH: int = 90  # (2024-2025)
 
 
 @dataclass(frozen=True)
