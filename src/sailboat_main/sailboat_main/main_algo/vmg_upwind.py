@@ -86,6 +86,7 @@ class VMGUpwind(Node):
         self.declare_parameter('kp',                     0.5)
         self.declare_parameter('max_rudder_deg',         25)
         self.declare_parameter('roll_rudder_gain',       0.0)  # deg rudder per deg heel
+        self.declare_parameter('constant_wind_angle',   -1)    # global compass degrees; -1 = use sensor
 
         self.timer_period  = self.get_parameter('timer_period').value
         self.best_vmg_twa  = self.get_parameter('best_vmg_twa_deg').value
@@ -184,7 +185,10 @@ class VMGUpwind(Node):
         self.roll    = msg.x
 
     def _on_wind(self, msg: Int32):
-        if self.heading is not None:
+        constant_wind = self.get_parameter('constant_wind_angle').value
+        if constant_wind >= 0:
+            self.absolute_wind = float(constant_wind)
+        elif self.heading is not None:
             self.absolute_wind = (float(msg.data) + self.heading) % 360
 
     def _on_waypoint(self, msg: NavSatFix):

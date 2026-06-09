@@ -25,6 +25,10 @@ sailbot: #Namespace
    trim_sail:
       ros__parameters:
          constant_wind_angle: -1  # Set to 0-359 (compass degrees) to override broken wind sensor. -1 = use sensor.
+
+   vmg_upwind:
+      ros__parameters:
+         constant_wind_angle: -1  # Must match trim_sail value when overriding sensor.
    
    buoy_detection: 
       ros__parameters:
