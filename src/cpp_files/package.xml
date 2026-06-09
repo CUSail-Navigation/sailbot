@@ -3,15 +3,16 @@
 <package format="3">
   <name>cpp_files</name>
   <version>0.0.0</version>
-  <description>C++ sailing algorithm (main_algo port)</description>
-  <maintainer email="nl545@cornell.edu">nicole luor</maintainer>
-  <license>TODO: License declaration</license>
+  <description>C++ Rudder Algorithm (main_algo port)</description>
+  <maintainer email="kn449@cornell.edu">Kai Nizhner</maintainer>
+  <license> TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>sensor_msgs</depend>
+  <depend>sailboat_interface</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

@@ -11,12 +11,13 @@
 #include <std_msgs/msg/string.hpp>
 #include <std_msgs/msg/bool.hpp>
 // Custom messages.
-//#include "sailboat_interface/msg/algo_debug.hpp" //todo this is giving me errors
+#include "sailboat_interface/msg/algo_debug.hpp" //todo this is giving me errors
+//#include "sailboat_interface/srv/[waypoinythingy]" //todo this is giving me errors
 
 class LatLongPoint;
 class NavSatFix;
 
-/** Represents a point in UTM Coordinates. */
+/** Represents a point in UTM coordinates. */
 class UTMPoint {
     double northing;
     double easting;
@@ -60,11 +61,11 @@ class LatLongPoint {
         this->longitude = longitude;
     }
 
-    double getLatitude() {
+    double get_latitude() {
         return latitude;
     }
 
-    double getLongitude() {
+    double get_longitude() {
         return longitude;
     }
 
@@ -76,7 +77,7 @@ class LatLongPoint {
     };
     */
 
-    std::string toString() {
+    std::string to_string() {
         std::ostringstream oss;
         oss << "Latitude = " << latitude << ", Longitude = " << longitude;
         return oss.str();
@@ -99,19 +100,19 @@ class Algo : public rclcpp::Node {
      */
 
     // SENSOR AND INPUT DATA.                   // TODO write docs / class invariants / definitions for all variables
-    std::optional<double> windDirection;
-    std::optional<double> windSpeed;            // TODO Work this in somewhere --> potentially for sail trim
-    std::optional<double> headingDirection;     // convention: 0 is east, 90 is north, etc. todo see if this is still true
-    std::optional<double> headingDifference;    // What is this for?? --> the difference to your target angle
-    std::optional<double> distToDest;
-    std::optional<UTMPoint> currentLocation;
-    std::optional<UTMPoint> currentWaypoint;    // The manual waypoint set on the map. New version: this will be our end goal.
+    std::optional<double> wind_direction;
+    std::optional<double> wind_speed;           // TODO Work this in somewhere --> potentially for sail trim
+    std::optional<double> heading_direction;    // convention: 0 is east, 90 is north, etc. todo see if this is still true
+    std::optional<double> heading_difference;   // What is this for?? --> the difference to your target angle
+    std::optional<double> dist_to_dest;
+    std::optional<UTMPoint> current_location;
+    std::optional<UTMPoint> current_waypoint;   // The manual waypoint set on the map. New version: this will be our end goal.
 
     // ALGORITHM STATE.     // TODO re-organize these sections because they don't seem super right.
     SailState state = NORMAL;
     // std::optional<UTMPoint> currentDestination;        // What the algorithm calculates as the next place to go to, to get to currentWaypoint. This was for the old version; don't need anymore.
     // std::optional<UTMPoint> tacking_point = None       // Do we need this
-    std::string currentMode = "manual";
+    std::string current_mode = "manual";
 
     // CONSTANT ALGORITHM/PHYSICAL PARAMETERS.
     /* Nomenclature:
@@ -128,21 +129,21 @@ class Algo : public rclcpp::Node {
     static constexpr int POP_RADIUS = 5;        // Do we need this??
 
     // ROS SUBSCRIBERS.
-    rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr subscriptionCurrLoc;
-    rclcpp::Subscription<geometry_msgs::msg::Vector3>::SharedPtr subscriptionHeadingDirection;
-    rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr subscriptionWindDirection;
-    rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr subscriptionCurrentWaypoint;
-    rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr subscriptionNoGoZone;
-    rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr subscriptionNeutralZone; // TODO delete? 1) class variable 2) ros variable 3) ros subscription 4) ros callback method
-    rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr subscriptionTackingBuffer; // TODO delete? 1) class variable 2) ros variable 3) ros subscription 4) ros callback method
-    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr subscriptionMode; // todo is this state? do we need?
+    rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr subscription_curr_loc;
+    rclcpp::Subscription<geometry_msgs::msg::Vector3>::SharedPtr subscription_heading_direction;
+    rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr subscription_wind_direction;
+    rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr subscription_current_waypoint;
+    rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr subscription_no_go_zone;
+    rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr subscription_neutral_zone;   // TODO delete? 1) class variable 2) ros variable 3) ros subscription 4) ros callback method
+    rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr subscription_tacking_buffer; // TODO delete? 1) class variable 2) ros variable 3) ros subscription 4) ros callback method
+    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr subscription_mode; // todo is this state? do we need?
 
     // ROS PUBLISHERS.
-    rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr rudderAnglePub;
-    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr dangerZonePub;
+    rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr rudder_angle_pub;
+    rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr danger_zone_pub;
 
-    //rclcpp::Publisher<sailboat_interface::msg::AlgoDebug>::SharedPtr statePub;
-    rclcpp::TimerBase::SharedPtr stateTimer;
+    rclcpp::Publisher<sailboat_interface::msg::AlgoDebug>::SharedPtr state_pub;
+    rclcpp::TimerBase::SharedPtr state_timer;
 
     public:
     Algo() : Node("main_algo") {
@@ -150,42 +151,42 @@ class Algo : public rclcpp::Node {
         // All the stuff to subscribe and publish.
 
         // Subscription for current location.
-        subscriptionCurrLoc = this->create_subscription<sensor_msgs::msg::NavSatFix>(
+        subscription_curr_loc = this->create_subscription<sensor_msgs::msg::NavSatFix>(
             "/gps", 10, std::bind(&Algo::currGpsCallback, this, std::placeholders::_1));
 
         // Subscription for heading direction.
-        subscriptionHeadingDirection = this->create_subscription<geometry_msgs::msg::Vector3>(
+        subscription_heading_direction = this->create_subscription<geometry_msgs::msg::Vector3>(
             "/imu", 10, std::bind(&Algo::headingDirectionCallback, this, std::placeholders::_1));
 
         // Subscription for wind direction.
-        subscriptionWindDirection = this->create_subscription<std_msgs::msg::Int32>(
+        subscription_wind_direction = this->create_subscription<std_msgs::msg::Int32>(
             "wind", 10, std::bind(&Algo::windCallback, this, std::placeholders::_1));
 
         // Subscription for current waypoint.
-        subscriptionCurrentWaypoint = this->create_subscription<sensor_msgs::msg::NavSatFix>(
+        subscription_current_waypoint = this->create_subscription<sensor_msgs::msg::NavSatFix>(
             "current_waypoint", 10, std::bind(&Algo::currentWaypointCallback, this, std::placeholders::_1));
 
         // Subscription for runtime no-go zone adjustments.
-        subscriptionNoGoZone = this->create_subscription<std_msgs::msg::Int32>(
+        subscription_no_go_zone = this->create_subscription<std_msgs::msg::Int32>(
             "no_go_zone", 10, std::bind(&Algo::noGoZoneCallback, this, std::placeholders::_1));
 
         // Subscription for runtime neutral zone adjustments.
-        subscriptionNeutralZone = this->create_subscription<std_msgs::msg::Int32>(
+        subscription_neutral_zone = this->create_subscription<std_msgs::msg::Int32>(
             "neutral_zone", 10, std::bind(&Algo::neutralZoneCallback, this, std::placeholders::_1));
 
         // Subscription for runtime tacking buffer adjustments.
-        subscriptionTackingBuffer = this->create_subscription<std_msgs::msg::Int32>(
+        subscription_tacking_buffer = this->create_subscription<std_msgs::msg::Int32>(
             "tacking_buffer", 10, std::bind(&Algo::tackingBufferCallback, this, std::placeholders::_1));
 
         // Subscription for the mode.
-        subscriptionMode = this->create_subscription<std_msgs::msg::String>(
+        subscription_mode = this->create_subscription<std_msgs::msg::String>(
             "current_mode", 10, std::bind(&Algo::modeCallback, this, std::placeholders::_1));
 
         // Publisher for the rudder angle.
-        rudderAnglePub = this->create_publisher<std_msgs::msg::Int32>("algo_rudder", 10);
+        rudder_angle_pub = this->create_publisher<std_msgs::msg::Int32>("algo_rudder", 10);
 
         // Publisher for the danger zone notification.
-        dangerZonePub = this->create_publisher<std_msgs::msg::Bool>("danger_zone", 10);
+        danger_zone_pub = this->create_publisher<std_msgs::msg::Bool>("danger_zone", 10);
 
         // Handle debug publishing.
         // Declare and get parameter
@@ -194,15 +195,15 @@ class Algo : public rclcpp::Node {
 
         RCLCPP_INFO(this->get_logger(), "Debug mode: %s", debug ? "true" : "false");
 
-        // if (debug) {
-        //     // Publisher for internal state
-        //     statePub = this->create_publisher<src::sailboat_interface::msg::AlgoDebug>("main_algo_debug", 10);
-        //     // Timer to publish state every 1 second (1000ms)
-        //     stateTimer = this->create_wall_timer(
-        //         std::chrono::seconds(1),
-        //         std::bind(&Algo::publishStateDebug, this)
-        //     );
-        // }
+        if (debug) {
+            // Publisher for internal state
+            state_pub = this->create_publisher<sailboat_interface::msg::AlgoDebug>("main_algo_debug", 10);
+            // Timer to publish state every 1 second (1000ms)
+            state_timer = this->create_wall_timer(
+                std::chrono::seconds(1),
+                std::bind(&Algo::publishStateDebug, this)
+            );
+        }
 
         RCLCPP_INFO(this->get_logger(), "Main algo started successfully");
     }
@@ -252,7 +253,7 @@ class Algo : public rclcpp::Node {
      *  position in a given moment. Sail the boat through looping this method forever. */
     void step() {
         // Not enough information yet.
-        if (!currentLocation || !currentWaypoint || !headingDirection) return;
+        if (!current_location || !current_waypoint || !heading_direction) return;
 
         updateState();
 
@@ -282,7 +283,7 @@ class Algo : public rclcpp::Node {
 
 
     bool waypointInNogo() {// TODO implement this
-        if (!(currentWaypoint && windDirection)) return false;
+        if (!(current_waypoint && wind_direction)) return false;
 
 
     }
@@ -292,12 +293,12 @@ class Algo : public rclcpp::Node {
         int rudderAngle;
 
         // smth about when you're coming out of the tack
-        if (headingDifference && std::abs(headingDifference.value()) <= NEUTRAL_ZONE) {
-            rudderAngle = (int) (headingDifference.value() / 180 * 25);
+        if (heading_difference && std::abs(heading_difference.value()) <= NEUTRAL_ZONE) {
+            rudderAngle = (int) (heading_difference.value() / 180 * 25);
         }
         // Decide which side.
         else {
-            rudderAngle = headingDifference >= 0 ? MAX_RUDDER_ANGLE : -MAX_RUDDER_ANGLE;
+            rudderAngle = heading_difference >= 0 ? MAX_RUDDER_ANGLE : -MAX_RUDDER_ANGLE;
         }
 
         // Publish.
@@ -313,7 +314,7 @@ int main(int argc, char * argv[]) {
     rclcpp::init(argc, argv);
     std::shared_ptr<Algo> mainAlgo = std::make_shared<Algo>();
 
-    // ROS2 in C++ handles keyboard interrupt; the node will automatically be destroyed when it gets out of scope.
+    // ROS2 in C++ handles keyboard interrupts; the node will automatically be destroyed when it gets out of scope.
     rclcpp::spin(mainAlgo);
 
     rclcpp::shutdown();
