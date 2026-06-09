@@ -2,6 +2,7 @@ import numpy as np
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Int32, UInt8, Bool
+from geometry_msgs.msg import Vector3
 from .. import constants
 
 
@@ -13,9 +14,17 @@ class TrimSail(Node):
 
     def __init__(self):
         super().__init__('trim_sail')
+
+        # Set to a non-negative value to override the wind sensor with a constant
+        # global compass wind direction (degrees, 0-359, where 0/360 = wind from North).
+        self.declare_parameter('constant_wind_angle', -1)
+
+        self.heading = None
+
         # Subscription for wind direction and danger zone.
         self.wind_subscription = self.create_subscription(Int32, 'wind', self.wind_callback, 10)
         self.danger_zone_subscription = self.create_subscription(Bool, 'danger_zone', self.danger_zone_callback, 10)
+        self.heading_subscription = self.create_subscription(Vector3, '/imu', self.heading_callback, 10)
         self.in_danger_zone = False
 
         # Publishers for mainsail angle, jib angle, and jib side flag.
@@ -23,12 +32,20 @@ class TrimSail(Node):
         self.publisher_jib_angle = self.create_publisher(Int32, 'algo_jib_angle', 10)
         self.publisher_jib_side_flag = self.create_publisher(UInt8, 'algo_jib_side_flag', 10)
 
+    def heading_callback(self, msg):
+        self.heading = msg.z
+
     def wind_callback(self, msg):
         """
         Use the wind data from ``msg`` to calculate the sail angles and side;
         publish these values.
         """
-        mainsail_angle, jib_angle, jib_side_flag = self.calculate_sail_angles(msg.data)
+        constant_wind = self.get_parameter('constant_wind_angle').value
+        if constant_wind >= 0 and self.heading is not None:
+            wind_dir = (constant_wind - self.heading) % 360
+        else:
+            wind_dir = msg.data
+        mainsail_angle, jib_angle, jib_side_flag = self.calculate_sail_angles(wind_dir)
 
         # Create the proper messages and publish the values.
         mainsail_angle_msg = Int32()
