@@ -359,8 +359,7 @@ export class ROSConnection {
             throttle_rate: this.BASE_THROTTLE_RATE,
         });
         actualRudderAngleTopic.subscribe((message) => {
-            // Update angle, shift from [0,50] to [-25,25]
-            updateValue('actual-rudder-angle-value', message.data - 25);
+            updateValue('actual-rudder-angle-value', message.data);
             if (this.dialManager) {
                 this.dialManager.updateTailAngle(message.data, "actual-tail-angle-dial");
             }
@@ -389,6 +388,28 @@ export class ROSConnection {
             if (this.dialManager) {
                 this.dialManager.updateSailAngle(message.data, "actual-sail-angle-dial");
             }
+        });
+
+        // Subscribe to actual jib angle
+        const actualJibAngleTopic = new ROSLIB.Topic({
+            ros: this.ros,
+            name: '/sailbot/actual_jib_angle',
+            messageType: 'std_msgs/msg/Int32',
+            throttle_rate: this.BASE_THROTTLE_RATE,
+        });
+        actualJibAngleTopic.subscribe((message) => {
+            updateValue('actual-jib-angle-value', message.data);
+        });
+
+        // Subscribe to actual jib side flag
+        const actualJibSideTopic = new ROSLIB.Topic({
+            ros: this.ros,
+            name: '/sailbot/actual_jib_side_flag',
+            messageType: 'std_msgs/msg/UInt8',
+            throttle_rate: this.BASE_THROTTLE_RATE,
+        });
+        actualJibSideTopic.subscribe((message) => {
+            updateValue('actual-jib-side-value', message.data === 0 ? 'Port' : 'Starboard');
         });
 
         // Subscribe to algorithm debug

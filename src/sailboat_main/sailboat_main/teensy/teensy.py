@@ -1,104 +1,104 @@
 import serial
+from .. import constants
+
 
 class TeensyHardware:
     """
     Handles communication with a Teensy 4.0 via a serial connection. Class methods
-    send serial messages to the Teensy, receives and processes telemetry data, 
-    and performs any necessary conversions of transmitted and received data.
+    send serial messages to the Teensy, receive and process telemetry data,
+    and perform any necessary conversions of transmitted and received data.
     """
-
-    START_BYTE = 0xff
-    END_BYTE = 0xee
-    PACKET_LENGTH = 5
 
     def __init__(self, port):
         self.port = port
         self.buffer = []
         self.packet_started = False
         try:
-            self.serial = serial.Serial(self.port, baudrate=9600)
+            self.serial = serial.Serial(self.port, baudrate=constants.SERIAL.BAUD_RATE)
         except serial.SerialException as e:
             raise
         
     def read_telemetry(self, data):
         """
-        Receives teensy packet and returns the packet data
-        :param packet: Teensy packet
+        Reads a Teensy telemetry packet and records the packet data.
+        The format of the telemetry payload between start/end flags is:
+            [wind_hi, wind_lo, mainsail_angle, rudder_angle, jib_angle, jib_side_flag, dropped_packets]
+        :param data: where the Teensy packet is written to.
+        :return: 0 for success, 1 for failure.
         """
-        # check for waiting serial data
+        # Check for waiting serial data.
         while self.serial.in_waiting > 0:
             incoming_byte = self.serial.read()
 
-            # if we see a packet start byte, set flags, clear buffer
-            if incoming_byte == self.START_BYTE.to_bytes(1, 'big'):
+            # If we see a packet start byte: set flags, clear buffer.
+            if incoming_byte == constants.SERIAL.TX_START_FLAG.to_bytes(1, 'big'):
                 self.packet_started = True
                 self.buffer = []
-            # if we see a packet end byte, process the buffer data
-            elif incoming_byte == self.END_BYTE.to_bytes(1, 'big') and len(self.buffer) == self.PACKET_LENGTH:
+            # If we see a packet end byte and the buffer is full, process the buffer and store into ``data``.
+            elif incoming_byte == constants.SERIAL.TX_END_FLAG.to_bytes(1, 'big') and len(self.buffer) == constants.SERIAL.TX_PACKET_LEN:
                 self.packet_started = False
                 data["wind_angle"], \
-                data["sail_angle"], \
+                data["mainsail_angle"], \
                 data["rudder_angle"], \
+                data["jib_angle"], \
+                data["jib_side_flag"], \
                 data["dropped_packets"] = self._parse_packet(self.buffer)
-
-                # clear buffer
-                self.serial.reset_input_buffer()
+                self.serial.reset_input_buffer() # Clear buffer.
                 return 0
-            # if we have previously seen a packet start byte, add data to our buffer
+            # If we have previously seen a packet start byte, add data to our buffer.
             elif self.packet_started:
                 self.buffer.append(int.from_bytes(incoming_byte, 'big'))
-        else:
-            return 1
-    
-
+        else: return 1
 
     def _parse_packet(self, packet):
         """
-        Parse a packet from the Teensy.
-        :param packet: Packet from the Teensy
+        A helper method to actually parse the data in a packet from the Teensy.
+        :param packet: the packet from the Teensy.
         """
         wind_angle = (packet[0] << 8) | packet[1]
 
-        # uint8_t to int8_t conversion
-        if packet[2] >= 128:
-            sail_angle = packet[2] - 256
-        else:
-            sail_angle = packet[2]
-        # uint8_t to int8_t conversion
-        if packet[3] >= 128:
-            rudder_angle = packet[3] - 256
-        else:
-            rudder_angle = packet[3]
+        # uint8_t to int8_t conversion for negative values.
+        mainsail_angle = packet[2] - 256 if packet[2] >= 128 else packet[2]
+        mainsail_angle = constants.PHYSICAL.MAINSAIL_MAX_ANGLE - mainsail_angle  # invert for mechanical swap
+        rudder_angle = packet[3] - 256 if packet[3] >= 128 else packet[3]
+        rudder_angle -= (-constants.PHYSICAL.RUDDER_MIN_ANGLE)  # un-offset the +45 added in send_command
+        jib_angle = packet[4] - 256 if packet[4] >= 128 else packet[4]
+        jib_angle = constants.PHYSICAL.JIB_MAX_ANGLE + constants.PHYSICAL.JIB_MIN_ANGLE - jib_angle  # invert for mechanical swap
 
-        dropped_packets = packet[4]
+        jib_side_flag = packet[5]
+        dropped_packets = packet[6]
 
-        return wind_angle, sail_angle, rudder_angle, dropped_packets
+        return wind_angle, mainsail_angle, rudder_angle, jib_angle, jib_side_flag, dropped_packets
 
-
-    def send_command(self, sail, rudder):
+    def send_command(self, mainsail_angle, rudder_angle, jib_angle, jib_side_flag):
         """
-        Send a properly formatted command packet to the servo.
-
-        :param sail: Sail position (integer)
-        :param tail: Tail position (integer)
+        Send a properly formatted command packet to the Teensy.
+        :param mainsail_angle: new mainsail angle to set (integer). Should be in range [0, 90].
+        :param rudder_angle: new rudder angle to set (integer). Should be in range [-45, 45].
+        :param jib_angle: new jib angle to set (integer). Should be in range [10, 80].
+        :param jib_side_flag: side to set the jib on (integer).
         """
         try:
-            # check bounds
-            sail = max(min(sail, 127), -128)
-            rudder = rudder + 25
-        
-            # convert sail and tail to signed 8-bit integers (bytes)
-            sail_byte = sail & 0xFF if sail >= 0 else (sail + 256) & 0xFF
-            rudder_byte = rudder & 0xFF if rudder >= 0 else (rudder + 256) & 0xFF
+            # Check bounds. For the sails, this is just defensive.
+            mainsail_angle = max(min(mainsail_angle, 127), -128)
+            rudder_angle = rudder_angle + (-constants.PHYSICAL.RUDDER_MIN_ANGLE)
+            jib_angle = max(min(jib_angle, 127), -128)
 
-            # create the packet: [start flag] [sail] [tail] [end flag]
-            command_packet = bytearray([self.START_BYTE, sail_byte, rudder_byte, self.END_BYTE])
+            # Convert control values to 8-bit integers (bytes). The else check is just defensive.
+            mainsail_byte = mainsail_angle & 0xFF if mainsail_angle >= 0 else (mainsail_angle + 256) & 0xFF
+            rudder_byte = rudder_angle & 0xFF if rudder_angle >= 0 else (rudder_angle + 256) & 0xFF
+            jib_angle_byte = jib_angle & 0xFF if jib_angle >= 0 else (jib_angle + 256) & 0xFF
+            jib_side_byte = jib_side_flag & 0xFF
 
-            # send the packet over serial
+            # Command payload format between start/end flags:
+            # [mainsail_angle, rudder_angle, jib_angle, jib_side_flag]
+            command_packet = bytearray([constants.SERIAL.RX_START_FLAG, mainsail_byte, rudder_byte,
+                                         jib_angle_byte, jib_side_byte, constants.SERIAL.RX_END_FLAG])
+
+            # Send the packet over serial.
             self.serial.write(command_packet)
             return 0   
-        except:
-            return 1
+        except: return 1
 
     def close(self):
         """

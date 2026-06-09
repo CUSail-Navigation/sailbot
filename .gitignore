@@ -25,3 +25,7 @@ __pycache__/
 *.tmp
 *.DS_Store
 *~
+.vscode/
+
+# Google Maps API key
+src/webserver/maps-key.js

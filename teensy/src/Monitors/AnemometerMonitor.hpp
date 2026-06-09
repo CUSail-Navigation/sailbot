@@ -1,11 +1,8 @@
 #pragma once
-
 #include <Arduino.h>
 #include "sfr.hpp"
-#include "constants.hpp"
 
-class AnemometerMonitor
-{
+class AnemometerMonitor {
 public:
     AnemometerMonitor();
     void execute();

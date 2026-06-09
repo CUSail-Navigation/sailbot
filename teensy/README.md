@@ -7,14 +7,14 @@ MiniPC via a serial connection.
 This code is structured based on [Lodestar](https://github.com/shihaocao/lodestar), a small scale electric demonstrator for the belly-flop and tail-sitting control algorithms necessary for SpaceX's Starship.
 
 ### main.cpp
-This file is comparable to a .ino file you would see in the Arduino IDE (notice setup and loop are exactly the same as they would be in an Arduino file)
+This file is comparable to a .ino file you would see in the Arduino IDE (notice setup and loop are exactly the same as they would be in an Arduino file).
 
 ### MainControlLoop.cpp
 The MainControlLoop initializes and executes all monitors and control tasks.
 
 ### SFR
 SFR stands for State Field Registry. It contains values that should be available 
-to the entire boat. Ie. sensor values, serial buffer data, etc.
+to the entire boat (sensor values, serial buffer data, etc).
 
 ### Monitors
 Monitors read input from some source and updates sensor values in the SFR.
@@ -28,8 +28,8 @@ Constants contains values that will never be changed. This prevents "magic numbe
 ## Getting Started
 Below are steps to set up your development environment to upload code and observe serial outputs from the Teensy.
 ### Prerequesites: 
-- [VSCode](https://code.visualstudio.com/download) is installed
-- The [sailbot](https://github.com/CUSail-Navigation/sailbot) repository is cloned
+- [VSCode](https://code.visualstudio.com/download) is installed.
+- The [sailbot](https://github.com/CUSail-Navigation/sailbot) repository is cloned.
 ### Steps:
 1. In VSCode, click on "Extensions" on the left hand toolbar. Search for an install PlatformIO IDE.
 2. Open the "teensy" folder within the sailbot repository in VSCode.
@@ -37,20 +37,20 @@ Below are steps to set up your development environment to upload code and observ
 have the "teensy" folder open as the root.
 4. If you would just like to compile code but not upload to the teensy, press the check.
 5. If you would like to upload to the teensy, press the arrow.
-6. To vie wthe serial monitor press the electrical cord icon.
+6. To view the serial monitor press the electrical cord icon.
 
 ## Developing with a Teensy w/ Docker & WSL on Windows:
 The following steps exposes a Windows COM port to WSL and then exposes the WSL port to the Docker image running in WSL. This was necessary to setup a test environment with the ROS2 codebase on my Windows 11 computer.
 ### Changing Docker Desktop Backend to support WSL
 Make sure you have:
-- [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) installed
-- [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) installed
+- [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) installed.
+- [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) installed.
 
-1. Open Docker Desktop
-2. Navigate to Settings->General
-3. Check the box "Use the WSL 2 based engine"
+1. Open Docker Desktop.
+2. Navigate to Settings → General.
+3. Check the box "Use the WSL 2 based engine".
 ### Expose Windows COM port to WSL 
-1. Download and install [USBIPD-WIN](https://github.com/dorssel/usbipd-win/) (and follow their README.md instructions)
+1. Download and install [USBIPD-WIN](https://github.com/dorssel/usbipd-win/) (and follow their README.md instructions).
 2. Open PowerShell as an administrator.
 3. Obtain a list of USB devices using ```usbipd list```.
 4. Find the bus ID of the device (e.g. 4-4) and use ```usbipd bind --busid <id>``` to share it with WSL.
