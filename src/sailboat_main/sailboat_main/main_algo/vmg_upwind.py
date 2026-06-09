@@ -85,6 +85,7 @@ class VMGUpwind(Node):
         self.declare_parameter('min_tack_time_s',       15.0)
         self.declare_parameter('kp',                     0.5)
         self.declare_parameter('max_rudder_deg',         25)
+        self.declare_parameter('roll_rudder_gain',       0.0)  # deg rudder per deg heel
 
         self.timer_period  = self.get_parameter('timer_period').value
         self.best_vmg_twa  = self.get_parameter('best_vmg_twa_deg').value
@@ -93,12 +94,14 @@ class VMGUpwind(Node):
         self.min_tack_time = self.get_parameter('min_tack_time_s').value
         self.kp            = self.get_parameter('kp').value
         self.max_rudder    = int(self.get_parameter('max_rudder_deg').value)
+        self.roll_rudder_gain = self.get_parameter('roll_rudder_gain').value
 
         # Sensor state
         self.heading:       Optional[float]    = None  # compass degrees
         self.absolute_wind: Optional[float]    = None  # compass bearing wind blows TO
         self.location:      Optional[UTMPoint] = None
         self.waypoint:      Optional[UTMPoint] = None
+        self.roll:          float              = 0.0   # degrees, positive = starboard up
 
         # Tack state
         self.tack            = self.TACK_PORT
@@ -137,15 +140,16 @@ class VMGUpwind(Node):
             target = wp_bearing
             mode   = 'reach/downwind'
 
-        heading_err = signed_angle_diff(self.heading, target)
-        rudder      = int(np.clip(self.kp * heading_err, -self.max_rudder, self.max_rudder))
+        heading_err  = signed_angle_diff(self.heading, target)
+        roll_offset  = self.roll_rudder_gain * self.roll
+        rudder       = int(np.clip(self.kp * heading_err + roll_offset, -self.max_rudder, self.max_rudder))
 
         msg = Int32()
         msg.data = rudder
         self.rudder_pub.publish(msg)
         self.get_logger().info(
             f'[{mode}] target={target:.1f} heading={self.heading:.1f} '
-            f'err={heading_err:.1f} rudder={rudder}'
+            f'err={heading_err:.1f} roll={self.roll:.1f} roll_offset={roll_offset:.1f} rudder={rudder}'
         )
 
     # ------------------------------------------------------------------
@@ -177,6 +181,7 @@ class VMGUpwind(Node):
 
     def _on_imu(self, msg: Vector3):
         self.heading = msg.z
+        self.roll    = msg.x
 
     def _on_wind(self, msg: Int32):
         if self.heading is not None:
