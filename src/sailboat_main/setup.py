@@ -31,6 +31,7 @@ setup(
             'sail_algo = sailboat_main.main_algo.sail_algo:main',
             'algo = sailboat_main.main_algo.algo:main',
             'albo = sailboat_main.main_algo.albo:main',
+            'vmg_upwind = sailboat_main.main_algo.vmg_upwind:main',
         ],
     },
 )
