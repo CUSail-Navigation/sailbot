@@ -47,7 +47,6 @@ class Teensy(Node):
         self.desired_jib_side_flag = 0
 
         # Telemetry data publishers.
-        self.wind_angle_pub = self.create_publisher(Int32, 'wind', 10)
         self.actual_mainsail_angle_pub = self.create_publisher(Int32, 'actual_sail_angle', 10)
         self.actual_rudder_angle_pub = self.create_publisher(Int32, 'actual_rudder_angle', 10)
         self.actual_jib_angle_pub = self.create_publisher(Int32, 'actual_jib_angle', 10)
@@ -69,10 +68,6 @@ class Teensy(Node):
         self.get_logger().info('Check telemetry callback entered.')
         data = {}
         if self.teensy.read_telemetry(data) == 0:
-            wind_angle_msg = Int32()
-            wind_angle_msg.data = data['wind_angle']
-            self.wind_angle_pub.publish(wind_angle_msg)
-
             mainsail_angle_msg = Int32()
             mainsail_angle_msg.data = data['mainsail_angle']
             self.actual_mainsail_angle_pub.publish(mainsail_angle_msg)
@@ -102,7 +97,6 @@ class Teensy(Node):
             except Exception as e:
                 self.get_logger().warn(f'Failed to write rudder angle to file: {e}')
 
-            self.get_logger().info(f"{'Wind angle:':<20} {wind_angle_msg.data}")
             self.get_logger().info(f"{'Actual mainsail angle:':<20} {mainsail_angle_msg.data}")
             self.get_logger().info(f"{'Actual rudder angle:':<20} {rudder_angle_msg.data}")
             self.get_logger().info(f"{'Actual jib angle:':<20} {jib_angle_msg.data}")

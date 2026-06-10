@@ -33,6 +33,14 @@ def generate_launch_description():
         parameters=[config],
     )
 
+    licor_cmd = Node(
+        package="sailboat_sensors",
+        executable="licor",
+        name="licor",
+        namespace="sailbot",
+        parameters=[config],
+    )
+
     mux_cmd = Node(
         package="sailboat_main",
         executable="mux",
@@ -106,6 +114,7 @@ def generate_launch_description():
     # HW peripherals
     ld.add_action(gps_cmd)
     ld.add_action(teensy_cmd)
+    ld.add_action(licor_cmd)
 
     # Autonomous sailing
     ld.add_action(main_algo_cmd)
