@@ -95,6 +95,14 @@
                             <span class="status-value" id="actual-rudder-angle-value">N/A</span>
                         </div>
                         <div class="status-row">
+                            <span class="status-label">Actual Jib Angle: </span>
+                            <span class="status-value" id="actual-jib-angle-value">N/A</span>
+                        </div>
+                        <div class="status-row">
+                            <span class="status-label">Actual Jib Side: </span>
+                            <span class="status-value" id="actual-jib-side-value">N/A</span>
+                        </div>
+                        <div class="status-row">
                             <span class="status-label">Dropped Packets: </span>
                             <span class="status-value" id="dropped-packets-value">N/A</span>
                         </div>
@@ -476,10 +484,8 @@
     <!-- Load the modular JavaScript -->
     <script type="module" src="main.js"></script>
 
-    <!-- Google Maps API - will call window.initMap when ready -->
-    <script async defer
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBuFSxZ-m0FA2FubP6t7irEPSklGe7oGV0&callback=window.initMap">
-        </script>
+    <!-- Google Maps API key loaded from untracked maps-key.js (download from Drive and place in src/webserver) -->
+    <script src="maps-key.js"></script>
 </body>
 
 </html>

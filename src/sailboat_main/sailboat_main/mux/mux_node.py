@@ -1,75 +1,141 @@
+"""
+Multiplex control commands from several sources onto the topics the boat stack expects.
+
+Each source (e.g. ``radio``, ``algo``) publishes on prefixed topics (``<source>_sail``,
+``<source>_rudder``, ...). This node forwards only the active source (see ``control_mode``)
+to the shared outputs: ``sail``, ``rudder_angle``, ``jib_angle``, ``jib_side_flag``.
+
+**Parameters**
+
+- ``control_mode`` (defaults to ``algo``): the active source; must be one of
+  ``radio``, ``algo``, ``webserver``, ``controller_app``.
+
+**Topics**
+
+- Subscribe to ``control_mode`` (``String``) in order to know which source to switch to;
+  unknown values are ignored.
+- Subscribe per source: ``<source>_sail`` (``Int32``), ``<source>_rudder`` (``Int32``),
+  ``<source>_jib_angle`` (``Int32``), ``<source>_jib_side_flag`` (``UInt8``).
+- Publish: ``sail``, ``rudder_angle``, ``jib_angle``, ``jib_side_flag``.
+
+**Behavior**
+
+- Timer at 10 Hz re-publishes the latest values from the active source.
+- Mainsail and rudder publish when that axis has been received from the active source.
+- Jib angle and jib side publish only when **both** are non-null, avoiding half-updates.
+"""
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Int32, String
+from std_msgs.msg import Int32, String, UInt8
+
 
 class MuxNode(Node):
+    """
+    Select one control source and forward it to the shared command topics.
+    """
+
     def __init__(self):
         super().__init__('mux_node')
 
-        # Default control mode
+        # Default control mode: ``algo``.
         self.declare_parameter('control_mode', 'algo')
         self.control_mode = self.get_parameter('control_mode').value
 
-        # Mux topic for changing control_mode
+        # Mux topic for changing control_mode.
         self.create_subscription(String, 'control_mode', self.control_mode_callback, 10)
 
-        # Define control sources
+        # Latest command per source.
         self.control_sources = {
-            'radio': {'sail': None, 'rudder': None},
-            'algo': {'sail': None, 'rudder': None},
-            'webserver': {'sail': None, 'rudder': None},
-            'controller_app': {'sail': None, 'rudder': None}
+            'radio': {'mainsail_angle': None, 'rudder_angle': None, 'jib_angle': None, 'jib_side_flag': None},
+            'algo': {'mainsail_angle': None, 'rudder_angle': None, 'jib_angle': None, 'jib_side_flag': None},
+            'webserver': {'mainsail_angle': None, 'rudder_angle': None, 'jib_angle': None, 'jib_side_flag': None},
+            'controller_app': {'mainsail_angle': None, 'rudder_angle': None, 'jib_angle': None, 'jib_side_flag': None},
         }
 
-        # Create subscribers for all control sources
+        # Create subscribers for all control sources.
         for source in self.control_sources:
             self.create_subscription(
-                Int32, f'{source}_sail', 
-                lambda msg, src=source: self.sail_callback(msg, src), 10)
+                Int32, f'{source}_sail',
+                lambda msg, src=source: self.mainsail_angle_callback(msg, src), 10)
             self.create_subscription(
-                Int32, f'{source}_rudder', 
-                lambda msg, src=source: self.rudder_callback(msg, src), 10)
+                Int32, f'{source}_rudder',
+                lambda msg, src=source: self.rudder_angle_callback(msg, src), 10)
+            self.create_subscription(
+                Int32, f'{source}_jib_angle',
+                lambda msg, src=source: self.jib_angle_callback(msg, src), 10)
+            self.create_subscription(
+                UInt8, f'{source}_jib_side_flag',
+                lambda msg, src=source: self.jib_side_flag_callback(msg, src), 10)
 
-        # Publishers for multiplexed output
-        self.rudder_pub = self.create_publisher(Int32, 'rudder_angle', 10)
-        self.sail_pub = self.create_publisher(Int32, 'sail', 10)
+        # Publishers for multiplexed output.
+        self.mainsail_angle_pub = self.create_publisher(Int32, 'sail', 10)
+        self.rudder_angle_pub = self.create_publisher(Int32, 'rudder_angle', 10)
+        self.jib_angle_pub = self.create_publisher(Int32, 'jib_angle', 10)
+        self.jib_side_flag_pub = self.create_publisher(UInt8, 'jib_side_flag', 10)
 
-        # Timer to publish at a regular interval (10 Hz)
+        # Timer to publish at a regular interval (10 Hz).
         self.create_timer(0.1, self.publish_muxed_values)
 
-    def sail_callback(self, msg, source):
-        self.control_sources[source]['sail'] = msg.data
-        self.get_logger().info(f'{source} sail angle: {msg.data}')
+    def mainsail_angle_callback(self, msg, source):
+        self.control_sources[source]['mainsail_angle'] = msg.data
+        self.get_logger().info(f'{source} mainsail angle: {msg.data}')
 
-    def rudder_callback(self, msg, source):
-        self.control_sources[source]['rudder'] = msg.data
+    def rudder_angle_callback(self, msg, source):
+        self.control_sources[source]['rudder_angle'] = msg.data
         self.get_logger().info(f'{source} rudder angle: {msg.data}')
+
+    def jib_angle_callback(self, msg, source):
+        self.control_sources[source]['jib_angle'] = msg.data
+        self.get_logger().info(f'{source} jib angle: {msg.data}')
+
+    def jib_side_flag_callback(self, msg, source):
+        self.control_sources[source]['jib_side_flag'] = msg.data
+        self.get_logger().info(f'{source} jib side flag: {msg.data}')
 
     def control_mode_callback(self, msg):
         if msg.data in self.control_sources:
             self.control_mode = msg.data
             self.get_logger().info(f'Switched control mode to {msg.data}')
         else:
-            self.get_logger().info(f'Invalid control mode request: {msg.data}. Staying in current mode ({self.control_mode})')
+            self.get_logger().info(
+                f'Invalid control mode request: {msg.data}. '
+                f'Staying in current mode ({self.control_mode}).'
+            )
 
     def publish_muxed_values(self):
-        # Get current values from the active control source
-        sail_value = self.control_sources[self.control_mode]['sail']
-        rudder_value = self.control_sources[self.control_mode]['rudder']
-        
-        # Publish sail value if available
-        if sail_value is not None:
-            sail_msg = Int32()
-            sail_msg.data = sail_value
-            self.sail_pub.publish(sail_msg)
-            self.get_logger().info(f'Published sail angle from {self.control_mode}: {sail_value}')
-        
-        # Publish rudder value if available
+        # Get current values from the active control source.
+        src = self.control_sources[self.control_mode]
+        mainsail_value = src['mainsail_angle']
+        rudder_value = src['rudder_angle']
+        jib_angle_value = src['jib_angle']
+        jib_side_value = src['jib_side_flag']
+
+        # Publish mainsail value if available.
+        if mainsail_value is not None:
+            mainsail_msg = Int32()
+            mainsail_msg.data = mainsail_value
+            self.mainsail_angle_pub.publish(mainsail_msg)
+            self.get_logger().info(f'Published mainsail angle from {self.control_mode}: {mainsail_value}')
+
+        # Publish rudder value if available.
         if rudder_value is not None:
             rudder_msg = Int32()
             rudder_msg.data = rudder_value
-            self.rudder_pub.publish(rudder_msg)
+            self.rudder_angle_pub.publish(rudder_msg)
             self.get_logger().info(f'Published rudder angle from {self.control_mode}: {rudder_value}')
+
+        # Publish jib values only when both are set, so downstream never gets a half-update from mux.
+        if jib_angle_value is not None and jib_side_value is not None:
+            jib_msg = Int32()
+            jib_msg.data = jib_angle_value
+            jib_side_msg = UInt8()
+            jib_side_msg.data = jib_side_value
+            self.jib_angle_pub.publish(jib_msg)
+            self.jib_side_flag_pub.publish(jib_side_msg)
+            self.get_logger().info(
+                f'Published jib angle and side from {self.control_mode}: '
+                f'angle={jib_angle_value}, side={jib_side_value}'
+            )
 
 
 def main(args=None):

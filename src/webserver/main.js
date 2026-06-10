@@ -24,7 +24,7 @@ let sailPath;
 // Google Maps initialization - called directly by Maps API
 window.initMap = function() {
     console.log("Initializing map...");
-    const defaultLocation = { lat: 42.276848, lng: -71.756323 }; // Lake Quinsigamond 
+    const defaultLocation = { lat: 42.470389, lng: -76.503110 }; // Merrill Family Sailing Center
 
     map = new google.maps.Map(document.getElementById("map"), {
         center: defaultLocation,

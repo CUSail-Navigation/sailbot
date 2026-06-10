@@ -28,3 +28,7 @@ __pycache__/
 
 # CV model
 *.pt
+.vscode/
+
+# Google Maps API key
+src/webserver/maps-key.js

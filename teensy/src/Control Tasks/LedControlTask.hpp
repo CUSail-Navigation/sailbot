@@ -1,9 +1,8 @@
+#pragma once
 #include "sfr.hpp"
-#include "constants.hpp"
 #include <Arduino.h>
 
-class LedControlTask
-{
+class LedControlTask {
 public:
     LedControlTask();
     void execute();
