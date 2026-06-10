@@ -32,3 +32,8 @@ sailbot: #Namespace
    buoy_search:
       ros__parameters:
          show_debug_plot: false
+
+   licor:
+      ros__parameters:
+         licor_port: "/dev/ttyUSB0"
+         simulated: false
