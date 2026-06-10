@@ -183,7 +183,7 @@ uint32_t ServoControlTask::law_of_cos_map(const uint8_t angle, const uint32_t tw
                                           const float wheel_circum, const bool mainsail) {
     const float c_squared = static_cast<float>(two_b_sqd) * (1 - cosf(static_cast<float>(angle) * 0.017453f)); // 0.017453 = pi/180.
     const float sheet_len = mainsail ? sqrtf(c_squared + constants::servo::MAINSAIL_INITIAL_SQD_CM) - constants::servo::MAINSAIL_INITIAL_CM
-                                     : sqrtf(c_squared) * 0.9f;
+                                     : sqrtf(c_squared) * 0.85f;
 
     return static_cast<uint32_t>(PWM_per_turn * (sheet_len / wheel_circum));  // PWM: (PWM_per_turn * turns_needed).
 }
