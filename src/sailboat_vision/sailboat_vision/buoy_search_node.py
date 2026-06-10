@@ -241,8 +241,14 @@ class BuoySearch(Node):
         self.num_particles = 100
         self.search_radius = 100
         self.particle_filter = None
+        self.camera_hfov_deg = 85.2
+        self.non_detection_period_sec = 0.5
+        self.detection_timeout_sec = 1.0
+        self.last_detection_time = None
+        self.buoy_waypoint_utm = None
 
         self.waypoints = []
+        self.search_pattern_waypoints = []
 
         #Initiialize debug plot
         self.show_debug_plot = False
@@ -250,6 +256,9 @@ class BuoySearch(Node):
             self.setup_debug_plot()
         
         self.initialize_search_pattern()
+        self.non_detection_timer = self.create_timer(
+            self.non_detection_period_sec,
+            self.non_detection_timer_callback)
         
         self.get_logger().info('Buoy search algo started successfully')
 
@@ -286,9 +295,36 @@ class BuoySearch(Node):
         relative_bearing = math.degrees(math.atan2(msg.x, msg.y)) % 360
 
         observed_range = math.sqrt(msg.x**2 + msg.y**2)
+        self.last_detection_time = self.get_clock().now()
 
         # Perform one full filter step using the relative bearing
         self.perform_particle_filter_step(relative_bearing, observed_range)
+
+    def non_detection_timer_callback(self):
+        """Remove the buoy waypoint if it should be visible but is no longer detected."""
+        if self.current_mode != 'search':
+            return
+        if self.buoy_waypoint_utm is None:
+            return
+        if self.last_detection_time is None:
+            return
+
+        now = self.get_clock().now()
+        elapsed = (now - self.last_detection_time).nanoseconds / 1e9
+        if elapsed < self.detection_timeout_sec:
+            return
+
+        if not self.is_point_in_camera_fov(self.buoy_waypoint_utm):
+            return
+
+        self.get_logger().info(
+            'Removing buoy waypoint after non-detection in camera field of view.')
+        self.buoy_waypoint_utm = None
+        self.particle_filter = None
+        self.continue_search_pattern()
+
+        if self.show_debug_plot:
+            self.update_debug_plot()
         
     def mode_callback(self, msg) :
         new_mode = msg.data
@@ -308,8 +344,57 @@ class BuoySearch(Node):
         self.get_logger().info("Resetting search state.")
         self.particle_filter = None
         self.waypoints = []
+        self.search_pattern_waypoints = []
         self.center = None
         self.search_direction = None
+        self.last_detection_time = None
+        self.buoy_waypoint_utm = None
+
+    @staticmethod
+    def angle_difference(a: float, b: float) -> float:
+        """Return the smallest signed angle from b to a in degrees."""
+        return (a - b + 180) % 360 - 180
+
+    def is_point_in_camera_fov(self, point: UTMPoint) -> bool:
+        """Return whether a UTM point is inside the current camera field of view."""
+        if self.curr_loc is None or self.heading_dir is None:
+            return False
+
+        dx = point.easting - self.curr_loc.easting
+        dy = point.northing - self.curr_loc.northing
+        point_bearing = math.degrees(math.atan2(dy, dx)) % 360
+        bearing_error = abs(self.angle_difference(point_bearing, self.heading_dir))
+        return bearing_error <= self.camera_hfov_deg / 2.0
+
+    def search_waypoints_from_closest(self):
+        """Return the search pattern starting at the waypoint closest to the boat."""
+        if not self.search_pattern_waypoints:
+            return []
+        if self.curr_loc is None:
+            return list(self.search_pattern_waypoints)
+
+        closest_index = 0
+        closest_distance = None
+        for index, waypoint in enumerate(self.search_pattern_waypoints):
+            try:
+                waypoint_utm = LatLongPoint(waypoint[0], waypoint[1]).to_utm()
+            except utm.error.OutOfRangeError:
+                continue
+
+            distance = self.curr_loc.distance_to(waypoint_utm)
+            if closest_distance is None or distance < closest_distance:
+                closest_index = index
+                closest_distance = distance
+
+        return list(self.search_pattern_waypoints[closest_index:])
+
+    def continue_search_pattern(self):
+        """Restore the search pattern after dropping a stale buoy waypoint."""
+        if not self.search_pattern_waypoints:
+            self.initialize_search_pattern()
+            return
+
+        self.set_waypoints(self.search_waypoints_from_closest())
             
     def set_waypoints(self, waypoints):
         """
@@ -375,6 +460,7 @@ class BuoySearch(Node):
 
             # Push the estimated position as a waypoint
             estimated_buoy_latlon = estimated_buoy.to_latlon()
+            self.buoy_waypoint_utm = estimated_buoy
             self.set_waypoints([[estimated_buoy_latlon.latitude, estimated_buoy_latlon.longitude]])
         else:
             self.get_logger().error('Current location is not available.')
@@ -484,6 +570,7 @@ class BuoySearch(Node):
                 return
     
             search_pattern_waypoints.append((new_waypoint.latitude, new_waypoint.longitude))
+        self.search_pattern_waypoints = search_pattern_waypoints
         self.set_waypoints(search_pattern_waypoints)
 
         if self.show_debug_plot:
@@ -508,4 +595,3 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-

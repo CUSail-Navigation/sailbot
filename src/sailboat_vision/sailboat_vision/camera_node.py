@@ -1,4 +1,5 @@
 import cv2
+from datetime import datetime
 import math
 import numpy as np
 import pyrealsense2 as rs
@@ -8,7 +9,7 @@ from geometry_msgs.msg import Point
 from std_msgs.msg import String, Int32, Float32
 from std_msgs.msg import Int32MultiArray
 
-from sailboat_vision.buoy_detection import BuoyDetectorCV
+from sailboat_vision.buoy_detection import YOLOBuoyDetector
 
 class BuoyDetectorNode(Node):
     def __init__(self):
@@ -16,7 +17,7 @@ class BuoyDetectorNode(Node):
 
         self.declare_parameter('hsv_lower', [0, 127, 63])
         self.declare_parameter('hsv_upper', [20, 255, 255] )
-        self.declare_parameter('detection_threshold', 100)
+        self.declare_parameter('detection_threshold', 0.85)
         self.declare_parameter('timer_period', 0.1)  # Timer period for frame processing
         self.declare_parameter('show_frames', False)
         
@@ -58,7 +59,7 @@ class BuoyDetectorNode(Node):
         self.pipeline.start(config)
         self.align = rs.align(rs.stream.color)
 
-        self.detector = BuoyDetectorCV(self.hsv_lower, self.hsv_upper, self.detection_threshold, self.show_frames)
+        self.detector = YOLOBuoyDetector(self.detection_threshold, self.show_frames)
         self.current_mode = "manual"  # Default mode
         self.current_mode_sub = self.create_subscription(String,'current_mode',self.mode_callback,10)
 
@@ -80,6 +81,11 @@ class BuoyDetectorNode(Node):
 
         # Check color frame for buoy
         color_image = np.asanyarray(color_frame.get_data())
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        file_path = f'images/image_{timestamp}.jpg'
+        cv2.imwrite(file_path, color_image)
+
         buoy_center, _ = self.detector.process_frame(color_image)
         if not buoy_center:
             self.get_logger().info(f'No buoy detected')
@@ -103,7 +109,7 @@ class BuoyDetectorNode(Node):
 
     def update_detector_params(self):
         """Update the CV detector parameters dynamically."""
-        self.detector.update_parameters(self.hsv_lower, self.hsv_upper, self.detection_threshold)
+        self.detector.update_parameters(self.detection_threshold)
         self.get_logger().info(f"Updated parameters: HSV Lower: {self.hsv_lower}, HSV Upper: {self.hsv_upper}, Detection Threshold: {self.detection_threshold}")
 
     def destroy_node(self):

@@ -25,6 +25,9 @@ __pycache__/
 *.tmp
 *.DS_Store
 *~
+
+# CV model
+*.pt
 .vscode/
 
 # Google Maps API key
