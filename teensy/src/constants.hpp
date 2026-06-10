@@ -25,10 +25,10 @@ namespace constants {
         constexpr uint32_t SERVO_MIN_PULSE = 600;
         constexpr uint32_t SERVO_MAX_PULSE = 2400;
 
-        constexpr uint32_t RUDDER_MIN_PULSE = 600;                                                          //TODO
+        constexpr uint32_t RUDDER_MIN_PULSE = 650;                                                          //TODO
         constexpr uint32_t RUDDER_MAX_PULSE = 2400;                                                         //TODO
 
-        constexpr uint32_t JIB_PORT_MIN_PULSE = 600;                                                        //TODO
+        constexpr uint32_t JIB_PORT_MIN_PULSE = 650;                                                        //TODO
         constexpr uint32_t JIB_PORT_MAX_PULSE = 1700;                                                       //TODO
 
         constexpr uint32_t JIB_STB_MIN_PULSE = 600;                                                         //TODO
