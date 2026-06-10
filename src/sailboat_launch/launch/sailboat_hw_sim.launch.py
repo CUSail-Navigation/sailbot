@@ -102,6 +102,14 @@ def generate_launch_description():
             'port': 9090  # This is the default WebSocket port for rosbridge
         }]
     )
+   
+   licor_cmd = Node(
+      package='sailboat_sensors',
+      executable='licor',
+      name='licor',
+      namespace='sailbot',
+      parameters=[config]
+   )
 
 
    ld = LaunchDescription()
@@ -125,5 +133,8 @@ def generate_launch_description():
 
    # Telemetry
    ld.add_action(rosbridge_node)
+
+   # Licor
+   ld.add_action(licor_cmd) # SIM
 
    return ld

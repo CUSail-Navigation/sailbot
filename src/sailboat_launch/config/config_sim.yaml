@@ -14,6 +14,10 @@ sailbot: #Namespace
    radio:
       ros__parameters:
          simulated: true
+   licor:
+      ros__parameters:
+         simulated: true
+         use_fake_data: true
 
    waypoint_service:
       ros__parameters:
