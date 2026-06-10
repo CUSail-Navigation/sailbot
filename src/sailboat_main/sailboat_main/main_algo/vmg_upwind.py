@@ -2,11 +2,14 @@ import math
 import numpy as np
 import rclpy
 from rclpy.node import Node
+from rclpy.task import Future
 from sensor_msgs.msg import NavSatFix
 from geometry_msgs.msg import Vector3
 from std_msgs.msg import Int32, String
 from typing import Optional
 import utm
+
+from sailboat_interface.srv import Waypoint
 
 
 # ---------------------------------------------------------------------------
@@ -72,8 +75,9 @@ class VMGUpwind(Node):
       upwind_dir = absolute_wind_dir + 180          — compass bearing wind comes FROM
     """
 
-    TACK_PORT = 1
-    TACK_STBD = -1
+    TACK_PORT   = 1
+    TACK_STBD   = -1
+    POP_RADIUS  = 5  # metres
 
     def __init__(self):
         super().__init__('vmg_upwind')
@@ -102,6 +106,7 @@ class VMGUpwind(Node):
         self.location:      Optional[UTMPoint] = None
         self.waypoint:      Optional[UTMPoint] = None
         self.roll:          float              = 0.0   # degrees, positive = starboard up
+        self.current_mode:  str                = 'manual'
 
         # Tack state
         self.tack            = self.TACK_PORT
@@ -176,8 +181,36 @@ class VMGUpwind(Node):
     # Callbacks
     # ------------------------------------------------------------------
 
+    def pop_waypoint(self):
+        self.cli = self.create_client(Waypoint, 'mutate_waypoint_queue')
+        while not self.cli.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Waypoint service not available, waiting...')
+        self.req = Waypoint.Request()
+        self.req.command = 'pop'
+        self.req.argument = ''
+        self.future = self.cli.call_async(self.req)
+        self.future.add_done_callback(self._pop_response_callback)
+
+    def _pop_response_callback(self, future: Future):
+        try:
+            response = future.result()
+            if response.success:
+                self.get_logger().info('Waypoint popped successfully.')
+            else:
+                self.get_logger().info('Failed to pop waypoint from the service.')
+        except Exception as e:
+            self.get_logger().error(f'Error in _pop_response_callback: {str(e)}')
+
     def _on_gps(self, msg: NavSatFix):
         self.location = LatLongPoint(msg.latitude, msg.longitude).to_utm()
+        if self.waypoint is not None and self.location is not None:
+            dist = self.location.distance_to(self.waypoint)
+            self.get_logger().info(f'Distance to waypoint: {dist:.2f} m')
+            if dist < self.POP_RADIUS:
+                if self.current_mode != 'station_keeping':
+                    self.get_logger().info('=============================== Waypoint popped ===============================')
+                    self.pop_waypoint()
+                    self.waypoint = None
 
     def _on_imu(self, msg: Vector3):
         self.heading = msg.z
@@ -200,7 +233,7 @@ class VMGUpwind(Node):
         self.get_logger().info(f'New waypoint ({msg.latitude:.6f}, {msg.longitude:.6f})')
 
     def _on_mode(self, msg: String):
-        pass  # available for future mode-gating if needed
+        self.current_mode = msg.data
 
 
 def main(args=None):
