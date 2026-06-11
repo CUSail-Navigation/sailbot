@@ -55,7 +55,7 @@ class TrimSail(Node):
         half_no_go = constants.WIND.NO_GO_WIDTH / 2
 
         # Set the jib on the port side of the boat if we're on the left side of the no-go zone.
-        jib_side_flag = constants.PHYSICAL.JIB_SIDE_PORT if wind_dir > constants.WIND.NO_GO_CENTER else constants.PHYSICAL.JIB_SIDE_STB
+        jib_side_flag = constants.PHYSICAL.JIB_SIDE_PORT if wind_dir < constants.WIND.NO_GO_CENTER else constants.PHYSICAL.JIB_SIDE_STB
 
         # No longer care about side: map angles on the left side of the no-go zone symmetrically to the right side.
         if 180 < wind_dir < 360: wind_dir = 360 - wind_dir
