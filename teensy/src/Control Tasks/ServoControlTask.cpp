@@ -25,7 +25,8 @@ ServoControlTask::ServoControlTask() {
  *  - ROS buffer layout:     [mainsail_angle, rudder_angle, jib_angle, jib_side_flag]
  */
 void ServoControlTask::execute() {
-    if (sfr::serial::radio_flag != 0 && sfr::serial::update_servos_radio) { // RADIO MODE.
+    if (sfr::serial::radio_flag != 0) { // RADIO MODE.
+        if (!sfr::serial::update_servos_radio) return;
         apply_commands(sfr::serial::radio_buffer[1], sfr::serial::radio_buffer[2],
                         sfr::serial::radio_buffer[3], sfr::serial::radio_buffer[4]);
         sfr::serial::update_servos_radio = false;
