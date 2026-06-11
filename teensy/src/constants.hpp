@@ -36,8 +36,8 @@ namespace constants {
         constexpr uint32_t JIB_STB_MIN_PULSE = 800;                                                                     //TODO
         constexpr uint32_t JIB_STB_MAX_PULSE = 1800;                                                                    //TODO
 
-        constexpr uint32_t MAINSAIL_MIN_PULSE = 650;
-        constexpr uint32_t MAINSAIL_MAX_PULSE = 2100;
+        constexpr uint32_t MAINSAIL_MIN_PULSE = 700;
+        constexpr uint32_t MAINSAIL_MAX_PULSE = 1800;
 
         constexpr uint8_t RUDDER_MIN_ANGLE = 0; // (2025-2026) 0-90 range = -45 to +45 degrees.                         //TODO
         constexpr uint8_t RUDDER_MAX_ANGLE = 90;                                                                        //TODO
