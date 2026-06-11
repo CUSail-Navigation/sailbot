@@ -12,8 +12,8 @@ ServoControlTask::ServoControlTask() {
     // Pre-set the rudder to center and all sail servos to "all-out" (for manual setup).
     actuate_servo(rudder_servo, constants::servo::RUDDER_MID_PULSE);
     actuate_servo(mainsail_servo, constants::servo::MAINSAIL_MIN_PULSE);
-    actuate_servo(jib_port_servo, constants::servo::JIB_PORT_MIN_PULSE);
-    actuate_servo(jib_stb_servo, constants::servo::JIB_STB_MIN_PULSE);
+    actuate_servo(jib_port_servo, constants::servo::JIB_PORT_MAX_PULSE);
+    actuate_servo(jib_stb_servo, constants::servo::JIB_STB_MAX_PULSE);
 }
 
 /**
