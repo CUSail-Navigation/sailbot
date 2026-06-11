@@ -30,11 +30,11 @@ namespace constants {
         constexpr uint32_t RUDDER_MIN_PULSE = 600;                                                                      //TODO
         constexpr uint32_t RUDDER_MAX_PULSE = 2400;                                                                     //TODO
 
-        constexpr uint32_t JIB_PORT_MIN_PULSE = 800;                                                                    //TODO
-        constexpr uint32_t JIB_PORT_MAX_PULSE = 1900;                                                                   //TODO
+        constexpr uint32_t JIB_PORT_MIN_PULSE = 750;                                                                    //TODO
+        constexpr uint32_t JIB_PORT_MAX_PULSE = 1750;                                                                   //TODO
 
-        constexpr uint32_t JIB_STB_MIN_PULSE = 800;                                                                     //TODO
-        constexpr uint32_t JIB_STB_MAX_PULSE = 1800;                                                                    //TODO
+        constexpr uint32_t JIB_STB_MIN_PULSE = 850;                                                                     //TODO
+        constexpr uint32_t JIB_STB_MAX_PULSE = 2200;                                                                    //TODO
 
         constexpr uint32_t MAINSAIL_MIN_PULSE = 700;
         constexpr uint32_t MAINSAIL_MAX_PULSE = 1800;
