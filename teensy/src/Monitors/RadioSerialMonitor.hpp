@@ -1,11 +1,8 @@
 #pragma once
-
 #include <Arduino.h>
 #include "sfr.hpp"
-#include "constants.hpp"
 
-class RadioSerialMonitor
-{
+class RadioSerialMonitor {
 public:
     RadioSerialMonitor();
     void execute();
