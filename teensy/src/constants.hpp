@@ -5,8 +5,11 @@ namespace constants {
     namespace anemometer {
         constexpr uint8_t ANEMOMETER_PIN = 18;
     }
-    /** PHYSICAL SERVO NOTES FROM 2025-2026 SEASON:
-     * - All servos can go from 600 PWM (a "minimum angle") to 2400 PWM (a "maximum angle").
+    /** PHYSICAL SERVO NOTES AND CONVENTIONS FROM 2025-2026 SEASON:
+     * - All servos can go from 600 PWM (a "SMALL" angle) to 2400 PWM (a "LARGE" angle).
+     * - In general, we choose 800 as a baseline PWM to represent a minimum angle so that, just in case something
+     *   physical changes on the boat, we can recalibrate the PWM that corresponds to this angle by dipping below this
+     *   baseline (until reaching \code SERVO_MIN_PULSE\endcode), and avoiding needing to re-screw the servos.
      * - Rudder: This servo can turn 0.5 times, but mech did something to cut this in half, so that the rudder will only
      *              go from -45 degrees (600 PWM) to 45 degrees (2400 PWM).
      * - Mainsail: This servo can turn 7.85 times.
@@ -24,14 +27,14 @@ namespace constants {
         constexpr uint32_t SERVO_MIN_PULSE = 600;
         constexpr uint32_t SERVO_MAX_PULSE = 2400;
 
-        constexpr uint32_t RUDDER_MIN_PULSE = 650;                                                                      //TODO // double todo for comp
+        constexpr uint32_t RUDDER_MIN_PULSE = 600;                                                                      //TODO
         constexpr uint32_t RUDDER_MAX_PULSE = 2400;                                                                     //TODO
 
-        constexpr uint32_t JIB_PORT_MIN_PULSE = 650;                                                                    //TODO
-        constexpr uint32_t JIB_PORT_MAX_PULSE = 1700;                                                                   //TODO
+        constexpr uint32_t JIB_PORT_MIN_PULSE = 800;                                                                    //TODO
+        constexpr uint32_t JIB_PORT_MAX_PULSE = 1900;                                                                   //TODO
 
-        constexpr uint32_t JIB_STB_MIN_PULSE = 600;                                                                     //TODO
-        constexpr uint32_t JIB_STB_MAX_PULSE = 1600;                                                                    //TODO
+        constexpr uint32_t JIB_STB_MIN_PULSE = 800;                                                                     //TODO
+        constexpr uint32_t JIB_STB_MAX_PULSE = 1800;                                                                    //TODO
 
         constexpr uint32_t MAINSAIL_MIN_PULSE = 650;
         constexpr uint32_t MAINSAIL_MAX_PULSE = 2100;
@@ -79,6 +82,9 @@ namespace constants {
         constexpr uint8_t BUFFER_LEN = 4;
 
         constexpr uint32_t BAUD_RATE = 9600;
+    }
+    namespace radio {
+        constexpr uint8_t BUFFER_LEN = 5;
     }
     namespace led {
         constexpr uint8_t LED_PIN = 13;
