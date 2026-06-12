@@ -5,18 +5,20 @@ namespace constants {
     namespace anemometer {
         constexpr uint8_t ANEMOMETER_PIN = 18;
     }
-    /** PHYSICAL SERVO NOTES FROM 2025-2026 SEASON:
-     * - All servos can go from 600 PWM (a "minimum angle") to 2400 PWM (a "maximum angle").
+    /** PHYSICAL SERVO NOTES AND CONVENTIONS FROM 2025-2026 SEASON:
+     * - All servos can go from 600 PWM (a "SMALL" angle) to 2400 PWM (a "LARGE" angle).
+     * - In general, we choose 800 as a baseline PWM to represent a minimum angle so that, just in case something
+     *   physical changes on the boat, we can recalibrate the PWM that corresponds to this angle by dipping below this
+     *   baseline (until reaching \code SERVO_MIN_PULSE\endcode), and avoiding needing to re-screw the servos.
      * - Rudder: This servo can turn 0.5 times, but mech did something to cut this in half, so that the rudder will only
      *              go from -45 degrees (600 PWM) to 45 degrees (2400 PWM).
      * - Mainsail: This servo can turn 7.85 times.
-     * - Jib: We have two servos; one for each side of the boat. Both servos can turn 7.85 times.
+     * - Jib: We have two servos, one for each side of the boat. Both servos can turn 7.85 times.
      *
-     * NOTE: Anything labeled TODO is ones that will be made runtime-changable over the mobile app. This
-     *              functionality is not implemented yet
+     * NOTE: Any constants that are labeled TODO are ones that will be made runtime-changeable over the mobile app. This
+     *       functionality is not yet implemented.
      */
     namespace servo {
-
         constexpr uint8_t RUDDER_PIN   = 4;
         constexpr uint8_t MAINSAIL_PIN = 3;
         constexpr uint8_t JIB_PORT_PIN = 5; 
@@ -25,17 +27,17 @@ namespace constants {
         constexpr uint32_t SERVO_MIN_PULSE = 600;
         constexpr uint32_t SERVO_MAX_PULSE = 2400;
 
-        constexpr uint32_t RUDDER_MIN_PULSE = 600;                                                          //TODO
-        constexpr uint32_t RUDDER_MAX_PULSE = 2400;                                                         //TODO
+        constexpr uint32_t RUDDER_MIN_PULSE = 600;                                                                      //TODO
+        constexpr uint32_t RUDDER_MAX_PULSE = 2400;                                                                     //TODO
 
-        constexpr uint32_t JIB_PORT_MIN_PULSE = 600;                                                        //TODO
-        constexpr uint32_t JIB_PORT_MAX_PULSE = 1700;                                                       //TODO
+        constexpr uint32_t JIB_PORT_MIN_PULSE = 750;                                                                    //TODO
+        constexpr uint32_t JIB_PORT_MAX_PULSE = 1750;                                                                   //TODO
 
-        constexpr uint32_t JIB_STB_MIN_PULSE = 600;                                                         //TODO
-        constexpr uint32_t JIB_STB_MAX_PULSE = 1600;                                                        //TODO
+        constexpr uint32_t JIB_STB_MIN_PULSE = 850;                                                                     //TODO
+        constexpr uint32_t JIB_STB_MAX_PULSE = 2200;                                                                    //TODO
 
-        constexpr uint32_t MAINSAIL_MIN_PULSE = 650;
-        constexpr uint32_t MAINSAIL_MAX_PULSE = 2100;
+        constexpr uint32_t MAINSAIL_MIN_PULSE = 700;
+        constexpr uint32_t MAINSAIL_MAX_PULSE = 1800;
 
         constexpr uint8_t RUDDER_MIN_ANGLE = 0; // (2025-2026) 0-90 range = -45 to +45 degrees.                         //TODO
         constexpr uint8_t RUDDER_MAX_ANGLE = 90;                                                                        //TODO
@@ -49,7 +51,7 @@ namespace constants {
         constexpr float MAINSAIL_WHEEL_CIRCUM_CM = 16.242; // (2025-2026) Diameter: 5.17cm.                             //TODO
         constexpr float MAINSAIL_PULSE_PER_TURN = (SERVO_MAX_PULSE - SERVO_MIN_PULSE) / 7.85;
 
-        constexpr uint8_t JIB_MIN_ANGLE = 0;                                                                           //TODO
+        constexpr uint8_t JIB_MIN_ANGLE = 0;                                                                            //TODO
         constexpr uint8_t JIB_MAX_ANGLE = 90;                                                                           //TODO
         constexpr uint32_t TWO_JIB_FOOT_LEN_SQD_CM = 2 * 60 * 60; // (2025-2026) Jib foot length is 60cm.               //TODO
         constexpr float JIB_PORT_WHEEL_CIRCUM_CM = 16.242; // (2025-2026) Diameter: 5.17cm.                             //TODO
@@ -80,6 +82,9 @@ namespace constants {
         constexpr uint8_t BUFFER_LEN = 4;
 
         constexpr uint32_t BAUD_RATE = 9600;
+    }
+    namespace radio {
+        constexpr uint8_t BUFFER_LEN = 5;
     }
     namespace led {
         constexpr uint8_t LED_PIN = 13;

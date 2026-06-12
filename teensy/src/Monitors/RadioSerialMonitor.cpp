@@ -44,8 +44,8 @@ void RadioSerialMonitor::execute()
 
             // Decode RADIO packet: [radio_flag, mainsail_angle, rudder_angle, jib_angle, jib_side_flag]
             sfr::serial::radio_flag          = sfr::serial::radio_buffer[0];
-            sfr::servo::radio_sail_angle     = sfr::serial::radio_buffer[1];
-            sfr::servo::radio_rudder_angle   = sfr::serial::radio_buffer[2];
+            // sfr::servo::radio_sail_angle     = sfr::serial::radio_buffer[1]; //todo delete
+            // sfr::servo::radio_rudder_angle   = sfr::serial::radio_buffer[2]; //todo delete
             sfr::serial::update_servos_radio = true;
         }
         else if (packet_started)

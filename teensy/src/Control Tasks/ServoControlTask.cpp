@@ -12,59 +12,32 @@ ServoControlTask::ServoControlTask() {
     // Pre-set the rudder to center and all sail servos to "all-out" (for manual setup).
     actuate_servo(rudder_servo, constants::servo::RUDDER_MID_PULSE);
     actuate_servo(mainsail_servo, constants::servo::MAINSAIL_MIN_PULSE);
-    actuate_servo(jib_port_servo, constants::servo::JIB_PORT_MIN_PULSE);
-    actuate_servo(jib_stb_servo, constants::servo::JIB_STB_MIN_PULSE);
+    actuate_servo(jib_port_servo, constants::servo::JIB_PORT_MAX_PULSE);
+    actuate_servo(jib_stb_servo, constants::servo::JIB_STB_MAX_PULSE);
 }
 
 /**
- *  Updates the servos if valid serial data is ready and waiting.
- *  Radio mode (radio_flag != 0) takes priority over Jetson/ROS mode.
+ *  Update the servos if valid data is ready and waiting. <p>
+ *  Note that radio mode ( \code radio_flag != 0\endcode ) takes priority over Jetson/ROS mode. Flags differ between
+ *  modes, but the resultant servo behavior should be identical.
  *
- *  Radio buffer layout:   [radio_flag, mainsail_angle, rudder_angle, jib_angle, jib_side_flag]
- *  ROS buffer layout:     [mainsail_angle, rudder_angle, jib_angle, jib_side_flag]
+ *  - Radio buffer layout:   [radio_flag, mainsail_angle, rudder_angle, jib_angle, jib_side_flag]
+ *  - ROS buffer layout:     [mainsail_angle, rudder_angle, jib_angle, jib_side_flag]
  */
 void ServoControlTask::execute() {
-
-    // RADIO MODE
-    if (sfr::serial::radio_flag != 0) {
+    if (sfr::serial::radio_flag != 0) { // RADIO MODE.
         if (!sfr::serial::update_servos_radio) return;
-
-        const uint8_t mainsail_angle = sfr::serial::radio_buffer[1];
-        const uint8_t rudder_angle   = sfr::serial::radio_buffer[2];
-        const uint8_t jib_angle      = sfr::serial::radio_buffer[3];
-        const uint8_t jib_side_flag  = sfr::serial::radio_buffer[4];
-
-        if (mainsail_angle >= constants::servo::MAINSAIL_MIN_ANGLE && mainsail_angle <= constants::servo::MAINSAIL_MAX_ANGLE)
-            sfr::servo::radio_sail_angle = mainsail_angle;
-        if (rudder_angle >= constants::servo::RUDDER_MIN_ANGLE && rudder_angle <= constants::servo::RUDDER_MAX_ANGLE)
-            sfr::servo::radio_rudder_angle = rudder_angle;
-
-        apply_commands(mainsail_angle, rudder_angle, jib_angle, jib_side_flag);
+        apply_commands(sfr::serial::radio_buffer[1], sfr::serial::radio_buffer[2],
+                        sfr::serial::radio_buffer[3], sfr::serial::radio_buffer[4]);
         sfr::serial::update_servos_radio = false;
-
-    // Jetson (ROS) mode
-    } else {
-        if (!sfr::serial::update_servos_ros) return;
-
-        const uint8_t mainsail_angle = sfr::serial::ros_buffer[0];
-        const uint8_t rudder_angle   = sfr::serial::ros_buffer[1];
-        const uint8_t jib_angle      = sfr::serial::ros_buffer[2];
-        const uint8_t jib_side_flag  = sfr::serial::ros_buffer[3];
-
-        if (mainsail_angle >= constants::servo::MAINSAIL_MIN_ANGLE && mainsail_angle <= constants::servo::MAINSAIL_MAX_ANGLE)
-            sfr::servo::ros_sail_angle = mainsail_angle;
-        if (rudder_angle >= constants::servo::RUDDER_MIN_ANGLE && rudder_angle <= constants::servo::RUDDER_MAX_ANGLE)
-            sfr::servo::ros_rudder_angle = rudder_angle;
-
-        apply_commands(mainsail_angle, rudder_angle, jib_angle, jib_side_flag);
+    } else if (sfr::serial::update_servos_ros) { // JETSON (ROS) MODE.
+        apply_commands(sfr::serial::ros_buffer[0], sfr::serial::ros_buffer[1],
+                        sfr::serial::ros_buffer[2], sfr::serial::ros_buffer[3]);
         sfr::serial::update_servos_ros = false;
     }
 }
 
-/**
- *   Applies commands to servos based on flags inputted. Flags differ if reciving an input from ROS
- *   or from radio, but resultant servo behavior should be identical.
- **/
+/** A utility method to actually apply values to servos, based on the received data and if checks on the data pass. */
 void ServoControlTask::apply_commands(const uint8_t mainsail_angle, const uint8_t rudder_angle,
                                       const uint8_t jib_angle, const uint8_t jib_side_flag) {
     if (mainsail_angle >= constants::servo::MAINSAIL_MIN_ANGLE && mainsail_angle <= constants::servo::MAINSAIL_MAX_ANGLE) {
@@ -83,13 +56,13 @@ void ServoControlTask::apply_commands(const uint8_t mainsail_angle, const uint8_
         sfr::servo::jib_side_flag = jib_side_flag;
 
         if (jib_side_flag == constants::servo::JIB_SIDE_PORT) {
-            sfr::servo::jib_stb_pwm = constants::servo::JIB_STB_MIN_PULSE;
-            actuate_servo(jib_stb_servo, constants::servo::JIB_STB_MIN_PULSE);
+            sfr::servo::jib_stb_pwm = constants::servo::JIB_STB_MAX_PULSE;
+            actuate_servo(jib_stb_servo, constants::servo::JIB_STB_MAX_PULSE);
             sfr::servo::jib_port_pwm = jib_to_pwm(jib_angle, jib_side_flag);
             actuate_servo(jib_port_servo, sfr::servo::jib_port_pwm);
         } else {
-            sfr::servo::jib_port_pwm = constants::servo::JIB_PORT_MIN_PULSE;
-            actuate_servo(jib_port_servo, constants::servo::JIB_PORT_MIN_PULSE);
+            sfr::servo::jib_port_pwm = constants::servo::JIB_PORT_MAX_PULSE;
+            actuate_servo(jib_port_servo, constants::servo::JIB_PORT_MAX_PULSE);
             sfr::servo::jib_stb_pwm = jib_to_pwm(jib_angle, jib_side_flag);
             actuate_servo(jib_stb_servo, sfr::servo::jib_stb_pwm);
         }
@@ -112,15 +85,13 @@ uint32_t ServoControlTask::rudder_to_pwm(const uint8_t angle) {
  * @return the PWM to actuate \code mainsail_servo\endcode to.
  */
 uint32_t ServoControlTask::mainsail_to_pwm(const uint8_t angle) {
-    const uint32_t delta = law_of_cos_map(angle,
+    const uint32_t new_pwm = law_of_cos_map(angle,
         constants::servo::TWO_BOOM_LEN_SQD_CM,
         constants::servo::MAINSAIL_PULSE_PER_TURN,
         constants::servo::MAINSAIL_WHEEL_CIRCUM_CM,
         true
-    );
-    constexpr uint32_t range = constants::servo::MAINSAIL_MAX_PULSE - constants::servo::MAINSAIL_MIN_PULSE;
-    if (delta >= range) return constants::servo::MAINSAIL_MAX_PULSE;
-    return constants::servo::MAINSAIL_MIN_PULSE + delta;
+    ) + constants::servo::MAINSAIL_MIN_PULSE;
+    return new_pwm <= constants::servo::MAINSAIL_MAX_PULSE ? new_pwm : constants::servo::MAINSAIL_MAX_PULSE;
 }
 
 /** Maps a goal sail angle for the jib to a PWM value (for one of the two jib servos).
@@ -136,15 +107,13 @@ uint32_t ServoControlTask::jib_to_pwm(const uint8_t angle, const uint8_t jib_sid
                                 constants::servo::JIB_PORT_MIN_PULSE : constants::servo::JIB_STB_MIN_PULSE;
     const uint32_t max_pulse = (jib_side_flag == constants::servo::JIB_SIDE_PORT) ?
                                 constants::servo::JIB_PORT_MAX_PULSE : constants::servo::JIB_STB_MAX_PULSE;
-    const uint32_t delta = law_of_cos_map(angle,
+    const uint32_t new_pwm = law_of_cos_map(angle,
         constants::servo::TWO_JIB_FOOT_LEN_SQD_CM,
         constants::servo::JIB_PULSE_PER_TURN,
         wheel_circum,
         false
-    );
-    const uint32_t range = max_pulse - min_pulse;
-    if (delta >= range) return max_pulse;
-    return min_pulse + delta;
+    ) + min_pulse;
+    return new_pwm <= max_pulse ? new_pwm : max_pulse;
 }
 
 /** Send \code pwm\endcode to \code servo\endcode, thereby changing \code servo\endcode 's angle. */
@@ -169,11 +138,12 @@ void ServoControlTask::actuate_servo(Servo &servo, const uint32_t pwm) {
  *      apply the Pythagorean theorem on the right triangle formed by "c", the initial distance from the deck to the
  *      boom, and the actual mainsheet, to obtain the actual goal length of the mainsheet.
  * - We model similarly for the jib (note that this is less accurate as there is no "boom" for the jib, and it is
- *   therefore harder to quantify a triangle or angles in general).
+ *   therefore harder to quantify a triangle or angles in general. This is why we multiply by a slight fractional offset
+ *   when trimming the jib).
  *    - "angle" refers to the goal angle we want the jib to be set to.
  *    - We approximate "b" as the length of the foot of the jib.
  *    - Here, "c" on its own is approximately the length of the sheet, which is what we want to solve for.
- * - In either case, our final \code sheet_len\endcode value maps to a PWM value based on the specific servo and
+ * - In either case, this final \code sheet_len\endcode value will map to a PWM value based on the specific servo and
  *   the circumference of its wheel.
  *
  * Note that this method assumes that the max PWM value of the servo in question allows for the sail to be set to
@@ -183,7 +153,7 @@ uint32_t ServoControlTask::law_of_cos_map(const uint8_t angle, const uint32_t tw
                                           const float wheel_circum, const bool mainsail) {
     const float c_squared = static_cast<float>(two_b_sqd) * (1 - cosf(static_cast<float>(angle) * 0.017453f)); // 0.017453 = pi/180.
     const float sheet_len = mainsail ? sqrtf(c_squared + constants::servo::MAINSAIL_INITIAL_SQD_CM) - constants::servo::MAINSAIL_INITIAL_CM
-                                     : sqrtf(c_squared);
+                                     : sqrtf(c_squared) * 0.85f;
 
-    return static_cast<uint32_t>(PWM_per_turn * (sheet_len / wheel_circum));  // PWM: (PWM_per_turn * turns_needed).
+    return static_cast<uint32_t>(PWM_per_turn * (sheet_len / wheel_circum)); // PWM: (PWM_per_turn * turns_needed).
 }
