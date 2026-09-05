@@ -11,7 +11,7 @@ ServoControlTask::ServoControlTask() {
 
     // Pre-set the rudder to center and all sail servos to "all-out" (for manual setup).
     actuate_servo(rudder_servo, constants::servo::RUDDER_MID_PULSE);
-    actuate_servo(mainsail_servo, constants::servo::MAINSAIL_MIN_PULSE);
+    actuate_servo(mainsail_servo, constants::servo::MAINSAIL_MAX_PULSE);
     actuate_servo(jib_port_servo, constants::servo::JIB_PORT_MAX_PULSE);
     actuate_servo(jib_stb_servo, constants::servo::JIB_STB_MAX_PULSE);
 }
@@ -157,3 +157,25 @@ uint32_t ServoControlTask::law_of_cos_map(const uint8_t angle, const uint32_t tw
 
     return static_cast<uint32_t>(PWM_per_turn * (sheet_len / wheel_circum)); // PWM: (PWM_per_turn * turns_needed).
 }
+
+
+/**
+ * A testing utility used for mapping goal angles to specific servo PWM values.
+ * Prints these values in the format <number>:<PWM> which can be directly copy-pasted into the 2025-2026 servo testbench.
+ */ /*
+#include <iostream>
+[[noreturn]] int main() {
+    while (true) {
+        std::string servo;
+        int angle = 0;
+
+        std::cout << "Enter servo and angle: ";
+        std::cin >> servo;
+        std::cin >> angle;
+
+        if (servo == "mainsail") std::cout << "1:" << ServoControlTask::mainsail_to_pwm(angle) << std::endl;
+        else if (servo == "rudder") std::cout << "2:" << ServoControlTask::rudder_to_pwm(angle + 45) << std::endl;
+        else if (servo == "jib_port") std::cout << "3:" << ServoControlTask::jib_to_pwm(angle, 0) << std::endl;
+        else if (servo == "jib_stb") std::cout << "4:" << ServoControlTask::jib_to_pwm(angle, 1) << std::endl;
+    }
+} */
