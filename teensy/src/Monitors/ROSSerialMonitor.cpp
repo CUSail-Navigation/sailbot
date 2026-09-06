@@ -1,52 +1,30 @@
 #include "ROSSerialMonitor.hpp"
 
-ROSSerialMonitor::ROSSerialMonitor()
-    : buffer_index(0),
-      packet_started(false),
-      packet_start_time(0)
-{
-}
+void ROSSerialMonitor::execute() {
+    // Catch and drop stale packets that started being processed in earlier execute() calls but stalled.
+    if (packet_timed_out()) drop_packet();
 
-void ROSSerialMonitor::execute()
-{
-    while (Serial.available())
-    {
-        uint8_t incoming_byte = Serial.read();
+    while (Serial.available()) {
+        // Drop the packet in case of timing out while processing it.
+        if (packet_timed_out()) drop_packet();
 
-        // Start of packet
-        if (incoming_byte == constants::serial::RX_START_FLAG)
-        {
-            packet_started = true;
+        const uint8_t incoming_byte = Serial.read();
+        if (incoming_byte == constants::serial::RX_START_FLAG) {
             buffer_index = 0;
+            packet_started = true;
             packet_start_time = millis();
         }
-        // End of packet and full ROS payload received
-        else if (incoming_byte == constants::serial::RX_END_FLAG &&
-                 buffer_index == sizeof(sfr::serial::ros_buffer) &&
-                 packet_started)
-        {
-            packet_started = false;
-            buffer_index = 0;
-
-            // Decode ROS packet: [sail, rudder]
-            sfr::serial::update_servos_ros = true;
-            // sfr::servo::ros_sail_angle   = sfr::serial::ros_buffer[0]; //todo delete
-            // sfr::servo::ros_rudder_angle = sfr::serial::ros_buffer[1]; //todo delete
+        else if (packet_started && incoming_byte != constants::serial::RX_END_FLAG) {
+            if (buffer_index < sizeof(sfr::serial::ros_buffer)) sfr::serial::ros_buffer[buffer_index++] = incoming_byte;
+            else drop_packet(); // Packet is incorrect (buffer is full, but we have not reached RX_END_FLAG).
         }
-        else if (packet_started)
-        {
-            // Store data byte into the buffer
-            if (buffer_index < sizeof(sfr::serial::ros_buffer))
-            {
-                sfr::serial::ros_buffer[buffer_index++] = incoming_byte;
-            }
-            else
-            {
-                // Buffer overflow → drop packet
+        else if (packet_started && incoming_byte == constants::serial::RX_END_FLAG) {
+            if (buffer_index == sizeof(sfr::serial::ros_buffer)) {
                 buffer_index = 0;
                 packet_started = false;
-                sfr::serial::dropped_packets++;
+                sfr::serial::update_servos_ros = true;
             }
+            else drop_packet(); // Packet is incorrect (buffer is not full, but we have reached RX_END_FLAG).
         }
     }
 }

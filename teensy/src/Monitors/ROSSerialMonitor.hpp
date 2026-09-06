@@ -1,15 +1,7 @@
 #pragma once
-#include "sfr.hpp"
+#include "SerialMonitorBase.hpp"
 
-class ROSSerialMonitor {
+class ROSSerialMonitor : public SerialMonitorBase {
 public:
-    ROSSerialMonitor();
-    void execute();
-
-private:
-    uint8_t buffer_index;
-    bool packet_started;
-    uint32_t packet_start_time;
-
-    void drop_packet();
+    void execute() override;
 };
