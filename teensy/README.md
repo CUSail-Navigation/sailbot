@@ -13,7 +13,7 @@ tail-sitting control algorithms necessary for SpaceX's Starship.
 This file is comparable to a .ino file you would see in the Arduino IDE (notice setup and loop are exactly the same as 
 they would be in an Arduino file).
 
-### MainControlLoop.cpp
+### MainControlLoop
 The MainControlLoop initializes and executes all monitors and control tasks.
 
 ### SFR
