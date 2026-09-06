@@ -1,7 +1,6 @@
 #include "MainControlLoop.hpp"
 
-MainControlLoop::MainControlLoop() : anemometer_monitor(), radio_serial_monitor(), ros_serial_monitor(),
-                                        servo_control_task(), serial_control_task() {
+MainControlLoop::MainControlLoop() {
     delay(1000);
 }
 
