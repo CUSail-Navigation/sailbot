@@ -76,7 +76,7 @@ void ServoControlTask::apply_commands(const uint8_t mainsail_angle, const uint8_
  */
 uint32_t ServoControlTask::rudder_to_pwm(const uint8_t angle) {
     return map(angle, constants::servo::RUDDER_MIN_ANGLE, constants::servo::RUDDER_MAX_ANGLE,
-               constants::servo::RUDDER_MAX_PULSE, constants::servo::RUDDER_MIN_PULSE);
+                        constants::servo::RUDDER_MIN_PULSE,constants::servo::RUDDER_MAX_PULSE);
 }
 
 /** Maps a goal mainsail angle to a \code mainsail_servo\endcode PWM.
