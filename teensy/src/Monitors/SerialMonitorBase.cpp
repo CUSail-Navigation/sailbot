@@ -9,7 +9,7 @@ void SerialMonitorBase::drop_packet() {
     sfr::serial::dropped_packets++;
 }
 
-/** Returns true when an in-progress packet has exceeded the RX timeout. */
+/** Returns \code true\endcode when an in-progress packet has exceeded the RX timeout. */
 bool SerialMonitorBase::packet_timed_out() const {
     return packet_started && (millis() - packet_start_time > constants::serial::RX_PACKET_TIMEOUT_MS);
 }

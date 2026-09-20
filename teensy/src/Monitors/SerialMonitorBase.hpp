@@ -15,5 +15,5 @@ protected:
     virtual ~SerialMonitorBase() = default;
 
     void drop_packet();
-    bool packet_timed_out() const;
+    [[nodiscard]] bool packet_timed_out() const;
 };

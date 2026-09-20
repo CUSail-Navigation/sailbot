@@ -67,7 +67,7 @@ namespace constants {
      *   - [0] = \code mainsail_angle\endcode
      *   - [1] = \code rudder_angle\endcode
      *   - [2] = \code jib_angle\endcode
-     *   - [3] = \code jib_side_flag\endcode ( \code JIB_SIDE_PORT\endcode or \code JIB_SIDE_STARBOARD\endcode )
+     *   - [3] = \code jib_side_flag\endcode ( \code JIB_SIDE_PORT\endcode or \code JIB_SIDE_STB\endcode )
      * - TX PACKET FORMAT: [start_flag, wind_hi, wind_lo, mainsail_angle, rudder_angle,
      *                      jib_angle, jib_side_flag, dropped_packets, end_flag].
      */

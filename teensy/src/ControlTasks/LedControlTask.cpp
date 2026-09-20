@@ -5,9 +5,12 @@ LedControlTask::LedControlTask() {
     pinMode(LED_PIN, OUTPUT);
 }
 
+/**
+ * Blinks the status LED to indicate the current connectivity/data state of the boat.
+ */
 void LedControlTask::execute() const {
     const bool update_servos = sfr::serial::update_servos_radio || sfr::serial::update_servos_ros;
-    if (!update_servos && Serial.available()) {
+    if (Serial.available() && !update_servos) {
         digitalWrite(LED_PIN, LOW);
         delay(2000);
         digitalWrite(LED_PIN, HIGH);

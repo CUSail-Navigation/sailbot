@@ -1,5 +1,11 @@
 #include "ROSSerialMonitor.hpp"
 
+/**
+ * Reads and assembles incoming Jetson packets from \code Serial1\endcode into \code ros_buffer\endcode, byte by byte.
+ *
+ * Valid packets must begin with \code RX_START_FLAG\endcode, end with \code RX_END_FLAG\endcode, and be an exact size.
+ * Packets that stall mid-transfer for longer than \code RX_PACKET_TIMEOUT_MS\endcode are dropped.
+ */
 void ROSSerialMonitor::execute() {
     // Catch and drop stale packets that started being processed in earlier execute() calls but stalled.
     if (packet_timed_out()) drop_packet();

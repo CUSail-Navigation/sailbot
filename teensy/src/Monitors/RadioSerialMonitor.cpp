@@ -1,5 +1,11 @@
 #include "RadioSerialMonitor.hpp"
 
+/**
+ * Reads and assembles incoming radio packets from \code Serial2\endcode into \code radio_buffer\endcode, byte by byte.
+ *
+ * Valid packets must begin with \code RX_START_FLAG\endcode, end with \code RX_END_FLAG\endcode, and be an exact size.
+ * Packets that stall mid-transfer for longer than \code RX_PACKET_TIMEOUT_MS\endcode are dropped.
+ */
 void RadioSerialMonitor::execute() {
     // Catch and drop stale packets that started being processed in earlier execute() calls but stalled.
     if (packet_timed_out()) drop_packet();
