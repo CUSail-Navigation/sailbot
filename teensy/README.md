@@ -4,13 +4,15 @@ The `teensy` directory includes the code for our Teensy 4.0 microcontroller, whi
 of our sailboat. The code manages the sensors, actuators (such as the servos for the sail and rudder), and communicates 
 with the Jetson via a serial connection.
 
+---
 
-## Code Overview
+
+## Source Code (`src/`)
 This code is structured based on [Lodestar](https://github.com/shihaocao/lodestar), a small scale electric demonstrator for the belly-flop and 
 tail-sitting control algorithms necessary for SpaceX's Starship.
 
 ### main.cpp
-This file is comparable to a .ino file you would see in the Arduino IDE (notice setup and loop are exactly the same as 
+This file is comparable to a `.ino` file you would see in the Arduino IDE (notice setup and loop are exactly the same as 
 they would be in an Arduino file).
 
 ### MainControlLoop
@@ -27,7 +29,17 @@ Monitors read input from some source and update sensor values in the SFR.
 Control tasks perform actions based on the current state of the boat or SFR values.
 
 ### constants.hpp
-This file contains values that will never be changed. This prevents "magic numbers" in the codebase.
+This file contains values that will never be dynamically changed (mainly physical parameters for a specific boat). This 
+prevents "magic numbers" in the codebase.
+
+
+## Testing (`test/`)
+A directory intended for PlatformIO Test Runner and project tests. The tests currently included here run locally, with 
+no need to have a Teensy plugged in. Run them from the `test/` directory with the command `./run_tests.sh`.
+
+See [test/README.md](test/README.md) for how more on how this test suite works and what is covered.
+
+---
 
 
 ## Getting Started
@@ -74,8 +86,3 @@ Make sure you have:
 ```
 docker run -it --rm --name ros2_container -v $(pwd)/src:/home/ros2_user/ros2_ws/src --device=<port>  ros2_humble_custom 
 ```
-
-
-
-
-
