@@ -15,8 +15,8 @@ namespace constants {
      * - Mainsail: This servo can turn 7.85 times.
      * - Jib: We have two servos, one for each side of the boat. Both servos can turn 7.85 times.
      *
-     * NOTE: Any constants that are labeled TODO are ones that will be made runtime-changeable over the mobile app. This
-     *       functionality is not yet implemented.
+     * NOTE: Any constants that are labeled \code TODO\endcode are ones that we plan to make runtime-changeable over
+     *       the mobile app. This functionality is not yet implemented.
      */
     namespace servo {
         constexpr uint8_t RUDDER_PIN   = 4;

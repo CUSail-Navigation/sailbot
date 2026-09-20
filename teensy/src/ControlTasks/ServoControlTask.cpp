@@ -21,8 +21,8 @@ ServoControlTask::ServoControlTask() {
  *  Note that radio mode ( \code radio_flag != 0\endcode ) takes priority over Jetson/ROS mode. Flags differ between
  *  modes, but the resultant servo behavior should be identical.
  *
- *  - Radio buffer layout:   [radio_flag, mainsail_angle, rudder_angle, jib_angle, jib_side_flag]
- *  - ROS buffer layout:     [mainsail_angle, rudder_angle, jib_angle, jib_side_flag]
+ *  - Radio buffer layout:   \code [radio_flag, mainsail_angle, rudder_angle, jib_angle, jib_side_flag]\endcode
+ *  - ROS buffer layout:     \code [mainsail_angle, rudder_angle, jib_angle, jib_side_flag]\endcode
  */
 void ServoControlTask::execute() {
     if (sfr::serial::radio_flag != 0) { // RADIO MODE.

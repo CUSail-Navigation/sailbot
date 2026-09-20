@@ -6,7 +6,7 @@ MainControlLoop::MainControlLoop() {
 }
 
 /**
- * Runs a single iteration of the boat's control loop in the given order.
+ * Runs a single iteration of the boat's control loop, in the given order.
  */
 void MainControlLoop::execute() {
     anemometer_monitor.execute();

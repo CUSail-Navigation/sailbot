@@ -1,7 +1,7 @@
 #pragma once
 #include "sfr.hpp"
 
-/** An abstract base class to store shared implementation for serial monitors. */
+/** An abstract base class: stores shared functionality for serial monitors that assemble packets. */
 class SerialMonitorBase {
 public:
     virtual void execute() = 0;
