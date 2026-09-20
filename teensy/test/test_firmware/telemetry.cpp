@@ -66,7 +66,7 @@ static void test_frame_layout_matches_the_protocol() {
 }
 
 static void test_wind_angle_is_split_big_endian() {
-    sfr::anemometer::wind_angle = 347; // 0x015B -> high byte 0x01, low byte 0x5B.
+    sfr::anemometer::wind_angle = 347; // 0x015B: high byte 0x01, low byte 0x5B.
 
     SerialControlTask task;
     mock_set_millis(constants::serial::TX_PERIOD_MS);

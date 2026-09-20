@@ -1,7 +1,7 @@
 /**
- * THIS FILE CONTAINS SHARED TEST HELPERS. Here, we accomplish two main jobs:
+ * THIS FILE CONTAINS SHARED TEST HELPERS. It accomplishes two main jobs:
  *  1. Reset all scraps of global state between tests to start fresh each time (the SFR and mocks are both global).
- *  2. Build serial packets and pick test angles *symbolically* -- from constants.hpp and sizeof(), never from literals.
+ *  2. Build serial packets and pick test angles symbolically -- from constants.hpp and sizeof(), never from literals.
  */
 #pragma once
 #include <unity.h>
@@ -10,7 +10,7 @@
 #include "sfr.hpp"
 
 // Packet layouts: constants for indices defined explicitly (if a format ever gains a field, just make one edit here).
-// TODO consider just defining these in constants.hpp (it's a good practice for the rest of the project anyway).
+// TODO consider just defining these in constants.hpp (it's a good practice for the rest of the codebase anyway).
 namespace layout {
     // ROS payload: [mainsail_angle, rudder_angle, jib_angle, jib_side_flag]
     constexpr size_t ROS_MAINSAIL  = 0;
@@ -66,7 +66,7 @@ inline void reset_mocks() {
     }
 }
 
-/** Call from Unity's \code setUp()\endcode so every test starts from the same baseline. */
+/** Call this function from Unity's \code setUp()\endcode so every test starts from the same baseline. */
 inline void reset_all() {
     reset_mocks();
     reset_sfr();
@@ -122,7 +122,7 @@ inline bool find_out_of_range_angle(const uint8_t lo, const uint8_t hi, uint8_t&
     return false;
 }
 
-/** Generates an invalid jib side flag (neither port nor stb), for testing rejection of a corrupt flag. */
+/** Generates an invalid jib side flag (neither port nor stb). */
 inline bool find_invalid_jib_side_flag(uint8_t& out) {
     for (unsigned candidate = 0; candidate <= 255; ++candidate) {
         const uint8_t flag = static_cast<uint8_t>(candidate);

@@ -19,5 +19,5 @@ else
     exit 127
 fi
 
-# Actually run the tests.
-exec "$PIO" test -e native "$@" # "-e native" pins this to host-side environment (never tries to talk to a Teensy).
+# Actually run the tests. "-e native" pins this to host-side environment (never tries to talk to a Teensy).
+exec "$PIO" test -e native "$@"

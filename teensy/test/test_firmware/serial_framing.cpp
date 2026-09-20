@@ -47,7 +47,7 @@ static void test_radio_valid_packet_is_accepted() {
 
 static void test_radio_publishes_mode_flag_from_payload() {
     std::vector<uint8_t> payload = make_payload(RADIO_PAYLOAD_LEN);
-    payload[layout::RADIO_FLAG] = 0; // 0 means "hand control back to the Jetson".
+    payload[layout::RADIO_FLAG] = 0;
     feed(Serial2, frame_packet(payload));
 
     RadioSerialMonitor monitor;

@@ -18,7 +18,7 @@
 #define INPUT_PULLUP 2
 
 
-// Simulated clock. (firmware's packet timeouts are driven entirely by millis(), so tests advance this manually).
+// Simulated clock (firmware's packet timeouts are driven entirely by millis(), so tests advance this manually).
 inline uint32_t g_mock_millis = 0;
 
 /** Returns the current fake time, in milliseconds. */
@@ -49,7 +49,7 @@ inline void delay(const uint32_t ms) {
 /** Accept and ignore this call -- the fake clock has millisecond resolution and cannot represent this. */
 inline void delayMicroseconds(const uint32_t) {}
 
-/**  Accept and ignore this call --  there is no background work to yield to on the host. */
+/**  Accept and ignore this call -- there is no background work to yield to on the host. */
 inline void yield() {}
 
 
@@ -182,7 +182,7 @@ public:
         return 0;
     }
 
-    /** Discards a bare newline, as \code print()\endcode discards its argument. */
+    /** Discards a bare newline, as \code print()\endcode does. */
     size_t println() {
         return 0;
     }
