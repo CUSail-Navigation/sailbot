@@ -2,8 +2,8 @@
 #include "Monitors/AnemometerMonitor.hpp"
 #include "Monitors/RadioSerialMonitor.hpp"
 #include "Monitors/ROSSerialMonitor.hpp"
-#include "Control Tasks/ServoControlTask.hpp"
-#include "Control Tasks/SerialControlTask.hpp"
+#include "ControlTasks/ServoControlTask.hpp"
+#include "ControlTasks/SerialControlTask.hpp"
 #include "sfr.hpp"
 
 class MainControlLoop {

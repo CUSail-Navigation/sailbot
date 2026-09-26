@@ -1,11 +1,10 @@
 #pragma once
 #include "sfr.hpp"
-#include <Arduino.h>
 
 class LedControlTask {
 public:
     LedControlTask();
-    void execute();
+    void execute() const;
 
 private:
     int LED_PIN = constants::led::LED_PIN;

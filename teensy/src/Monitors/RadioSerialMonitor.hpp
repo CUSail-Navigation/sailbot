@@ -1,17 +1,10 @@
 #pragma once
+#include "SerialMonitorBase.hpp"
 
-#include <Arduino.h>
-#include "sfr.hpp"
-#include "constants.hpp"
-
-class RadioSerialMonitor
-{
+class RadioSerialMonitor : public SerialMonitorBase {
 public:
-    RadioSerialMonitor();
-    void execute();
+    void execute() override;
 
 private:
-    uint8_t buffer_index;
-    bool packet_started;
-    uint32_t packet_start_time;
+    uint8_t temp_buffer[constants::radio::BUFFER_LEN] = {};
 };

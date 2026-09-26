@@ -1,66 +1,38 @@
 #include "RadioSerialMonitor.hpp"
 
-RadioSerialMonitor::RadioSerialMonitor()
-    : buffer_index(0),
-      packet_started(false),
-      packet_start_time(0)
-{
-}
+/**
+ * Reads and assembles incoming radio packets from \code Serial2\endcode into \code radio_buffer\endcode, byte by byte.
+ *
+ * Valid packets must begin with \code RX_START_FLAG\endcode, end with \code RX_END_FLAG\endcode, and contain exactly
+ * \code BUFFER_LEN\endcode bytes. Packets that stall for longer than \code RX_PACKET_TIMEOUT_MS\endcode are dropped.
+ */
+void RadioSerialMonitor::execute() {
+    // Catch and drop stale packets that started being processed in earlier execute() calls but stalled.
+    if (packet_timed_out()) drop_packet();
 
-void RadioSerialMonitor::execute()
-{
-    // Drop stale in-progress packets
-    if (packet_started && (millis() - packet_start_time > constants::serial::RX_PACKET_TIMEOUT_MS)) {
-        buffer_index = 0;
-        packet_started = false;
-        sfr::serial::dropped_packets++;
-    }
+    while (Serial2.available()) {
+        // Drop the packet in case of timing out while processing it.
+        if (packet_timed_out()) drop_packet();
 
-    while (Serial2.available())
-    {
-        // Also check timeout mid-stream
-        if (packet_started && (millis() - packet_start_time > constants::serial::RX_PACKET_TIMEOUT_MS)) {
+        const uint8_t incoming_byte = Serial2.read();
+        if (incoming_byte == constants::serial::RX_START_FLAG) {
             buffer_index = 0;
-            packet_started = false;
-            sfr::serial::dropped_packets++;
-        }
-
-        uint8_t incoming_byte = Serial2.read();
-
-        // Start of packet
-        if (incoming_byte == constants::serial::RX_START_FLAG)
-        {
             packet_started = true;
-            buffer_index = 0;
             packet_start_time = millis();
         }
-        // End of packet — accept only when all 5 payload bytes have arrived
-        else if (incoming_byte == constants::serial::RX_END_FLAG &&
-                 buffer_index == sizeof(sfr::serial::radio_buffer) &&
-                 packet_started)
-        {
-            packet_started = false;
-            buffer_index = 0;
-
-            // Decode RADIO packet: [radio_flag, mainsail_angle, rudder_angle, jib_angle, jib_side_flag]
-            sfr::serial::radio_flag          = sfr::serial::radio_buffer[0];
-            sfr::servo::radio_sail_angle     = sfr::serial::radio_buffer[1];
-            sfr::servo::radio_rudder_angle   = sfr::serial::radio_buffer[2];
-            sfr::serial::update_servos_radio = true;
+        else if (packet_started && incoming_byte != constants::serial::RX_END_FLAG) {
+            if (buffer_index < sizeof(temp_buffer)) temp_buffer[buffer_index++] = incoming_byte;
+            else drop_packet(); // Packet is incorrect (buffer is full, but we have not reached RX_END_FLAG).
         }
-        else if (packet_started)
-        {
-            if (buffer_index < sizeof(sfr::serial::radio_buffer))
-            {
-                sfr::serial::radio_buffer[buffer_index++] = incoming_byte;
-            }
-            else
-            {
-                // Buffer overflow, drop packet
+        else if (packet_started && incoming_byte == constants::serial::RX_END_FLAG) {
+            if (buffer_index == sizeof(temp_buffer)) {
+                std::copy_n(temp_buffer, sizeof(temp_buffer), sfr::serial::radio_buffer);
                 buffer_index = 0;
                 packet_started = false;
-                sfr::serial::dropped_packets++;
+                sfr::serial::update_servos_radio = true;
+                sfr::serial::radio_flag = sfr::serial::radio_buffer[0];
             }
+            else drop_packet(); // Packet is incorrect (buffer is not full, but we have reached RX_END_FLAG).
         }
     }
 }
