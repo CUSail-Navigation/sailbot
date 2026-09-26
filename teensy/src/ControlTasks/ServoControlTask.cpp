@@ -117,7 +117,7 @@ uint32_t ServoControlTask::jib_to_pwm(const uint8_t angle, const uint8_t jib_sid
 }
 
 /** Send \code pwm\endcode to \code servo\endcode, thereby changing \code servo\endcode 's angle. */
-void ServoControlTask::actuate_servo(Servo &servo, const uint32_t pwm) {
+void ServoControlTask::actuate_servo(Servo& servo, const uint32_t pwm) {
     servo.write(static_cast<int>(pwm));
 }
 
