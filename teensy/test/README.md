@@ -102,5 +102,5 @@ Some advantages that the mocks bring over real hardware:
      - The minimum angle maps to `MIN_PULSE`; the maximum to `MAX_PULSE`.
        - Every servo is expected to be rigged so a larger commanded angle means a larger pulse width.
        - PWM output should never escape `[MIN_PULSE, MAX_PULSE]`.
-     - A packet of exactly `sizeof(buffer)` payload bytes is accepted; anything shorter or longer is dropped.
+     - A packet of exactly `BUFFER_LEN` payload bytes is accepted; anything shorter or longer is dropped.
 4. **For more information about PlatformIO Unit Testing, vist this [link](https://docs.platformio.org/en/latest/advanced/unit-testing/index.html).**

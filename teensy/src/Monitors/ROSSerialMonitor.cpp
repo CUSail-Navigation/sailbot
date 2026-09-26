@@ -21,12 +21,12 @@ void ROSSerialMonitor::execute() {
             packet_start_time = millis();
         }
         else if (packet_started && incoming_byte != constants::serial::RX_END_FLAG) {
-            if (buffer_index < sizeof(temp_buffer)) temp_buffer[buffer_index++] = incoming_byte;
+            if (buffer_index < constants::serial::BUFFER_LEN) temp_buffer[buffer_index++] = incoming_byte;
             else drop_packet(); // Packet is incorrect (buffer is full, but we have not reached RX_END_FLAG).
         }
         else if (packet_started && incoming_byte == constants::serial::RX_END_FLAG) {
-            if (buffer_index == sizeof(temp_buffer)) {
-                std::copy_n(temp_buffer, sizeof(temp_buffer), sfr::serial::ros_buffer);
+            if (buffer_index == constants::serial::BUFFER_LEN) {
+                std::copy_n(temp_buffer, constants::serial::BUFFER_LEN, sfr::serial::ros_buffer);
                 buffer_index = 0;
                 packet_started = false;
                 sfr::serial::update_servos_ros = true;

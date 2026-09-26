@@ -1,7 +1,7 @@
 /**
  * THIS FILE CONTAINS SHARED TEST HELPERS. It accomplishes two main jobs:
  *  1. Reset all scraps of global state between tests to start fresh each time (the SFR and mocks are both global).
- *  2. Build serial packets and pick test angles symbolically -- from constants.hpp and sizeof(), never from literals.
+ *  2. Build serial packets and pick test angles symbolically -- from constants.hpp, never from literals.
  */
 #pragma once
 #include <unity.h>
@@ -25,10 +25,6 @@ namespace layout {
     constexpr size_t RADIO_JIB       = 3;
     constexpr size_t RADIO_JIB_SIDE  = 4;
 }
-
-/** Payload capacity of each RX buffer -- from the buffers themselves in \code constants.hpp\endcode. */
-constexpr size_t ROS_PAYLOAD_LEN = sizeof(sfr::serial::ros_buffer);
-constexpr size_t RADIO_PAYLOAD_LEN = sizeof(sfr::serial::radio_buffer);
 
 
 // State reset.

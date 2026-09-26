@@ -15,38 +15,38 @@ static void test_framing_flags_are_distinct() {
 }
 
 static void test_buffers_are_non_empty() {
-    TEST_ASSERT_GREATER_THAN_size_t(0, ROS_PAYLOAD_LEN);
-    TEST_ASSERT_GREATER_THAN_size_t(0, RADIO_PAYLOAD_LEN);
+    TEST_ASSERT_GREATER_THAN_size_t(0, constants::serial::BUFFER_LEN);
+    TEST_ASSERT_GREATER_THAN_size_t(0, constants::radio::BUFFER_LEN);
 }
 
 
 // Tests that validate everything went well.
 static void test_ros_valid_packet_is_accepted() {
-    const std::vector<uint8_t> payload = make_payload(ROS_PAYLOAD_LEN);
+    const std::vector<uint8_t> payload = make_payload(constants::serial::BUFFER_LEN);
     feed(Serial, frame_packet(payload));
 
     ROSSerialMonitor monitor;
     monitor.execute();
 
     TEST_ASSERT_TRUE_MESSAGE(sfr::serial::update_servos_ros, "A well-formed ROS packet should raise the update flag");
-    TEST_ASSERT_EQUAL_UINT8_ARRAY(payload.data(), sfr::serial::ros_buffer, ROS_PAYLOAD_LEN);
+    TEST_ASSERT_EQUAL_UINT8_ARRAY(payload.data(), sfr::serial::ros_buffer, constants::serial::BUFFER_LEN);
     TEST_ASSERT_EQUAL_UINT8_MESSAGE(0, sfr::serial::dropped_packets, "A valid packet must not count as dropped");
 }
 
 static void test_radio_valid_packet_is_accepted() {
-    const std::vector<uint8_t> payload = make_payload(RADIO_PAYLOAD_LEN);
+    const std::vector<uint8_t> payload = make_payload(constants::radio::BUFFER_LEN);
     feed(Serial2, frame_packet(payload));
 
     RadioSerialMonitor monitor;
     monitor.execute();
 
     TEST_ASSERT_TRUE_MESSAGE(sfr::serial::update_servos_radio, "A well-formed radio packet should raise the flag");
-    TEST_ASSERT_EQUAL_UINT8_ARRAY(payload.data(), sfr::serial::radio_buffer, RADIO_PAYLOAD_LEN);
+    TEST_ASSERT_EQUAL_UINT8_ARRAY(payload.data(), sfr::serial::radio_buffer, constants::radio::BUFFER_LEN);
     TEST_ASSERT_EQUAL_UINT8(0, sfr::serial::dropped_packets);
 }
 
 static void test_radio_publishes_mode_flag_from_payload() {
-    std::vector<uint8_t> payload = make_payload(RADIO_PAYLOAD_LEN);
+    std::vector<uint8_t> payload = make_payload(constants::radio::BUFFER_LEN);
     payload[layout::RADIO_FLAG] = 0;
     feed(Serial2, frame_packet(payload));
 
@@ -58,7 +58,7 @@ static void test_radio_publishes_mode_flag_from_payload() {
 }
 
 static void test_packet_split_across_execute_calls_still_completes() {
-    const std::vector<uint8_t> payload = make_payload(ROS_PAYLOAD_LEN);
+    const std::vector<uint8_t> payload = make_payload(constants::serial::BUFFER_LEN);
     const std::vector<uint8_t> packet = frame_packet(payload);
     const size_t split = packet.size() / 2;
 
@@ -74,13 +74,13 @@ static void test_packet_split_across_execute_calls_still_completes() {
     monitor.execute();
 
     TEST_ASSERT_TRUE_MESSAGE(sfr::serial::update_servos_ros, "The packet should complete once the rest arrives");
-    TEST_ASSERT_EQUAL_UINT8_ARRAY(payload.data(), sfr::serial::ros_buffer, ROS_PAYLOAD_LEN);
+    TEST_ASSERT_EQUAL_UINT8_ARRAY(payload.data(), sfr::serial::ros_buffer, constants::serial::BUFFER_LEN);
     TEST_ASSERT_EQUAL_UINT8(0, sfr::serial::dropped_packets);
 }
 
 static void test_back_to_back_packets_both_parse() {
-    const std::vector<uint8_t> first = make_payload(ROS_PAYLOAD_LEN);
-    std::vector<uint8_t> second = make_payload(ROS_PAYLOAD_LEN);
+    const std::vector<uint8_t> first = make_payload(constants::serial::BUFFER_LEN);
+    std::vector<uint8_t> second = make_payload(constants::serial::BUFFER_LEN);
     second[0] = static_cast<uint8_t>(second[0] + 1); // Make the second packet distinguishable.
     if (second[0] == constants::serial::RX_START_FLAG || second[0] == constants::serial::RX_END_FLAG) second[0] += 1;
 
@@ -92,14 +92,14 @@ static void test_back_to_back_packets_both_parse() {
 
     TEST_ASSERT_TRUE(sfr::serial::update_servos_ros);
     TEST_ASSERT_EQUAL_UINT8(0, sfr::serial::dropped_packets);
-    TEST_ASSERT_EQUAL_UINT8_ARRAY_MESSAGE(second.data(), sfr::serial::ros_buffer, ROS_PAYLOAD_LEN,
+    TEST_ASSERT_EQUAL_UINT8_ARRAY_MESSAGE(second.data(), sfr::serial::ros_buffer, constants::serial::BUFFER_LEN,
                                           "The most recent packet should win when several arrive in one pass");
 }
 
 
 // Tests that validate what happens with malformed packets.
 static void test_short_packet_is_dropped() {
-    const std::vector<uint8_t> payload = make_payload(ROS_PAYLOAD_LEN - 1);
+    const std::vector<uint8_t> payload = make_payload(constants::serial::BUFFER_LEN - 1);
     feed(Serial, frame_packet(payload));
 
     ROSSerialMonitor monitor;
@@ -110,7 +110,7 @@ static void test_short_packet_is_dropped() {
 }
 
 static void test_overlong_packet_is_dropped() {
-    const std::vector<uint8_t> payload = make_payload(ROS_PAYLOAD_LEN + 1);
+    const std::vector<uint8_t> payload = make_payload(constants::serial::BUFFER_LEN + 1);
     feed(Serial, frame_packet(payload));
 
     ROSSerialMonitor monitor;
@@ -121,7 +121,7 @@ static void test_overlong_packet_is_dropped() {
 }
 
 static void test_radio_short_packet_is_dropped() {
-    const std::vector<uint8_t> payload = make_payload(RADIO_PAYLOAD_LEN - 1);
+    const std::vector<uint8_t> payload = make_payload(constants::radio::BUFFER_LEN - 1);
     feed(Serial2, frame_packet(payload));
 
     RadioSerialMonitor monitor;
@@ -134,9 +134,9 @@ static void test_radio_short_packet_is_dropped() {
 static void test_dropped_packet_counter_accumulates() {
     ROSSerialMonitor monitor;
 
-    feed(Serial, frame_packet(make_payload(ROS_PAYLOAD_LEN - 1)));
+    feed(Serial, frame_packet(make_payload(constants::serial::BUFFER_LEN - 1)));
     monitor.execute();
-    feed(Serial, frame_packet(make_payload(ROS_PAYLOAD_LEN + 1)));
+    feed(Serial, frame_packet(make_payload(constants::serial::BUFFER_LEN + 1)));
     monitor.execute();
 
     TEST_ASSERT_EQUAL_UINT8_MESSAGE(2, sfr::serial::dropped_packets, "Each rejected packet bumps the drop counter");
@@ -153,7 +153,7 @@ static void test_stray_bytes_outside_a_packet_are_ignored() {
 }
 
 static void test_start_flag_mid_packet_restarts_cleanly() {
-    const std::vector<uint8_t> payload = make_payload(ROS_PAYLOAD_LEN);
+    const std::vector<uint8_t> payload = make_payload(constants::serial::BUFFER_LEN);
 
     std::vector<uint8_t> stream;
     stream.push_back(constants::serial::RX_START_FLAG);
@@ -166,7 +166,7 @@ static void test_start_flag_mid_packet_restarts_cleanly() {
     monitor.execute();
 
     TEST_ASSERT_TRUE_MESSAGE(sfr::serial::update_servos_ros, "The restarted packet should parse normally");
-    TEST_ASSERT_EQUAL_UINT8_ARRAY(payload.data(), sfr::serial::ros_buffer, ROS_PAYLOAD_LEN);
+    TEST_ASSERT_EQUAL_UINT8_ARRAY(payload.data(), sfr::serial::ros_buffer, constants::serial::BUFFER_LEN);
 }
 
 
@@ -181,7 +181,7 @@ static void test_stalled_packet_times_out_and_is_dropped() {
 
     // Time passes with no further bytes, then the rest finally shows up far too late.
     mock_advance_millis(constants::serial::RX_PACKET_TIMEOUT_MS + 1);
-    const std::vector<uint8_t> payload = make_payload(ROS_PAYLOAD_LEN);
+    const std::vector<uint8_t> payload = make_payload(constants::serial::BUFFER_LEN);
     Serial.mock_rx(payload.data() + 1, payload.size() - 1);
     Serial.mock_rx_byte(constants::serial::RX_END_FLAG);
     monitor.execute();
@@ -192,7 +192,7 @@ static void test_stalled_packet_times_out_and_is_dropped() {
 
 static void test_packet_just_inside_timeout_still_completes() {
     ROSSerialMonitor monitor;
-    const std::vector<uint8_t> payload = make_payload(ROS_PAYLOAD_LEN);
+    const std::vector<uint8_t> payload = make_payload(constants::serial::BUFFER_LEN);
 
     Serial.mock_rx_byte(constants::serial::RX_START_FLAG);
     monitor.execute();
@@ -209,7 +209,7 @@ static void test_packet_just_inside_timeout_still_completes() {
 
 // Tests that validate port isolation (different monitors must not consume each other's traffic).
 static void test_ros_monitor_ignores_radio_port() {
-    feed(Serial2, frame_packet(make_payload(RADIO_PAYLOAD_LEN)));
+    feed(Serial2, frame_packet(make_payload(constants::radio::BUFFER_LEN)));
 
     ROSSerialMonitor monitor;
     monitor.execute();
@@ -220,7 +220,7 @@ static void test_ros_monitor_ignores_radio_port() {
 }
 
 static void test_radio_monitor_ignores_ros_port() {
-    feed(Serial, frame_packet(make_payload(ROS_PAYLOAD_LEN)));
+    feed(Serial, frame_packet(make_payload(constants::serial::BUFFER_LEN)));
 
     RadioSerialMonitor monitor;
     monitor.execute();

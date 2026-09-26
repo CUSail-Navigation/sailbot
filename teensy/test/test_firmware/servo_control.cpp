@@ -10,8 +10,8 @@
 #include "ControlTasks/ServoControlTask.hpp"
 
 
-static_assert(ROS_PAYLOAD_LEN > layout::ROS_JIB_SIDE, "ros_buffer is too small for the documented ROS layout");
-static_assert(RADIO_PAYLOAD_LEN > layout::RADIO_JIB_SIDE, "radio_buffer is too small for the documented radio layout");
+static_assert(constants::serial::BUFFER_LEN > layout::ROS_JIB_SIDE, "ros_buffer is too small for the documented ROS layout");
+static_assert(constants::radio::BUFFER_LEN > layout::RADIO_JIB_SIDE, "radio_buffer is too small for the documented radio layout");
 
 
 // Helper functions.
