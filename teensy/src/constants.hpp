@@ -57,8 +57,9 @@ namespace constants {
         constexpr float JIB_PORT_WHEEL_CIRCUM_CM = 16.242; // (2025-2026) Diameter: 5.17cm.                             //TODO
         constexpr float JIB_STB_WHEEL_CIRCUM_CM = 16.242; // (2025-2026) Diameter: 5.17cm.                              //TODO
         constexpr float JIB_PULSE_PER_TURN = (SERVO_MAX_PULSE - SERVO_MIN_PULSE) / 7.85;
+        constexpr float JIB_CALIBRATION = 0.85;
 
-        /** Active jib sheet side (RX/TX and \code sfr::servo::jib_side_flag\endcode). */
+        /** Active jib sheet side flag (RX/TX and \code sfr::servo::jib_side_flag\endcode). */
         constexpr uint8_t JIB_SIDE_PORT = 0;
         constexpr uint8_t JIB_SIDE_STB = 1;
     }
