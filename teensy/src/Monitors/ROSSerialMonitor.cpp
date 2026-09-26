@@ -1,7 +1,7 @@
 #include "ROSSerialMonitor.hpp"
 
 /**
- * Reads and assembles incoming Jetson packets from \code Serial1\endcode into \code ros_buffer\endcode, byte by byte.
+ * Reads and assembles incoming Jetson packets from \code Serial\endcode into \code ros_buffer\endcode, byte by byte.
  *
  * Valid packets must begin with \code RX_START_FLAG\endcode, end with \code RX_END_FLAG\endcode, and contain exactly
  * \code BUFFER_LEN\endcode bytes. Packets that stall for longer than \code RX_PACKET_TIMEOUT_MS\endcode are dropped.
@@ -21,11 +21,12 @@ void ROSSerialMonitor::execute() {
             packet_start_time = millis();
         }
         else if (packet_started && incoming_byte != constants::serial::RX_END_FLAG) {
-            if (buffer_index < sizeof(sfr::serial::ros_buffer)) sfr::serial::ros_buffer[buffer_index++] = incoming_byte;
+            if (buffer_index < sizeof(temp_buffer)) temp_buffer[buffer_index++] = incoming_byte;
             else drop_packet(); // Packet is incorrect (buffer is full, but we have not reached RX_END_FLAG).
         }
         else if (packet_started && incoming_byte == constants::serial::RX_END_FLAG) {
-            if (buffer_index == sizeof(sfr::serial::ros_buffer)) {
+            if (buffer_index == sizeof(temp_buffer)) {
+                std::copy_n(temp_buffer, sizeof(temp_buffer), sfr::serial::ros_buffer);
                 buffer_index = 0;
                 packet_started = false;
                 sfr::serial::update_servos_ros = true;

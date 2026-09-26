@@ -1,5 +1,6 @@
 #pragma once
 #include "sfr.hpp"
+#include <algorithm>
 
 /** An abstract base class: stores shared functionality for serial monitors that assemble packets. */
 class SerialMonitorBase {
