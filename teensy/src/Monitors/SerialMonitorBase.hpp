@@ -24,8 +24,8 @@ protected:
     * reflected in \code sfr_buffer\endcode.
     *
     * Valid packets must begin with \code RX_START_FLAG\endcode, end with \code RX_END_FLAG\endcode, and contain exactly
-    * \code BUFFER_LEN\endcode bytes. Malformed packets that do not follow this structure, or packets that stall for
-    * longer than \code RX_PACKET_TIMEOUT_MS\endcode, are dropped.
+    * \code len\endcode bytes. Malformed packets that do not follow this structure, or packets that stall for longer
+    * than \code RX_PACKET_TIMEOUT_MS\endcode, are dropped.
     */
     template <typename Port> bool read_packet(Port& port, uint8_t* temp_buffer, uint8_t* sfr_buffer, const uint8_t len) {
         if (packet_timed_out()) drop_packet();
@@ -53,6 +53,7 @@ protected:
                 else drop_packet(); // Packet is incorrect (buffer is not full, but we have reached RX_END_FLAG).
             }
         }
+
         return completed;
     }
 };

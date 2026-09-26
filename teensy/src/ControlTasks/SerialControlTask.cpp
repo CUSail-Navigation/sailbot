@@ -3,7 +3,8 @@
 SerialControlTask::SerialControlTask() : last_telemetry_send_time(0), current_time(0), send_telemetry(false) {}
 
 /**
- * Sends a telemetry packet of SFR data to the Jetson every \code TX_PERIOD_MS\endcode.
+ * Sends a telemetry packet of SFR data to the computer connected via \code Serial\endcode every
+ * \code TX_PERIOD_MS\endcode.
  */
 void SerialControlTask::execute() {
     if (current_time - last_telemetry_send_time >= constants::serial::TX_PERIOD_MS) send_telemetry = true;

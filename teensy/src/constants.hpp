@@ -80,12 +80,10 @@ namespace constants {
         constexpr uint8_t RX_START_FLAG = 0xFF;
         constexpr uint8_t RX_END_FLAG = 0xEE;
         constexpr uint8_t RX_PACKET_TIMEOUT_MS = 50;
-        constexpr uint8_t BUFFER_LEN = 4;
+        constexpr uint8_t USB_BUFFER_LEN = 4;
+        constexpr uint8_t RADIO_BUFFER_LEN = 5;
 
         constexpr uint32_t BAUD_RATE = 9600;
-    }
-    namespace radio {
-        constexpr uint8_t BUFFER_LEN = 5;
     }
     namespace led {
         constexpr uint8_t LED_PIN = 13;
