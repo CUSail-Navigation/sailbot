@@ -1,7 +1,6 @@
 #include "LedControlTask.hpp"
 
-LedControlTask::LedControlTask() {
-    LED_PIN = constants::led::LED_PIN;
+LedControlTask::LedControlTask() : LED_PIN(constants::led::LED_PIN) {
     pinMode(LED_PIN, OUTPUT);
 }
 
