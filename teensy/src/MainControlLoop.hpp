@@ -3,7 +3,7 @@
 #include "Monitors/RadioSerialMonitor.hpp"
 #include "Monitors/USBSerialMonitor.hpp"
 #include "ControlTasks/ServoControlTask.hpp"
-#include "ControlTasks/SerialControlTask.hpp"
+#include "ControlTasks/TelemetryControlTask.hpp"
 #include "sfr.hpp"
 
 class MainControlLoop {
@@ -16,5 +16,5 @@ protected:
     RadioSerialMonitor radio_serial_monitor;
     USBSerialMonitor usb_serial_monitor;
     ServoControlTask servo_control_task;
-    SerialControlTask serial_control_task;
+    TelemetryControlTask telemetry_control_task;
 };
