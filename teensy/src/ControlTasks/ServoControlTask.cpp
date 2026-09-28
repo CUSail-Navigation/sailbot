@@ -25,12 +25,12 @@ ServoControlTask::ServoControlTask() {
  *  - USB buffer layout:     \code [mainsail_angle, rudder_angle, jib_angle, jib_side_flag]\endcode
  */
 void ServoControlTask::execute() {
-    if (sfr::serial::radio_flag != 0) { // RADIO MODE.
+    if (sfr::serial::radio_flag != 0) { // RADIO SERIAL MODE.
         if (!sfr::serial::update_servos_radio) return;
         apply_commands(sfr::serial::radio_buffer[1], sfr::serial::radio_buffer[2],
                         sfr::serial::radio_buffer[3], sfr::serial::radio_buffer[4]);
         sfr::serial::update_servos_radio = false;
-    } else if (sfr::serial::update_servos_usb) { // JETSON (USB) MODE.
+    } else if (sfr::serial::update_servos_usb) { // USB SERIAL MODE.
         apply_commands(sfr::serial::usb_buffer[0], sfr::serial::usb_buffer[1],
                         sfr::serial::usb_buffer[2], sfr::serial::usb_buffer[3]);
         sfr::serial::update_servos_usb = false;
