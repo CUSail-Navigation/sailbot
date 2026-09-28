@@ -23,7 +23,7 @@ SFR stands for State Field Registry. It contains values that should be available
 serial buffer data, etc).
 
 ### Monitors
-Monitors read input from some source and update sensor values in the SFR.
+Monitors read input from some source and update corresponding values in the SFR.
 
 ### Control Tasks
 Control tasks perform actions based on the current state of the boat or SFR values.
