@@ -1,7 +1,7 @@
 /**
  * THIS FILE CONTAINS SHARED TEST HELPERS. It accomplishes two main jobs:
  *  1. Reset all scraps of global state between tests to start fresh each time (the SFR and mocks are both global).
- *  2. Build serial packets and pick test angles symbolically -- from constants.hpp and sizeof(), never from literals.
+ *  2. Build serial packets and pick test angles symbolically -- from constants.hpp, never from literals.
  */
 #pragma once
 #include <unity.h>
@@ -12,11 +12,11 @@
 // Packet layouts: constants for indices defined explicitly (if a format ever gains a field, just make one edit here).
 // TODO consider just defining these in constants.hpp (it's a good practice for the rest of the codebase anyway).
 namespace layout {
-    // ROS payload: [mainsail_angle, rudder_angle, jib_angle, jib_side_flag]
-    constexpr size_t ROS_MAINSAIL  = 0;
-    constexpr size_t ROS_RUDDER    = 1;
-    constexpr size_t ROS_JIB       = 2;
-    constexpr size_t ROS_JIB_SIDE  = 3;
+    // USB payload: [mainsail_angle, rudder_angle, jib_angle, jib_side_flag]
+    constexpr size_t USB_MAINSAIL  = 0;
+    constexpr size_t USB_RUDDER    = 1;
+    constexpr size_t USB_JIB       = 2;
+    constexpr size_t USB_JIB_SIDE  = 3;
 
     // Radio payload: [radio_flag, mainsail_angle, rudder_angle, jib_angle, jib_side_flag]
     constexpr size_t RADIO_FLAG      = 0;
@@ -25,10 +25,6 @@ namespace layout {
     constexpr size_t RADIO_JIB       = 3;
     constexpr size_t RADIO_JIB_SIDE  = 4;
 }
-
-/** Payload capacity of each RX buffer -- from the buffers themselves in \code constants.hpp\endcode. */
-constexpr size_t ROS_PAYLOAD_LEN = sizeof(sfr::serial::ros_buffer);
-constexpr size_t RADIO_PAYLOAD_LEN = sizeof(sfr::serial::radio_buffer);
 
 
 // State reset.
@@ -46,9 +42,9 @@ inline void reset_sfr() {
     sfr::servo::jib_stb_pwm = 0;
 
     sfr::serial::update_servos_radio = false;
-    sfr::serial::update_servos_ros = false;
+    sfr::serial::update_servos_usb = false;
     sfr::serial::dropped_packets = 0;
-    memset(sfr::serial::ros_buffer, 0, sizeof(sfr::serial::ros_buffer));
+    memset(sfr::serial::usb_buffer, 0, sizeof(sfr::serial::usb_buffer));
     memset(sfr::serial::radio_buffer, 0, sizeof(sfr::serial::radio_buffer));
     sfr::serial::radio_flag = 1;
 }

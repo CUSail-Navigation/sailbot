@@ -1,9 +1,9 @@
 #pragma once
 #include "sfr.hpp"
 
-class SerialControlTask {
+class TelemetryControlTask {
 public:
-    SerialControlTask();
+    TelemetryControlTask();
     void execute();
 
 private:

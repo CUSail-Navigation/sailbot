@@ -66,7 +66,7 @@ static void test_reading_vane_isolated() {
     read_wind_angle_for(monitor, ADC_MAX / 2);
 
     TEST_ASSERT_EQUAL_UINT8(0, sfr::serial::dropped_packets);
-    TEST_ASSERT_FALSE(sfr::serial::update_servos_ros);
+    TEST_ASSERT_FALSE(sfr::serial::update_servos_usb);
     TEST_ASSERT_FALSE(sfr::serial::update_servos_radio);
     TEST_ASSERT_EQUAL_UINT32(0, sfr::servo::rudder_pwm);
 }

@@ -7,5 +7,5 @@ public:
     void execute() const;
 
 private:
-    int LED_PIN = constants::led::LED_PIN;
+    const uint8_t LED_PIN;
 };

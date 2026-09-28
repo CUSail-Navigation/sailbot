@@ -1,11 +1,12 @@
-#include "SerialControlTask.hpp"
+#include "TelemetryControlTask.hpp"
 
-SerialControlTask::SerialControlTask() : last_telemetry_send_time(0), current_time(0), send_telemetry(false) {}
+TelemetryControlTask::TelemetryControlTask() : last_telemetry_send_time(0), current_time(0), send_telemetry(false) {}
 
 /**
- * Sends a telemetry packet of SFR data to the Jetson every \code TX_PERIOD_MS\endcode.
+ * Sends a telemetry packet of SFR data to the computer connected via \code Serial\endcode every
+ * \code TX_PERIOD_MS\endcode.
  */
-void SerialControlTask::execute() {
+void TelemetryControlTask::execute() {
     if (current_time - last_telemetry_send_time >= constants::serial::TX_PERIOD_MS) send_telemetry = true;
 
     if (send_telemetry) {

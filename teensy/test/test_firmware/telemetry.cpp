@@ -1,20 +1,20 @@
 /**
- * TELEMETRY TESTS -- SerialControlTask.
+ * TELEMETRY TESTS -- TelemetryControlTask.
  * The tests in this file assert the format of the telemetry packet and the send cadence. The byte order is a protocol
- * contract shared with the Jetson, so it is texted explicitly; everything else comes from the SFR/constants.hpp.
+ * contract shared with the Jetson, so it is tested explicitly; everything else comes from the SFR/constants.hpp.
  */
 #include "test_support.h"
 #include "suites.hpp"
-#include "ControlTasks/SerialControlTask.hpp"
+#include "ControlTasks/TelemetryControlTask.hpp"
 
 
 // Helper functions.
 /**
- * \code SerialControlTask\endcode compares against the timestamp captured at the END of the previous
+ * \code TelemetryControlTask\endcode compares against the timestamp captured at the END of the previous
  * \code execute()\endcode, so a freshly constructed task needs two calls before the first frame goes out.
  * This lag is harmless in the real loop (runs continuously) but must be reproduced here to observe any telemetry.
  */
-static void init_telemetry(SerialControlTask& task) {
+static void init_telemetry(TelemetryControlTask& task) {
     task.execute();
     task.execute();
 }
@@ -37,7 +37,7 @@ static std::vector<uint8_t> expected_frame() {
 
 // Tests.
 static void test_nothing_is_sent_before_the_period_elapses() {
-    SerialControlTask task;
+    TelemetryControlTask task;
 
     mock_set_millis(constants::serial::TX_PERIOD_MS - 1);
     init_telemetry(task);
@@ -54,7 +54,7 @@ static void test_frame_layout_matches_the_protocol() {
     sfr::servo::jib_side_flag = constants::servo::JIB_SIDE_STB;
     sfr::serial::dropped_packets = 7;
 
-    SerialControlTask task;
+    TelemetryControlTask task;
     mock_set_millis(constants::serial::TX_PERIOD_MS);
     init_telemetry(task);
 
@@ -68,7 +68,7 @@ static void test_frame_layout_matches_the_protocol() {
 static void test_wind_angle_is_split_big_endian() {
     sfr::anemometer::wind_angle = 347; // 0x015B: high byte 0x01, low byte 0x5B.
 
-    SerialControlTask task;
+    TelemetryControlTask task;
     mock_set_millis(constants::serial::TX_PERIOD_MS);
     init_telemetry(task);
 
@@ -83,7 +83,7 @@ static void test_wind_angle_is_split_big_endian() {
 }
 
 static void test_frame_is_not_repeated_until_another_period_passes() {
-    SerialControlTask task;
+    TelemetryControlTask task;
     mock_set_millis(constants::serial::TX_PERIOD_MS);
     init_telemetry(task);
 
@@ -106,7 +106,7 @@ static void test_frame_is_not_repeated_until_another_period_passes() {
 static void test_dropped_packet_count_is_reported() {
     sfr::serial::dropped_packets = 42;
 
-    SerialControlTask task;
+    TelemetryControlTask task;
     mock_set_millis(constants::serial::TX_PERIOD_MS);
     init_telemetry(task);
 

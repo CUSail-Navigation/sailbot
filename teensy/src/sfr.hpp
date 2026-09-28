@@ -19,10 +19,10 @@ namespace sfr {
         extern uint32_t jib_stb_pwm;
     }
     namespace serial {
-        extern bool update_servos_ros;
+        extern bool update_servos_usb;
         extern bool update_servos_radio;
-        extern uint8_t ros_buffer[constants::serial::BUFFER_LEN];
-        extern uint8_t radio_buffer[constants::radio::BUFFER_LEN];
+        extern uint8_t usb_buffer[constants::serial::USB_BUFFER_LEN];
+        extern uint8_t radio_buffer[constants::serial::RADIO_BUFFER_LEN];
         extern uint8_t radio_flag;
         extern uint8_t dropped_packets;
     }
