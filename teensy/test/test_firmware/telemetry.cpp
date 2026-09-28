@@ -1,7 +1,7 @@
 /**
  * TELEMETRY TESTS -- TelemetryControlTask.
  * The tests in this file assert the format of the telemetry packet and the send cadence. The byte order is a protocol
- * contract shared with the Jetson, so it is texted explicitly; everything else comes from the SFR/constants.hpp.
+ * contract shared with the Jetson, so it is tested explicitly; everything else comes from the SFR/constants.hpp.
  */
 #include "test_support.h"
 #include "suites.hpp"
