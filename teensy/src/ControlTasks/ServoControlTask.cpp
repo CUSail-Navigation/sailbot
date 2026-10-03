@@ -17,12 +17,12 @@ ServoControlTask::ServoControlTask() {
 }
 
 /**
- *  Update the servos if valid data is ready and waiting. <p>
- *  Note that radio mode ( \code radio_flag != 0\endcode ) takes priority over Jetson/ROS mode. Flags differ between
+ *  Update the servos if valid serial data is ready and waiting. <p>
+ *  Note that radio mode ( \code radio_flag != 0\endcode ) takes priority over USB mode. Flags differ between serial
  *  modes, but the resultant servo behavior should be identical.
  *
  *  - Radio buffer layout:   \code [radio_flag, mainsail_angle, rudder_angle, jib_angle, jib_side_flag]\endcode
- *  - ROS buffer layout:     \code [mainsail_angle, rudder_angle, jib_angle, jib_side_flag]\endcode
+ *  - USB buffer layout:     \code [mainsail_angle, rudder_angle, jib_angle, jib_side_flag]\endcode
  */
 void ServoControlTask::execute() {
     if (sfr::serial::radio_flag != 0) { // RADIO MODE.
@@ -30,10 +30,10 @@ void ServoControlTask::execute() {
         apply_commands(sfr::serial::radio_buffer[1], sfr::serial::radio_buffer[2],
                         sfr::serial::radio_buffer[3], sfr::serial::radio_buffer[4]);
         sfr::serial::update_servos_radio = false;
-    } else if (sfr::serial::update_servos_ros) { // JETSON (ROS) MODE.
-        apply_commands(sfr::serial::ros_buffer[0], sfr::serial::ros_buffer[1],
-                        sfr::serial::ros_buffer[2], sfr::serial::ros_buffer[3]);
-        sfr::serial::update_servos_ros = false;
+    } else if (sfr::serial::update_servos_usb) { // USB MODE.
+        apply_commands(sfr::serial::usb_buffer[0], sfr::serial::usb_buffer[1],
+                        sfr::serial::usb_buffer[2], sfr::serial::usb_buffer[3]);
+        sfr::serial::update_servos_usb = false;
     }
 }
 
@@ -117,7 +117,7 @@ uint32_t ServoControlTask::jib_to_pwm(const uint8_t angle, const uint8_t jib_sid
 }
 
 /** Send \code pwm\endcode to \code servo\endcode, thereby changing \code servo\endcode 's angle. */
-void ServoControlTask::actuate_servo(Servo &servo, const uint32_t pwm) {
+void ServoControlTask::actuate_servo(Servo& servo, const uint32_t pwm) {
     servo.write(static_cast<int>(pwm));
 }
 

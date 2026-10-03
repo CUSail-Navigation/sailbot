@@ -17,10 +17,10 @@ namespace sfr {
         uint32_t jib_stb_pwm = 0;
     }
     namespace serial {
-        bool update_servos_ros = false;
+        bool update_servos_usb = false;
         bool update_servos_radio = false;
-        uint8_t ros_buffer[constants::serial::BUFFER_LEN] = {};
-        uint8_t radio_buffer[constants::radio::BUFFER_LEN] = {};
+        uint8_t usb_buffer[constants::serial::USB_BUFFER_LEN] = {};
+        uint8_t radio_buffer[constants::serial::RADIO_BUFFER_LEN] = {};
         uint8_t radio_flag = 1;
         uint8_t dropped_packets = 0;
     }

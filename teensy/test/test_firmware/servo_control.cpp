@@ -1,7 +1,7 @@
 /**
  * SERVO CONTROL TESTS -- ServoControlTask.
  * Tests in this file cover two main areas of functionality:
- *  1. Mode arbitration (radio must win over the Jetson whenever radio_flag != 0, a fresh radio or ROS command
+ *  1. Mode arbitration (radio serial must win over USB serial whenever radio_flag != 0, a fresh radio or USB command
  *     applies and clears its own update flag, an idle cycle with nothing pending commands no servo at all).
  *  2. Angle to PWM mapping.
  */
@@ -10,8 +10,8 @@
 #include "ControlTasks/ServoControlTask.hpp"
 
 
-static_assert(ROS_PAYLOAD_LEN > layout::ROS_JIB_SIDE, "ros_buffer is too small for the documented ROS layout");
-static_assert(RADIO_PAYLOAD_LEN > layout::RADIO_JIB_SIDE, "radio_buffer is too small for the documented radio layout");
+static_assert(constants::serial::USB_BUFFER_LEN > layout::USB_JIB_SIDE, "usb_buffer is too small for the documented USB layout");
+static_assert(constants::serial::RADIO_BUFFER_LEN > layout::RADIO_JIB_SIDE, "radio_buffer is too small for the documented radio layout");
 
 
 // Helper functions.
@@ -26,13 +26,13 @@ static uint8_t default_jib() {
     return mid_angle(constants::servo::JIB_MIN_ANGLE, constants::servo::JIB_MAX_ANGLE);
 }
 
-/** Stage a Jetson command in the SFR exactly as \code ROSSerialMonitor\endcode would, and select ROS mode. */
-static void stage_ros_command(const uint8_t mainsail, const uint8_t rudder, const uint8_t jib, const uint8_t jib_side) {
-    sfr::serial::ros_buffer[layout::ROS_MAINSAIL] = mainsail;
-    sfr::serial::ros_buffer[layout::ROS_RUDDER] = rudder;
-    sfr::serial::ros_buffer[layout::ROS_JIB] = jib;
-    sfr::serial::ros_buffer[layout::ROS_JIB_SIDE] = jib_side;
-    sfr::serial::update_servos_ros = true;
+/** Stage a USB command in the SFR exactly as \code USBSerialMonitor\endcode would, and select USB mode. */
+static void stage_usb_command(const uint8_t mainsail, const uint8_t rudder, const uint8_t jib, const uint8_t jib_side) {
+    sfr::serial::usb_buffer[layout::USB_MAINSAIL] = mainsail;
+    sfr::serial::usb_buffer[layout::USB_RUDDER] = rudder;
+    sfr::serial::usb_buffer[layout::USB_JIB] = jib;
+    sfr::serial::usb_buffer[layout::USB_JIB_SIDE] = jib_side;
+    sfr::serial::update_servos_usb = true;
     sfr::serial::radio_flag = 0;
 }
 
@@ -47,29 +47,29 @@ static void stage_radio_command(const uint8_t mainsail, const uint8_t rudder, co
     sfr::serial::radio_flag = 1;
 }
 
-/** Run one Jetson command through the task and return, so a sweep can read the resulting PWM out of the SFR. */
-static void apply_ros_command(ServoControlTask& task, const uint8_t mainsail, const uint8_t rudder,
+/** Run one USB command through the task and return, so a sweep can read the resulting PWM out of the SFR. */
+static void apply_usb_command(ServoControlTask& task, const uint8_t mainsail, const uint8_t rudder,
                               const uint8_t jib, const uint8_t jib_side) {
-    stage_ros_command(mainsail, rudder, jib, jib_side);
+    stage_usb_command(mainsail, rudder, jib, jib_side);
     task.execute();
 }
 
 
 // Mode arbitration tests.
-static void test_radio_mode_ignores_pending_ros_command() {
+static void test_radio_mode_ignores_pending_usb_command() {
     ServoControlTask task;
     mock_reset_servos();
 
-    // Have a ROS packet pending, but radio mode is engaged. ROS packet shouldn't process.
-    stage_ros_command(default_mainsail(), default_rudder(), default_jib(), constants::servo::JIB_SIDE_PORT);
+    // Have a USB packet pending, but radio mode is engaged. USB packet shouldn't process.
+    stage_usb_command(default_mainsail(), default_rudder(), default_jib(), constants::servo::JIB_SIDE_PORT);
     sfr::serial::radio_flag = 1;
     sfr::serial::update_servos_radio = false;
     task.execute();
 
     TEST_ASSERT_EQUAL_UINT8_MESSAGE(0, sfr::servo::mainsail_angle,
-                                    "A queued ROS command must not reach the servos while radio mode is engaged");
-    TEST_ASSERT_TRUE_MESSAGE(sfr::serial::update_servos_ros,
-                             "The ROS command should remain pending, not be silently consumed");
+                                    "A queued USB command must not reach the servos while radio mode is engaged");
+    TEST_ASSERT_TRUE_MESSAGE(sfr::serial::update_servos_usb,
+                             "The USB command should remain pending, not be silently consumed");
     TEST_ASSERT_EQUAL_INT_MESSAGE(0, g_mock_servo_write_count[constants::servo::RUDDER_PIN],
                                   "No servo should be commanded at all on this cycle");
 }
@@ -89,16 +89,16 @@ static void test_radio_mode_applies_a_fresh_radio_command() {
     TEST_ASSERT_FALSE_MESSAGE(sfr::serial::update_servos_radio, "The radio flag should be cleared once consumed");
 }
 
-static void test_ros_mode_applies_when_radio_flag_is_zero() {
+static void test_usb_mode_applies_when_radio_flag_is_zero() {
     ServoControlTask task;
     const uint8_t mainsail = default_mainsail();
     const uint8_t rudder = default_rudder();
 
-    apply_ros_command(task, mainsail, rudder, default_jib(), constants::servo::JIB_SIDE_PORT);
+    apply_usb_command(task, mainsail, rudder, default_jib(), constants::servo::JIB_SIDE_PORT);
 
     TEST_ASSERT_EQUAL_UINT8(mainsail, sfr::servo::mainsail_angle);
     TEST_ASSERT_EQUAL_UINT8(rudder, sfr::servo::rudder_angle);
-    TEST_ASSERT_FALSE_MESSAGE(sfr::serial::update_servos_ros, "The ROS flag should be cleared once consumed");
+    TEST_ASSERT_FALSE_MESSAGE(sfr::serial::update_servos_usb, "The USB flag should be cleared once consumed");
 }
 
 static void test_no_pending_command_moves_nothing() {
@@ -106,7 +106,7 @@ static void test_no_pending_command_moves_nothing() {
     mock_reset_servos();
 
     sfr::serial::radio_flag = 0;
-    sfr::serial::update_servos_ros = false;
+    sfr::serial::update_servos_usb = false;
     sfr::serial::update_servos_radio = false;
     task.execute();
 
@@ -123,7 +123,7 @@ static void test_out_of_range_mainsail_angle_is_rejected() {
     }
 
     ServoControlTask task;
-    apply_ros_command(task, bad_angle, default_rudder(), default_jib(), constants::servo::JIB_SIDE_PORT);
+    apply_usb_command(task, bad_angle, default_rudder(), default_jib(), constants::servo::JIB_SIDE_PORT);
 
     TEST_ASSERT_EQUAL_UINT8_MESSAGE(0, sfr::servo::mainsail_angle, "An out-of-range mainsail angle must be discarded");
     TEST_ASSERT_EQUAL_UINT8_MESSAGE(default_rudder(), sfr::servo::rudder_angle,
@@ -137,7 +137,7 @@ static void test_out_of_range_rudder_angle_is_rejected() {
     }
 
     ServoControlTask task;
-    apply_ros_command(task, default_mainsail(), bad_angle, default_jib(), constants::servo::JIB_SIDE_PORT);
+    apply_usb_command(task, default_mainsail(), bad_angle, default_jib(), constants::servo::JIB_SIDE_PORT);
 
     TEST_ASSERT_EQUAL_UINT8_MESSAGE(0, sfr::servo::rudder_angle, "An out-of-range rudder angle must be discarded");
 }
@@ -149,7 +149,7 @@ static void test_out_of_range_jib_angle_is_rejected() {
     }
 
     ServoControlTask task;
-    apply_ros_command(task, default_mainsail(), default_rudder(), bad_angle, constants::servo::JIB_SIDE_PORT);
+    apply_usb_command(task, default_mainsail(), default_rudder(), bad_angle, constants::servo::JIB_SIDE_PORT);
 
     TEST_ASSERT_EQUAL_UINT8_MESSAGE(0, sfr::servo::jib_angle, "An out-of-range jib angle must be discarded");
 }
@@ -159,7 +159,7 @@ static void test_invalid_jib_side_flag_is_rejected() {
     if (!find_invalid_jib_side_flag(bad_flag)) TEST_IGNORE_MESSAGE("Every byte value is a valid jib side flag");
 
     ServoControlTask task;
-    apply_ros_command(task, default_mainsail(), default_rudder(), default_jib(), bad_flag);
+    apply_usb_command(task, default_mainsail(), default_rudder(), default_jib(), bad_flag);
 
     TEST_ASSERT_EQUAL_UINT8_MESSAGE(0, sfr::servo::jib_angle, "Corrupt jib side flag means whole jib command discard");
 }
@@ -169,12 +169,12 @@ static void test_invalid_jib_side_flag_is_rejected() {
 static void test_rudder_endpoints_match_the_declared_pulse_range() {
     ServoControlTask task;
 
-    apply_ros_command(task, default_mainsail(), constants::servo::RUDDER_MIN_ANGLE, default_jib(),
+    apply_usb_command(task, default_mainsail(), constants::servo::RUDDER_MIN_ANGLE, default_jib(),
                       constants::servo::JIB_SIDE_PORT);
     TEST_ASSERT_EQUAL_UINT32_MESSAGE(constants::servo::RUDDER_MIN_PULSE, sfr::servo::rudder_pwm,
                                      "The smallest rudder angle should map to RUDDER_MIN_PULSE");
 
-    apply_ros_command(task, default_mainsail(), constants::servo::RUDDER_MAX_ANGLE, default_jib(),
+    apply_usb_command(task, default_mainsail(), constants::servo::RUDDER_MAX_ANGLE, default_jib(),
                       constants::servo::JIB_SIDE_PORT);
     TEST_ASSERT_EQUAL_UINT32_MESSAGE(constants::servo::RUDDER_MAX_PULSE, sfr::servo::rudder_pwm,
                                      "The largest rudder angle should map to RUDDER_MAX_PULSE");
@@ -182,7 +182,7 @@ static void test_rudder_endpoints_match_the_declared_pulse_range() {
 
 static void test_rudder_midpoint_is_amidships() {
     ServoControlTask task;
-    apply_ros_command(task, default_mainsail(), default_rudder(), default_jib(), constants::servo::JIB_SIDE_PORT);
+    apply_usb_command(task, default_mainsail(), default_rudder(), default_jib(), constants::servo::JIB_SIDE_PORT);
 
     TEST_ASSERT_UINT32_WITHIN_MESSAGE(1, constants::servo::RUDDER_MID_PULSE, sfr::servo::rudder_pwm,
                                       "A mid-range rudder angle should sit at RUDDER_MID_PULSE");
@@ -193,7 +193,7 @@ static void test_rudder_pwm_rises_with_angle_and_stays_in_range() {
     std::vector<uint32_t> sweep;
 
     for (int angle = constants::servo::RUDDER_MIN_ANGLE; angle <= constants::servo::RUDDER_MAX_ANGLE; ++angle) {
-        apply_ros_command(task, default_mainsail(), static_cast<uint8_t>(angle), default_jib(),
+        apply_usb_command(task, default_mainsail(), static_cast<uint8_t>(angle), default_jib(),
                           constants::servo::JIB_SIDE_PORT);
         assert_pwm_in_range(sfr::servo::rudder_pwm, constants::servo::RUDDER_MIN_PULSE,
                             constants::servo::RUDDER_MAX_PULSE, "rudder");
@@ -210,7 +210,7 @@ static void test_mainsail_pwm_never_falls_and_stays_in_range() {
     std::vector<uint32_t> sweep;
 
     for (int angle = constants::servo::MAINSAIL_MIN_ANGLE; angle <= constants::servo::MAINSAIL_MAX_ANGLE; ++angle) {
-        apply_ros_command(task, static_cast<uint8_t>(angle), default_rudder(), default_jib(),
+        apply_usb_command(task, static_cast<uint8_t>(angle), default_rudder(), default_jib(),
                           constants::servo::JIB_SIDE_PORT);
         assert_pwm_in_range(sfr::servo::mainsail_pwm, constants::servo::MAINSAIL_MIN_PULSE,
                             constants::servo::MAINSAIL_MAX_PULSE, "mainsail");
@@ -228,7 +228,7 @@ static void test_mainsail_minimum_angle_sits_at_minimum_pulse() {
     }
 
     ServoControlTask task;
-    apply_ros_command(task, constants::servo::MAINSAIL_MIN_ANGLE, default_rudder(), default_jib(),
+    apply_usb_command(task, constants::servo::MAINSAIL_MIN_ANGLE, default_rudder(), default_jib(),
                       constants::servo::JIB_SIDE_PORT);
 
     TEST_ASSERT_EQUAL_UINT32_MESSAGE(constants::servo::MAINSAIL_MIN_PULSE, sfr::servo::mainsail_pwm,
@@ -245,7 +245,7 @@ static void test_jib_pwm_never_falls_and_stays_in_range_on_both_sides() {
 
         std::vector<uint32_t> sweep;
         for (int angle = constants::servo::JIB_MIN_ANGLE; angle <= constants::servo::JIB_MAX_ANGLE; ++angle) {
-            apply_ros_command(task, default_mainsail(), default_rudder(), static_cast<uint8_t>(angle), side);
+            apply_usb_command(task, default_mainsail(), default_rudder(), static_cast<uint8_t>(angle), side);
             const uint32_t pwm = is_port ? sfr::servo::jib_port_pwm : sfr::servo::jib_stb_pwm;
             assert_pwm_in_range(pwm, min_pulse, max_pulse, is_port ? "jib (port)" : "jib (starboard)");
             sweep.push_back(pwm);
@@ -256,7 +256,7 @@ static void test_jib_pwm_never_falls_and_stays_in_range_on_both_sides() {
 
 static void test_trimming_port_jib_slacks_the_starboard_sheet() {
     ServoControlTask task;
-    apply_ros_command(task, default_mainsail(), default_rudder(), default_jib(), constants::servo::JIB_SIDE_PORT);
+    apply_usb_command(task, default_mainsail(), default_rudder(), default_jib(), constants::servo::JIB_SIDE_PORT);
 
     TEST_ASSERT_EQUAL_UINT32_MESSAGE(constants::servo::JIB_STB_MAX_PULSE, sfr::servo::jib_stb_pwm,
                                      "Trimming to port should let the starboard sheet all the way out");
@@ -267,7 +267,7 @@ static void test_trimming_port_jib_slacks_the_starboard_sheet() {
 
 static void test_trimming_starboard_jib_slacks_the_port_sheet() {
     ServoControlTask task;
-    apply_ros_command(task, default_mainsail(), default_rudder(), default_jib(), constants::servo::JIB_SIDE_STB);
+    apply_usb_command(task, default_mainsail(), default_rudder(), default_jib(), constants::servo::JIB_SIDE_STB);
 
     TEST_ASSERT_EQUAL_UINT32_MESSAGE(constants::servo::JIB_PORT_MAX_PULSE, sfr::servo::jib_port_pwm,
                                      "Trimming to starboard should let the port sheet all the way out");
@@ -281,7 +281,7 @@ static void test_trimming_starboard_jib_slacks_the_port_sheet() {
 static void test_computed_pwm_reaches_the_correct_servo_pins() {
     ServoControlTask task;
     mock_reset_servos();
-    apply_ros_command(task, default_mainsail(), default_rudder(), default_jib(), constants::servo::JIB_SIDE_PORT);
+    apply_usb_command(task, default_mainsail(), default_rudder(), default_jib(), constants::servo::JIB_SIDE_PORT);
 
     TEST_ASSERT_EQUAL_INT_MESSAGE(static_cast<int>(sfr::servo::rudder_pwm),
                                   g_mock_servo_last_write[constants::servo::RUDDER_PIN],
@@ -298,9 +298,9 @@ static void test_computed_pwm_reaches_the_correct_servo_pins() {
 // Runner.
 void run_servo_control_tests() {
     Unity.TestFile = __FILE__; // Report failures against this file, not main.cpp.
-    RUN_TEST(test_radio_mode_ignores_pending_ros_command);
+    RUN_TEST(test_radio_mode_ignores_pending_usb_command);
     RUN_TEST(test_radio_mode_applies_a_fresh_radio_command);
-    RUN_TEST(test_ros_mode_applies_when_radio_flag_is_zero);
+    RUN_TEST(test_usb_mode_applies_when_radio_flag_is_zero);
     RUN_TEST(test_no_pending_command_moves_nothing);
 
     RUN_TEST(test_out_of_range_mainsail_angle_is_rejected);

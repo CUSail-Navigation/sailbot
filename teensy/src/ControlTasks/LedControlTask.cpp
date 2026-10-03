@@ -1,7 +1,6 @@
 #include "LedControlTask.hpp"
 
-LedControlTask::LedControlTask() {
-    LED_PIN = constants::led::LED_PIN;
+LedControlTask::LedControlTask() : LED_PIN(constants::led::LED_PIN) {
     pinMode(LED_PIN, OUTPUT);
 }
 
@@ -9,7 +8,7 @@ LedControlTask::LedControlTask() {
  * Blinks the status LED to indicate the current connectivity/data state of the boat.
  */
 void LedControlTask::execute() const {
-    const bool update_servos = sfr::serial::update_servos_radio || sfr::serial::update_servos_ros;
+    const bool update_servos = sfr::serial::update_servos_radio || sfr::serial::update_servos_usb;
     if (Serial.available() && !update_servos) {
         digitalWrite(LED_PIN, LOW);
         delay(2000);

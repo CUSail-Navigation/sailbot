@@ -215,7 +215,7 @@ public:
     }
 };
 
-/** The Jetson link (USB serial): read by \code ROSSerialMonitor\endcode, written by \code SerialControlTask\endcode. */
+/** The Jetson link (USB serial): read by \code USBSerialMonitor\endcode, written by \code TelemetryControlTask\endcode. */
 inline FakeStream Serial;
 
 /** The XBee radio link (hardware UART on pins 7/8): read by \code RadioSerialMonitor\endcode. */

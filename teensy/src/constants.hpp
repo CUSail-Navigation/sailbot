@@ -59,12 +59,11 @@ namespace constants {
         constexpr float JIB_PULSE_PER_TURN = (SERVO_MAX_PULSE - SERVO_MIN_PULSE) / 7.85;
         constexpr float JIB_CALIBRATION = 0.85;
 
-        /** Active jib sheet side flag (RX/TX and \code sfr::servo::jib_side_flag\endcode). */
         constexpr uint8_t JIB_SIDE_PORT = 0;
         constexpr uint8_t JIB_SIDE_STB = 1;
     }
     /** SERIAL NOTES FROM 2025-2026 SEASON: <p>
-     * - BUFFER FORMAT (which is RX PACKET FORMAT between the start and end flags):
+     * - USB BUFFER FORMAT (which is RX PACKET FORMAT between the start and end flags):
      *   - [0] = \code mainsail_angle\endcode
      *   - [1] = \code rudder_angle\endcode
      *   - [2] = \code jib_angle\endcode
@@ -80,12 +79,10 @@ namespace constants {
         constexpr uint8_t RX_START_FLAG = 0xFF;
         constexpr uint8_t RX_END_FLAG = 0xEE;
         constexpr uint8_t RX_PACKET_TIMEOUT_MS = 50;
-        constexpr uint8_t BUFFER_LEN = 4;
+        constexpr uint8_t USB_BUFFER_LEN = 4;
+        constexpr uint8_t RADIO_BUFFER_LEN = 5;
 
         constexpr uint32_t BAUD_RATE = 9600;
-    }
-    namespace radio {
-        constexpr uint8_t BUFFER_LEN = 5;
     }
     namespace led {
         constexpr uint8_t LED_PIN = 13;
